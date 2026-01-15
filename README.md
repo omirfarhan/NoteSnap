@@ -4,7 +4,7 @@ Currently working and creating best notes
 =======
 # notes
 
-Client project notes
+project notes
 
 ## Getting Started
 
