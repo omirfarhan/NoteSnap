@@ -75,3 +75,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 >>>>>>> d5261bf (first create this project)
+
+# FVM Version Cache
+.fvm/
