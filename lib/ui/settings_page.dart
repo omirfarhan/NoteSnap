@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:notes/services/auth/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 
 class SettingsPage extends StatefulWidget {
@@ -11,8 +12,13 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
 
+
+
   @override
   Widget build(BuildContext context) {
+
+
+
     return Scaffold(
 
       appBar: AppBar(
@@ -100,6 +106,9 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget ProfileSectionContainer(BuildContext context) {
+
+    final auth = context.watch<AuthProvider>();
+
     return Container(
                   width: MediaQuery.sizeOf(context).width,
 
@@ -111,7 +120,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         height: 10,
                       ),
 
-                      buildProfileCreator('Profile Name'),
+                      buildProfileCreator(context, auth.profilename??'profile name'),
                       Divider(thickness: 1),
                       buildCloudService(context, 'Backup Email'),
 
@@ -140,9 +149,18 @@ class _SettingsPageState extends State<SettingsPage> {
               );
   }
 
-  Widget buildProfileCreator(String profilename){
+
+
+  //Google Authentication
+
+  Widget buildProfileCreator(BuildContext context ,String profilename){
+
+    final auth=context.watch<AuthProvider>();
+
 
     return Material(
+
+
       color: Colors.transparent,
       child: InkWell(
 
@@ -150,14 +168,18 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: BorderRadius.circular(1),
 
 
+
         onTap: () async{
           //email navigator page e jabe
 
           try{
 
-            final userdata=await AuthProvider.signinwithGoogle();
-            print('${userdata.additionalUserInfo!.profile}');
+            await context.read<AuthProvider>().signinwithgoogle();
+            print(auth.email);
+            print(auth.profilename);
+            print(auth.photoUrl);
 
+            profilename=auth.profilename!;
 
           }catch(e){
             print('Google sign in faild $e');
@@ -182,7 +204,12 @@ class _SettingsPageState extends State<SettingsPage> {
                // borderRadius: BorderRadius.circular(50),
                   child: CircleAvatar(
                     radius: 50,
-                    backgroundImage: NetworkImage('https://plus.unsplash.com/premium_photo-1680404114169-e254afa55a16?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'),
+                    backgroundImage: auth.photoUrl != null ?
+                    NetworkImage(auth.photoUrl!)
+                        : null,
+                    child: auth.photoUrl == null ?
+                    const Icon(Icons.person)
+                    :null ,
                   )
               )
             ),
@@ -199,6 +226,28 @@ class _SettingsPageState extends State<SettingsPage> {
               fontSize: 15
             )
             ),
+
+            const Spacer(),
+            TextButton(onPressed: ()async{
+             await auth.signOut();
+             ScaffoldMessenger.of(context).showSnackBar(
+                 SnackBar(content: Text('You have logged out successfully!'),
+                 backgroundColor: Color(0xFF6365EF),
+                 )
+             );
+            },
+              child: Text('Log Out',
+                  style: TextStyle(
+                      color: Color(0xFFF7FBFD),
+                      fontWeight: FontWeight.w100,
+                      fontFamily: 'ArchivoBlack',
+                      fontSize: 15
+                  )
+              ),
+            ),
+            SizedBox(
+              width: 10,
+            )
 
           ],
         ),

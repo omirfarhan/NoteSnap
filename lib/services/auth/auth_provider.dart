@@ -3,12 +3,15 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 
-class FirebaseAuthExecption implements Exception{}
+
 
 class AuthProvider extends ChangeNotifier{
 
-  static final GoogleSignIn googleSignInn=GoogleSignIn.instance;
+  String? photoUrl;
+  String? email;
+  String? profilename;
 
+  static final GoogleSignIn googleSignInn=GoogleSignIn.instance;
   static bool isinitalized= false;
 
 
@@ -76,9 +79,27 @@ class AuthProvider extends ChangeNotifier{
   }
 
   //For signOut
-   Future<void> signOut() async{
+    Future<void> signOut() async{
     await googleSignInn.signOut();
     await FirebaseAuth.instance.signOut();
+    photoUrl =null;
+    email = null;
+    profilename = null;
+
+    notifyListeners();
    }
+
+   Future<void> signinwithgoogle() async{
+
+    final userdata=await AuthProvider.signinwithGoogle();
+    photoUrl=userdata.additionalUserInfo!.profile!['picture'] as String?;
+    email=userdata.additionalUserInfo!.profile!['email'] as String?;
+    profilename=userdata.additionalUserInfo!.profile!['name'] as String?;
+
+    notifyListeners();
+   }
+
+
+
 
 }
