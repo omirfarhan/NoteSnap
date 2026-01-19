@@ -11,6 +11,16 @@ class AuthProvider extends ChangeNotifier{
   String? email;
   String? profilename;
 
+  User? user;
+
+  AuthProvider(){
+    user =FirebaseAuth.instance.currentUser;
+
+  }
+
+  bool get isLoggedIn => user != null;
+
+
   static final GoogleSignIn googleSignInn=GoogleSignIn.instance;
   static bool isinitalized= false;
 

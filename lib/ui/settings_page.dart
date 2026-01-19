@@ -156,7 +156,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget buildProfileCreator(BuildContext context ,String profilename){
 
     final auth=context.watch<AuthProvider>();
-
+    print('logging option ${auth.isLoggedIn}');
 
     return Material(
 
@@ -228,6 +228,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
 
             const Spacer(),
+
             TextButton(onPressed: ()async{
              await auth.signOut();
              ScaffoldMessenger.of(context).showSnackBar(
