@@ -1,4 +1,4 @@
-package com.moinulnotes.notes.notes;
+package com.moinulislamsxs.notes;
 
 import io.flutter.embedding.android.FlutterActivity;
 

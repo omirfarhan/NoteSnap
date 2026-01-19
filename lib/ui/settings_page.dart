@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:notes/services/auth/auth_provider.dart';
 
 
 class SettingsPage extends StatefulWidget {
@@ -149,9 +150,20 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: BorderRadius.circular(1),
 
 
-        onTap: () {
+        onTap: () async{
           //email navigator page e jabe
-          debugPrint('tap');
+
+          try{
+
+            final userdata=await AuthProvider.signinwithGoogle();
+            print('${userdata.additionalUserInfo!.profile}');
+
+
+          }catch(e){
+            print('Google sign in faild $e');
+          }
+
+
 
 
         },

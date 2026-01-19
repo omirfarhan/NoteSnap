@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "84036142309",
+    "project_id": "notes-moinul-flutter-project",
+    "storage_bucket": "notes-moinul-flutter-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:84036142309:android:93ccb0089ddd12ff60800c",
+        "android_client_info": {
+          "package_name": "com.moinulislamsxs.notes"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "84036142309-o3fo97q8hdn43as73p6jaevqdph86hvr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBjBts21sOQQmWFHdHe9h4E-J4NcKj6F4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "84036142309-o3fo97q8hdn43as73p6jaevqdph86hvr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
