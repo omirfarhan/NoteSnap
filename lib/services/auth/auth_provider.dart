@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,14 +8,23 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthProvider extends ChangeNotifier{
 
+  final FirebaseAuth _firebaseAuth=FirebaseAuth.instance;
+
   String? photoUrl;
   String? email;
   String? profilename;
 
   User? user;
-
+//FirebaseAuth.instance.currentUser;
   AuthProvider(){
-    user =FirebaseAuth.instance.currentUser;
+    user =_firebaseAuth.currentUser;
+
+      if(user != null){
+        photoUrl = user!.photoURL;
+        profilename =user!.displayName;
+        email=user!.email;
+      }
+
 
   }
 
@@ -42,6 +52,8 @@ class AuthProvider extends ChangeNotifier{
 
   static Future<UserCredential> signinwithGoogle() async{
     await _initSignin();
+
+
     final GoogleSignInAccount account = await googleSignInn.authenticate();
 
     if(account == null ){
@@ -84,17 +96,20 @@ class AuthProvider extends ChangeNotifier{
 
     final credential= GoogleAuthProvider.credential(accessToken: aacessToken, idToken: idToken);
 
+
     return await FirebaseAuth.instance.signInWithCredential(credential);
 
   }
 
   //For signOut
     Future<void> signOut() async{
-    await googleSignInn.signOut();
-    await FirebaseAuth.instance.signOut();
-    photoUrl =null;
-    email = null;
-    profilename = null;
+
+      await googleSignInn.signOut();
+      await _firebaseAuth.signOut();
+      user=null;
+      photoUrl=null;
+      profilename=null;
+      email=null;
 
     notifyListeners();
    }
@@ -102,9 +117,14 @@ class AuthProvider extends ChangeNotifier{
    Future<void> signinwithgoogle() async{
 
     final userdata=await AuthProvider.signinwithGoogle();
-    photoUrl=userdata.additionalUserInfo!.profile!['picture'] as String?;
-    email=userdata.additionalUserInfo!.profile!['email'] as String?;
-    profilename=userdata.additionalUserInfo!.profile!['name'] as String?;
+    // photoUrl=userdata.additionalUserInfo!.profile!['picture'] as String?;
+    // email=userdata.additionalUserInfo!.profile!['email'] as String?;
+    // profilename=userdata.additionalUserInfo!.profile!['name'] as String?;
+
+    user=userdata.user;
+    profilename=user!.displayName;
+    email=user!.email;
+    photoUrl=user!.photoURL;
 
     notifyListeners();
    }

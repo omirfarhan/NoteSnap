@@ -156,7 +156,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget buildProfileCreator(BuildContext context ,String profilename){
 
     final auth=context.watch<AuthProvider>();
-    print('logging option ${auth.isLoggedIn}');
+    print('logging option=== ${auth.user}');
 
     return Material(
 
@@ -229,7 +229,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
             const Spacer(),
 
-            TextButton(onPressed: ()async{
+            auth.isLoggedIn? TextButton(onPressed: ()async{
              await auth.signOut();
              ScaffoldMessenger.of(context).showSnackBar(
                  SnackBar(content: Text('You have logged out successfully!'),
@@ -245,10 +245,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       fontSize: 15
                   )
               ),
-            ),
-            SizedBox(
-              width: 10,
-            )
+            ):const SizedBox.shrink()
 
           ],
         ),
