@@ -152,7 +152,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
 
   //Google Authentication
-
   Widget buildProfileCreator(BuildContext context ,String profilename){
 
     final auth=context.watch<AuthProvider>();
@@ -270,6 +269,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   }
 
+  //Backup Email
   Widget buildCloudService(BuildContext context, String title){
     
     return Material(
@@ -280,7 +280,11 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: BorderRadius.circular(1),
 
         onTap: (){
-          print('tap');
+
+
+          print('Backup Email ');
+
+
         },
 
         child: Padding(
@@ -305,6 +309,9 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     
   }
+
+
+
 
 }
 
