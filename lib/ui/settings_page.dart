@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 import 'package:provider/provider.dart';
+import '../constants/routes.dart';
 
 
 class SettingsPage extends StatefulWidget {
@@ -80,12 +81,91 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    buildCloudService(context, 'Cloud Files'),
+
+                    //buildCloudService(context, 'Cloud Files'),
+                    buldCloudFileMethod(),
                     Divider(thickness: 1),
-                    buildCloudService(context, 'Recently delete items'),
+                    buildRecentlyDeleteItems(),
+                    //buildCloudService(context, 'Recently delete items'),
+
                   ],
 
                 )
+              );
+  }
+
+
+  //build Recently delete items
+  Widget buildRecentlyDeleteItems() {
+    return Material(
+        color: Colors.transparent,
+        child: InkWell(
+
+          splashColor: Colors.white.withOpacity(0.25),
+          borderRadius: BorderRadius.circular(1),
+
+          onTap: (){
+
+
+            print('Recently delete items');
+
+
+          },
+
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8,horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Title(color: Color(0xFF5BB5D7), child: Text('Recently delete items',
+                  style: TextStyle(
+                      color: Color(0xFFF7FBFD),
+                      fontFamily: 'ArchivoBlack',
+                      fontSize: 19,
+                      fontWeight: FontWeight.w100
+                  ),
+                )),
+                Icon(Icons.arrow_forward_ios_outlined,color: Color(0xFFF7FBFD),)
+              ],
+            ),
+          ),
+
+        ),
+      );
+  }
+
+  //Cloud Files
+  Widget buldCloudFileMethod() {
+    return Material(
+                color: Colors.transparent,
+                child: InkWell(
+
+                  splashColor: Colors.white.withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(1),
+
+                  onTap: (){
+                    Navigator.of(context).pushNamed(CloudFilesRoute);
+                  },
+
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8,horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Title(color: Color(0xFF5BB5D7), child: Text('Cloud Files',
+                          style: TextStyle(
+                              color: Color(0xFFF7FBFD),
+                              fontFamily: 'ArchivoBlack',
+                              fontSize: 19,
+                              fontWeight: FontWeight.w100
+                          ),
+                        )),
+                        Icon(Icons.arrow_forward_ios_outlined,color: Color(0xFFF7FBFD),)
+                      ],
+                    ),
+                  ),
+
+                ),
               );
   }
 
@@ -155,11 +235,8 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget buildProfileCreator(BuildContext context ,String profilename){
 
     final auth=context.watch<AuthProvider>();
-    print('logging option=== ${auth.user}');
 
     return Material(
-
-
       color: Colors.transparent,
       child: InkWell(
 
@@ -176,8 +253,8 @@ class _SettingsPageState extends State<SettingsPage> {
             await context.read<AuthProvider>().signinwithgoogle();
             print(auth.email);
             print(auth.profilename);
-            print(auth.photoUrl);
 
+            print('======${AuthProvider.AccessToken}');
             profilename=auth.profilename!;
 
           }catch(e){

@@ -10,6 +10,8 @@ class AuthProvider extends ChangeNotifier{
 
   final FirebaseAuth _firebaseAuth=FirebaseAuth.instance;
 
+  static var AccessToken;
+
   String? photoUrl;
   String? email;
   String? profilename;
@@ -41,8 +43,11 @@ class AuthProvider extends ChangeNotifier{
 
   static Future<void> _initSignin() async{
 
+
     if(!isinitalized){
       await googleSignInn.initialize(serverClientId: "84036142309-o3fo97q8hdn43as73p6jaevqdph86hvr.apps.googleusercontent.com");
+
+
     }
     isinitalized = true;
   }
@@ -55,6 +60,7 @@ class AuthProvider extends ChangeNotifier{
 
 
     final GoogleSignInAccount account = await googleSignInn.authenticate();
+
 
     if(account == null ){
       throw FirebaseAuthException(code: 'SignIN Aborted by user',
@@ -76,6 +82,8 @@ class AuthProvider extends ChangeNotifier{
     ]);
 
     final aacessToken=auth?.accessToken;
+
+    AccessToken=aacessToken;
 
     if(aacessToken == null){
       final auth2=await authClient.authorizationForScopes([
@@ -128,6 +136,7 @@ class AuthProvider extends ChangeNotifier{
 
     notifyListeners();
    }
+
 
 
 
