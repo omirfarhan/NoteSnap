@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../constants/routes.dart';
 
 
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -253,8 +254,6 @@ class _SettingsPageState extends State<SettingsPage> {
             await context.read<AuthProvider>().signinwithgoogle();
             print(auth.email);
             print(auth.profilename);
-
-            //print(auth.);
             profilename=auth.profilename!;
 
           }catch(e){

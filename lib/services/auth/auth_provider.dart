@@ -1,17 +1,21 @@
+import 'dart:convert';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:notes/Data_Layer/google_http_client.dart';
+import 'package:googleapis/drive/v3.dart' as ga;
 
 
 
 
 class AuthProvider extends ChangeNotifier{
 
-
+  //static var client;
   final FirebaseAuth _firebaseAuth=FirebaseAuth.instance;
 
-
+  static final folderId = "1GCNjcP3k4qU8gepp5_mPnuzQ4-tY7PFf";
 
   String? photoUrl;
   String? email;
@@ -52,7 +56,7 @@ class AuthProvider extends ChangeNotifier{
     await _initSignin();
 
 
-    final GoogleSignInAccount account = await googleSignInn.authenticate();
+     final GoogleSignInAccount account = await googleSignInn.authenticate();
 
 
     if(account == null ){
@@ -61,55 +65,83 @@ class AuthProvider extends ChangeNotifier{
       );
     }
 
+
     final idToken=await account.authentication.idToken;
 
     //Google API access করার জন্য লাগে example: যেমন google Drive API
     final authClient=await account.authorizationClient;
 
-    // //Scopes হলো permission সেট — ইউজারকে কোন কোন ডেটা অ্যাক্সেস করতে দেবে।
-    // GoogleSignInClientAuthorization? auth=await authClient.authorizationForScopes([
-    //   'email',
-    //   'profile',
-    //   //drive er file toiri upload/show er jonne
-    //   'https://www.googleapis.com/auth/drive.file'
-    // ]);
-    // //final aacessToken=auth?.accessToken;
-
-    GoogleSignInServerAuthorization? serverAuth= await authClient.authorizeServer([
+    //Scopes হলো permission সেট — ইউজারকে কোন কোন ডেটা অ্যাক্সেস করতে দেবে।
+    GoogleSignInClientAuthorization? auth=await authClient.authorizationForScopes([
       'email',
       'profile',
       //drive er file toiri upload/show er jonne
       'https://www.googleapis.com/auth/drive.file'
     ]);
+    final aacessToken=auth?.accessToken;
 
-    if(serverAuth?.serverAuthCode==null){
-      throw FirebaseAuthException(
-          code: 'no Server code',
-        message: 'Failed to retrieve server authorization code'
-
-      );
-
-    }
+    //  final clientt=GoogleHttpClient({
+    //   'Authorization': 'Bearer $aacessToken',
+    // });
 
 
-
-    // if(aacessToken == null){
-    //   final auth2=await authClient.authorizationForScopes([
-    //     'email',
-    //     'profile',
-    //     //drive er file toiri upload/show er jonne
-    //     'https://www.googleapis.com/auth/drive.file'
+     //delete method
+    // final drive=ga.DriveApi(clientt);
+    // var file=ga.File();
+    // file.name="note.txt";
+    // file.parents=['1Cl1SDznsR5cDJoQVG0IzB6YVoM8gH9VN'];
     //
-    //   ]);
+    // var media=ga.Media(
+    //   Stream.value(utf8.encode("THis is my note")),
+    //   null
+    // );
     //
-    //   if(auth2?.accessToken == null){
-    //     throw FirebaseAuthException(code: 'No access Token', message: 'fail to retrive access token');
-    //   }
+    // var result=await drive.files.create(file, uploadMedia: media);
+    // print("Uploaded File ID: ${result.id}");
+//======================================
+     //client=clientt;
+
+
+
+    //print('Access Token is=======: ${aacessToken}');
+
+
+
+    // GoogleSignInServerAuthorization? serverAuth= await authClient.authorizeServer([
+    //   'email',
+    //   'profile',
+    //   //drive er file toiri upload/show er jonne
+    //   'https://www.googleapis.com/auth/drive.file'
+    // ]);
     //
-    //   auth=auth2;
+    // if(serverAuth?.serverAuthCode==null){
+    //   throw FirebaseAuthException(
+    //       code: 'no Server code',
+    //     message: 'Failed to retrieve server authorization code'
     //
+    //   );
     //
     // }
+
+
+
+    if(aacessToken == null){
+      final auth2=await authClient.authorizationForScopes([
+        'email',
+        'profile',
+        //drive er file toiri upload/show er jonne
+        'https://www.googleapis.com/auth/drive.file'
+
+      ]);
+
+      if(auth2?.accessToken == null){
+        throw FirebaseAuthException(code: 'No access Token', message: 'fail to retrive access token');
+      }
+
+      auth=auth2;
+
+
+    }
     //=============
 
 
@@ -146,7 +178,6 @@ class AuthProvider extends ChangeNotifier{
 
     notifyListeners();
    }
-
 
 
 
