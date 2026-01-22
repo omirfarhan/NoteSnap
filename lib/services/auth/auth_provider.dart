@@ -8,9 +8,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthProvider extends ChangeNotifier{
 
+
   final FirebaseAuth _firebaseAuth=FirebaseAuth.instance;
 
-  static var AccessToken;
+
 
   String? photoUrl;
   String? email;
@@ -37,17 +38,9 @@ class AuthProvider extends ChangeNotifier{
   static bool isinitalized= false;
 
 
-
-
-
-
   static Future<void> _initSignin() async{
-
-
     if(!isinitalized){
       await googleSignInn.initialize(serverClientId: "84036142309-o3fo97q8hdn43as73p6jaevqdph86hvr.apps.googleusercontent.com");
-
-
     }
     isinitalized = true;
   }
@@ -68,43 +61,60 @@ class AuthProvider extends ChangeNotifier{
       );
     }
 
-    final idToken=account.authentication.idToken;
+    final idToken=await account.authentication.idToken;
 
     //Google API access করার জন্য লাগে example: যেমন google Drive API
-    final authClient=account.authorizationClient;
+    final authClient=await account.authorizationClient;
 
-    //Scopes হলো permission সেট — ইউজারকে কোন কোন ডেটা অ্যাক্সেস করতে দেবে।
-    GoogleSignInClientAuthorization? auth=await authClient.authorizationForScopes([
+    // //Scopes হলো permission সেট — ইউজারকে কোন কোন ডেটা অ্যাক্সেস করতে দেবে।
+    // GoogleSignInClientAuthorization? auth=await authClient.authorizationForScopes([
+    //   'email',
+    //   'profile',
+    //   //drive er file toiri upload/show er jonne
+    //   'https://www.googleapis.com/auth/drive.file'
+    // ]);
+    // //final aacessToken=auth?.accessToken;
+
+    GoogleSignInServerAuthorization? serverAuth= await authClient.authorizeServer([
       'email',
       'profile',
       //drive er file toiri upload/show er jonne
-      //''https://www.googleapis.com/auth/drive.file''
+      'https://www.googleapis.com/auth/drive.file'
     ]);
 
-    final aacessToken=auth?.accessToken;
+    if(serverAuth?.serverAuthCode==null){
+      throw FirebaseAuthException(
+          code: 'no Server code',
+        message: 'Failed to retrieve server authorization code'
 
-    AccessToken=aacessToken;
-
-    if(aacessToken == null){
-      final auth2=await authClient.authorizationForScopes([
-        'email',
-        'profile',
-        //drive er file toiri upload/show er jonne
-        //''https://www.googleapis.com/auth/drive.file''
-
-      ]);
-
-      if(auth2?.accessToken == null){
-        throw FirebaseAuthException(code: 'No access Token', message: 'fail to retrive access token');
-      }
-
-      auth=auth2;
+      );
 
     }
 
-    final credential= GoogleAuthProvider.credential(accessToken: aacessToken, idToken: idToken);
 
 
+    // if(aacessToken == null){
+    //   final auth2=await authClient.authorizationForScopes([
+    //     'email',
+    //     'profile',
+    //     //drive er file toiri upload/show er jonne
+    //     'https://www.googleapis.com/auth/drive.file'
+    //
+    //   ]);
+    //
+    //   if(auth2?.accessToken == null){
+    //     throw FirebaseAuthException(code: 'No access Token', message: 'fail to retrive access token');
+    //   }
+    //
+    //   auth=auth2;
+    //
+    //
+    // }
+    //=============
+
+
+
+    final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
     return await FirebaseAuth.instance.signInWithCredential(credential);
 
   }
@@ -136,6 +146,7 @@ class AuthProvider extends ChangeNotifier{
 
     notifyListeners();
    }
+
 
 
 

@@ -254,7 +254,7 @@ class _SettingsPageState extends State<SettingsPage> {
             print(auth.email);
             print(auth.profilename);
 
-            print('======${AuthProvider.AccessToken}');
+            //print(auth.);
             profilename=auth.profilename!;
 
           }catch(e){
