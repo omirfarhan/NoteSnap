@@ -55,96 +55,80 @@ class AuthProvider extends ChangeNotifier{
   static Future<UserCredential> signinwithGoogle() async{
     await _initSignin();
 
+    final scopes = [
+      'email',
+      'profile',
+      'https://www.googleapis.com/auth/drive.appdata',
+    ];
 
-     final GoogleSignInAccount account = await googleSignInn.authenticate();
-
-
-    if(account == null ){
-      throw FirebaseAuthException(code: 'SignIN Aborted by user',
-        message: 'SIGNIN incomlete'
-      );
-    }
-
-
+    final GoogleSignInAccount account = await googleSignInn.authenticate();
     final idToken=await account.authentication.idToken;
 
     //Google API access করার জন্য লাগে example: যেমন google Drive API
     final authClient=await account.authorizationClient;
 
     //Scopes হলো permission সেট — ইউজারকে কোন কোন ডেটা অ্যাক্সেস করতে দেবে।
-    GoogleSignInClientAuthorization? auth=await authClient.authorizationForScopes([
-      'email',
-      'profile',
-      //drive er file toiri upload/show er jonne
-      'https://www.googleapis.com/auth/drive.file'
-    ]);
+    GoogleSignInClientAuthorization? auth=await authClient.authorizationForScopes(
+      scopes
+    );
+
     final aacessToken=auth?.accessToken;
 
-    //  final clientt=GoogleHttpClient({
-    //   'Authorization': 'Bearer $aacessToken',
-    // });
+    //HTTP request in server and data send to google drive
+    /*
+       final clientt=GoogleHttpClient({
+      'Authorization': 'Bearer $aacessToken',
+    });
+
 
 
      //delete method
-    // final drive=ga.DriveApi(clientt);
-    // var file=ga.File();
-    // file.name="note.txt";
-    // file.parents=['1Cl1SDznsR5cDJoQVG0IzB6YVoM8gH9VN'];
-    //
-    // var media=ga.Media(
-    //   Stream.value(utf8.encode("THis is my note")),
-    //   null
-    // );
-    //
-    // var result=await drive.files.create(file, uploadMedia: media);
-    // print("Uploaded File ID: ${result.id}");
-//======================================
-     //client=clientt;
+    final drive=ga.DriveApi(clientt);
+    final fileMetadata=ga.File();
+    fileMetadata.name='note.txt';
+    fileMetadata.parents=["appDataFolder"];
+
+    final content=utf8.encode('my createing note app i feel best proud');
+    final media=ga.Media(
+       Stream.value(content),
+      content.length,
+      contentType: 'text/plain'
+    );
+
+    var result=await drive.files.create(fileMetadata, uploadMedia: media);
+    print("Uploaded File ID: ${result.id}");
+
+        */
+    //file show data example : Text
+    /*
+    final getresult=await drive.files.get('1JRed4r6cLXJ_yw-7dr2KEBFobMOSNfeW58sRcUVNefBo8_OF',
+      downloadOptions: ga.DownloadOptions.fullMedia
+    ) as ga.Media;
+
+    var dataBytes = <int>[];
+    await getresult.stream.forEach((chunk) {
+      dataBytes.addAll(chunk);
+    });
+
+    var filetext=utf8.decode(dataBytes);
+
+    print("Uploaded FileText show: ${filetext}");
+
+     */
 
 
-
-    //print('Access Token is=======: ${aacessToken}');
-
-
-
-    // GoogleSignInServerAuthorization? serverAuth= await authClient.authorizeServer([
-    //   'email',
-    //   'profile',
-    //   //drive er file toiri upload/show er jonne
-    //   'https://www.googleapis.com/auth/drive.file'
-    // ]);
-    //
-    // if(serverAuth?.serverAuthCode==null){
-    //   throw FirebaseAuthException(
-    //       code: 'no Server code',
-    //     message: 'Failed to retrieve server authorization code'
-    //
-    //   );
-    //
-    // }
-
-
+    print('Access Token is=======: ${aacessToken}');
 
     if(aacessToken == null){
-      final auth2=await authClient.authorizationForScopes([
-        'email',
-        'profile',
-        //drive er file toiri upload/show er jonne
-        'https://www.googleapis.com/auth/drive.file'
-
-      ]);
+      final auth2=await authClient.authorizeScopes(
+        scopes
+      );
 
       if(auth2?.accessToken == null){
         throw FirebaseAuthException(code: 'No access Token', message: 'fail to retrive access token');
       }
-
       auth=auth2;
-
-
     }
-    //=============
-
-
 
     final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
     return await FirebaseAuth.instance.signInWithCredential(credential);
