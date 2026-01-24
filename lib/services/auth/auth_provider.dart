@@ -1,47 +1,36 @@
-import 'dart:convert';
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:notes/Data_Layer/google_http_client.dart';
-import 'package:googleapis/drive/v3.dart' as ga;
+import '../../Data_Layer/google_http_client.dart';
+
 
 
 
 
 class AuthProvider extends ChangeNotifier{
 
-  //static var client;
+  static final GoogleSignIn googleSignInn=GoogleSignIn.instance;
+  static String? driveAccessToken;
   final FirebaseAuth _firebaseAuth=FirebaseAuth.instance;
-
-  static final folderId = "1GCNjcP3k4qU8gepp5_mPnuzQ4-tY7PFf";
 
   String? photoUrl;
   String? email;
   String? profilename;
-
   User? user;
-//FirebaseAuth.instance.currentUser;
+
   AuthProvider(){
     user =_firebaseAuth.currentUser;
-
       if(user != null){
         photoUrl = user!.photoURL;
         profilename =user!.displayName;
         email=user!.email;
       }
-
-
   }
-
   bool get isLoggedIn => user != null;
 
 
-  static final GoogleSignIn googleSignInn=GoogleSignIn.instance;
   static bool isinitalized= false;
-
-
   static Future<void> _initSignin() async{
     if(!isinitalized){
       await googleSignInn.initialize(serverClientId: "84036142309-o3fo97q8hdn43as73p6jaevqdph86hvr.apps.googleusercontent.com");
@@ -51,9 +40,9 @@ class AuthProvider extends ChangeNotifier{
 
 
   //For SignIn
-
   static Future<UserCredential> signinwithGoogle() async{
     await _initSignin();
+
 
     final scopes = [
       'email',
@@ -67,12 +56,27 @@ class AuthProvider extends ChangeNotifier{
     //Google API access করার জন্য লাগে example: যেমন google Drive API
     final authClient=await account.authorizationClient;
 
+
+    /*
     //Scopes হলো permission সেট — ইউজারকে কোন কোন ডেটা অ্যাক্সেস করতে দেবে।
     GoogleSignInClientAuthorization? auth=await authClient.authorizationForScopes(
       scopes
     );
 
+
+
     final aacessToken=auth?.accessToken;
+
+
+     */
+
+
+    final GoogleSignInServerAuthorization? serverAuth = await authClient.authorizeServer(scopes);
+    final servercode=serverAuth!.serverAuthCode;
+    print('Server code: ${servercode}');
+
+
+
 
     //HTTP request in server and data send to google drive
     /*
@@ -82,7 +86,7 @@ class AuthProvider extends ChangeNotifier{
 
 
 
-     //delete method
+
     final drive=ga.DriveApi(clientt);
     final fileMetadata=ga.File();
     fileMetadata.name='note.txt';
@@ -117,6 +121,7 @@ class AuthProvider extends ChangeNotifier{
      */
 
 
+    /*
     print('Access Token is=======: ${aacessToken}');
 
     if(aacessToken == null){
@@ -129,6 +134,8 @@ class AuthProvider extends ChangeNotifier{
       }
       auth=auth2;
     }
+
+     */
 
     final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
     return await FirebaseAuth.instance.signInWithCredential(credential);
