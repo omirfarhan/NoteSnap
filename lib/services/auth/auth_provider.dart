@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../Data_Layer/google_http_client.dart';
 
 
-
+import 'package:http/http.dart' as http;
 
 
 class AuthProvider extends ChangeNotifier{
@@ -43,7 +43,6 @@ class AuthProvider extends ChangeNotifier{
   static Future<UserCredential> signinwithGoogle() async{
     await _initSignin();
 
-
     final scopes = [
       'email',
       'profile',
@@ -52,40 +51,41 @@ class AuthProvider extends ChangeNotifier{
 
     final GoogleSignInAccount account = await googleSignInn.authenticate();
     final idToken=await account.authentication.idToken;
-
     //Google API access করার জন্য লাগে example: যেমন google Drive API
     final authClient=await account.authorizationClient;
 
-
-    /*
     //Scopes হলো permission সেট — ইউজারকে কোন কোন ডেটা অ্যাক্সেস করতে দেবে।
     GoogleSignInClientAuthorization? auth=await authClient.authorizationForScopes(
       scopes
     );
-
-
-
     final aacessToken=auth?.accessToken;
+    AuthProvider.driveAccessToken=aacessToken;
 
+    /*
+    final GoogleSignInServerAuthorization? serverAuth = await authClient.authorizeServer(scopes);
+    final servercode=serverAuth!.serverAuthCode;
+
+    if(servercode !=null){
+
+      final response=await http.post(
+        Uri.parse("http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/signIn"),
+        body: {"authCode": servercode}
+      );
+      
+      print('Backend Response ${response.body}');
+    }else{
+      print("Auth code missing!");
+    }
 
      */
 
-
-    final GoogleSignInServerAuthorization? serverAuth = await authClient.authorizeServer(scopes);
-    final servercode=serverAuth!.serverAuthCode;
-    print('Server code: ${servercode}');
-
-
-
+    print('Server code: ${aacessToken}');
 
     //HTTP request in server and data send to google drive
     /*
        final clientt=GoogleHttpClient({
       'Authorization': 'Bearer $aacessToken',
     });
-
-
-
 
     final drive=ga.DriveApi(clientt);
     final fileMetadata=ga.File();
@@ -120,8 +120,6 @@ class AuthProvider extends ChangeNotifier{
 
      */
 
-
-    /*
     print('Access Token is=======: ${aacessToken}');
 
     if(aacessToken == null){
@@ -135,7 +133,7 @@ class AuthProvider extends ChangeNotifier{
       auth=auth2;
     }
 
-     */
+
 
     final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
     return await FirebaseAuth.instance.signInWithCredential(credential);
@@ -156,17 +154,11 @@ class AuthProvider extends ChangeNotifier{
    }
 
    Future<void> signinwithgoogle() async{
-
     final userdata=await AuthProvider.signinwithGoogle();
-    // photoUrl=userdata.additionalUserInfo!.profile!['picture'] as String?;
-    // email=userdata.additionalUserInfo!.profile!['email'] as String?;
-    // profilename=userdata.additionalUserInfo!.profile!['name'] as String?;
-
     user=userdata.user;
     profilename=user!.displayName;
     email=user!.email;
     photoUrl=user!.photoURL;
-
     notifyListeners();
    }
 

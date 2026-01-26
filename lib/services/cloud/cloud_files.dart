@@ -17,14 +17,15 @@ class CloudFiles extends StatefulWidget {
 class _CloudFilesState extends State<CloudFiles> {
 
 
-
   late final TextEditingController _textEditingController;
+
+  String? get accessToken=>AuthProvider.driveAccessToken;
 
   //eta ekan theke access hobe
   // final clientt=GoogleHttpClient({
-  //   'Authorization': 'Bearer $aacessToken',
+  //   'Authorization': 'Bearer $accessToken',
   // });
-  //
+
   @override
   void initState() {
     _textEditingController=TextEditingController();
@@ -67,11 +68,11 @@ class _CloudFilesState extends State<CloudFiles> {
               ElevatedButton(
                   onPressed: () async{
                     // final auths=AuthProvider.googleSignInn.attemptLightweightAuthentication();
-                    // if(auths !=null){
-                    //   print(auths);
-                    // }else{
-                    //   await AuthProvider.signinwithGoogle();
-                    // }
+                    if(accessToken !=null){
+                      print(accessToken);
+                    }else{
+                      await AuthProvider.signinwithGoogle();
+                    }
 
 
                   }, 
