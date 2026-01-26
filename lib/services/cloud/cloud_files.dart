@@ -2,8 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:notes/Data_Layer/drive_http_request_to_server.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:provider/provider.dart';
+import '../../Data_Layer/google_http_client.dart';
 
 import '../auth/auth_provider.dart';
 
@@ -19,12 +21,9 @@ class _CloudFilesState extends State<CloudFiles> {
 
   late final TextEditingController _textEditingController;
 
-  String? get accessToken=>AuthProvider.driveAccessToken;
+  final accessToken=AuthProvider.driveAccessToken;
 
-  //eta ekan theke access hobe
-  // final clientt=GoogleHttpClient({
-  //   'Authorization': 'Bearer $accessToken',
-  // });
+
 
   @override
   void initState() {
@@ -67,17 +66,29 @@ class _CloudFilesState extends State<CloudFiles> {
               ),
               ElevatedButton(
                   onPressed: () async{
-                    // final auths=AuthProvider.googleSignInn.attemptLightweightAuthentication();
+
+                    final uploadDriveFile=DriveHttpRequestToServer();
+
                     if(accessToken !=null){
-                      print(accessToken);
+
+                      final client=GoogleHttpClient({
+                        'Authorization': 'Bearer $accessToken',
+                      });
+
+                      final sendtoserver=uploadDriveFile.createFolder('new Note2', client);
+                      print('upload to server Report: ${sendtoserver}');
+
                     }else{
                       await AuthProvider.signinwithGoogle();
                     }
 
 
-                  }, 
+                  },
                   child: const Text('Save Drive')
-              )
+              ),
+
+
+
 
             ],
           ),
