@@ -74,14 +74,33 @@ class DriveHttpRequestToServer {
     }
 
     final fileList = await drivetoserverupload.files.list(
-      spaces: "appDataFolder", // শুধু appDataFolder এর ভেতর খুঁজবে
-      $fields: "files(id, name, mimeType)",
+      // spaces: "appDataFolder", // শুধু appDataFolder এর ভেতর খুঁজবে
+      // $fields: "files(id, name, mimeType)",
+
+      //file name see
+        spaces: "appDataFolder",
+        q: "'${folder.id}' in parents",
+        $fields: "files(id, name, mimeType)"
+
+        // spaces: "appDataFolder",
+        // q: "mimeType = 'application/vnd.google-apps.folder' or mimeType != 'application/vnd.google-apps.folder'",
+        // $fields: "files(id, name, mimeType, parents)"
+
     );
 
-    for (drive.File filess in fileList.files ?? []) {
-      print('📁 File/Folder name: ${filess.name}');
-      print('📁 File/Folder id: ${filess.id}');
+    // for (var f in fileList.files!) {
+    //   print("${f.name} (${f.mimeType}) parent=${f.parents}");
+    // }
+
+    //file name see
+    for(var note in fileList.files!){
+      print('📁 Note File Name: ${note.name}');
     }
+
+    // for (drive.File filess in fileList.files ?? []) {
+    //   print('📁 File/Folder name: ${filess.name}');
+    //   print('📁 File/Folder id: ${filess.id}');
+    // }
 
     print('working at uploadNotesToFolder');
   }
