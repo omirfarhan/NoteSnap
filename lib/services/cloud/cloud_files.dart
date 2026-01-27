@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:notes/Data/notemodel.dart';
 import 'package:notes/Data_Layer/drive_http_request_to_server.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,8 @@ class _CloudFilesState extends State<CloudFiles> {
   late final TextEditingController _textEditingController;
 
   final accessToken=AuthProvider.driveAccessToken;
+
+
 
 
 
@@ -75,8 +78,24 @@ class _CloudFilesState extends State<CloudFiles> {
                         'Authorization': 'Bearer $accessToken',
                       });
 
-                      final sendtoserver=uploadDriveFile.createFolder('new Note2', client);
-                      print('upload to server Report: ${sendtoserver}');
+                      final notes = [
+                        Notemodel(
+                          id: '1',
+                          title: 'First Note',
+                          text: 'Hello Google Drive',
+                          createdAt: DateTime.now(),
+                          updatedAt: DateTime.now(),
+                          imagesPath: ['null'],
+                        ),
+                      ];
+
+
+
+                      final createSubFolder=await uploadDriveFile.createFolder('1234', client);
+                      final uploadToServer=await uploadDriveFile.uploadNotesToFolder(client, createSubFolder,notes);
+
+                      print('upload to server Report: ${createSubFolder}');
+
 
                     }else{
                       await AuthProvider.signinwithGoogle();

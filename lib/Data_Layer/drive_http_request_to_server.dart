@@ -1,22 +1,10 @@
-import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:notes/Data/notemodel.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'dart:convert';
 
 class DriveHttpRequestToServer {
-  // Future<void> uploadFileGoogleDrive(GoogleHttpClient client, File file)async{
-  //
-  //   final driveapi=drive.DriveApi(client);
-  //
-  //   final mainfolder=drive.File();
-  //
-  //
-  // }
-  //
-
-
 
   Future<drive.File> createFolder(String folderName, GoogleHttpClient client) async {
     final drivetoserverupload = drive.DriveApi(client);
@@ -29,7 +17,7 @@ class DriveHttpRequestToServer {
 
     if(existingFolder.files != null && existingFolder.files!.isNotEmpty){
       final folder= existingFolder.files!.first;
-      print('Alredy existing folder${folder.name}');
+     // print('Alredy existing folder: ${folder.name}');
       return folder;
     }
 
@@ -57,23 +45,46 @@ class DriveHttpRequestToServer {
 
      */
 
-    print('✅ Created folder id: ${result.name}');
+    //print('✅ Created folder id: ${result.name}');
     return result;
   }
 
-// Future<drive.FileList> showCreatedFolder(GoogleHttpClient client, String folderId,
-  //     ) async {
-  //   final driveApi = drive.DriveApi(client);
-  //
-  //
-  //
-  //   for(drive.File filess in fileList.files ??[]){
-  //     print('📁 Folder name: ${filess.name}');
-  //     print('📁 Folder id: ${filess.id}');
-  //   }
-  //
-  //   return fileList;
-  // }
+  Future<void> uploadNotesToFolder(GoogleHttpClient client, drive.File folder,
+      List<Notemodel> notes)async{
+
+    final drivetoserverupload = drive.DriveApi(client);
+
+    for(var note in notes){
+      String jsonData=jsonEncode(note);
+
+      var noteFile=drive.File();
+      noteFile.name="${note.title}.json";
+      noteFile.parents=[folder.id!];
+
+      var media=drive.Media(
+        Stream.value(utf8.encode(jsonData)),
+        utf8.encode(jsonData).length
+      );
+
+      await drivetoserverupload.files.create(
+        noteFile,
+        uploadMedia: media,
+      );
+
+    }
+
+    final fileList = await drivetoserverupload.files.list(
+      spaces: "appDataFolder", // শুধু appDataFolder এর ভেতর খুঁজবে
+      $fields: "files(id, name, mimeType)",
+    );
+
+    for (drive.File filess in fileList.files ?? []) {
+      print('📁 File/Folder name: ${filess.name}');
+      print('📁 File/Folder id: ${filess.id}');
+    }
+
+    print('working at uploadNotesToFolder');
+  }
 
 
 
