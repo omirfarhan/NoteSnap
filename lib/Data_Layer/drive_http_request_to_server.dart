@@ -52,57 +52,57 @@ class DriveHttpRequestToServer {
   Future<void> uploadNotesToFolder(GoogleHttpClient client, drive.File folder,
       List<Notemodel> notes)async{
 
-    final drivetoserverupload = drive.DriveApi(client);
+    final driveApi = drive.DriveApi(client);
 
     for(var note in notes){
-      String jsonData=jsonEncode(note);
+      final filename = "${note.title}.json";
+      final jsondata=jsonEncode(note.toJson());
 
-      var noteFile=drive.File();
-      noteFile.name="${note.title}.json";
-      noteFile.parents=[folder.id!];
+      final existingfile=await findNoteFile(folder.id!, filename, driveApi);
 
-      var media=drive.Media(
-        Stream.value(utf8.encode(jsonData)),
-        utf8.encode(jsonData).length
-      );
+      if(existingfile != null){
+        final oldData=await readFileContent(driveApi, existingfile.id!);
 
-      await drivetoserverupload.files.create(
-        noteFile,
-        uploadMedia: media,
-      );
+        if(oldData != jsondata){
+          await driveApi.files.update(
+              drive.File(),
+              existingfile.id!,
+              uploadMedia: drive.Media(
+                  Stream.value(utf8.encode(jsondata)),
+                  utf8.encode(jsondata).length
+              )
+          );
+          print('upload at new content');
+        }else{
+          print('Skipped at: ${filename}');
+          continue;
+        }
+
+
+
+      }else{
+
+        //if file does not exists then create new file
+
+        final noteFile=drive.File();
+        noteFile.name=filename;
+        noteFile.parents=[folder.id!];
+
+        await driveApi.files.create(
+            noteFile,
+          uploadMedia: drive.Media(
+              Stream.value(utf8.encode(jsondata)),
+              utf8.encode(jsondata).length
+          )
+
+        );
+
+        print('new file create at: ${filename}');
+
+      }
 
     }
 
-    final fileList = await drivetoserverupload.files.list(
-      // spaces: "appDataFolder", // শুধু appDataFolder এর ভেতর খুঁজবে
-      // $fields: "files(id, name, mimeType)",
-
-      //file name see
-        spaces: "appDataFolder",
-        q: "'${folder.id}' in parents",
-        $fields: "files(id, name, mimeType)"
-
-        // spaces: "appDataFolder",
-        // q: "mimeType = 'application/vnd.google-apps.folder' or mimeType != 'application/vnd.google-apps.folder'",
-        // $fields: "files(id, name, mimeType, parents)"
-
-    );
-
-    // for (var f in fileList.files!) {
-    //   print("${f.name} (${f.mimeType}) parent=${f.parents}");
-    // }
-
-    //file name see
-    for(var note in fileList.files!){
-      print('📁 Note File Name: ${note.name}');
-    }
-
-    // for (drive.File filess in fileList.files ?? []) {
-    //   print('📁 File/Folder name: ${filess.name}');
-    //   print('📁 File/Folder id: ${filess.id}');
-    // }
-
-    print('working at uploadNotesToFolder');
   }
 
   Future<drive.File?> findNoteFile(String folderId, String filename, drive.DriveApi api)async{

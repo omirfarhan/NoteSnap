@@ -81,8 +81,8 @@ class _CloudFilesState extends State<CloudFiles> {
                       final notes = [
                         Notemodel(
                           id: '1',
-                          title: 'First Note',
-                          text: 'Hello Google Drive',
+                          title: 'First Note1',
+                          text: 'Hello Google Drive1',
                           createdAt: DateTime.now(),
                           updatedAt: DateTime.now(),
                           imagesPath: ['null'],
