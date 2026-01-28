@@ -7,6 +7,7 @@ import 'package:notes/Data_Layer/drive_http_request_to_server.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:provider/provider.dart';
 import '../../Data_Layer/google_http_client.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 
 import '../auth/auth_provider.dart';
 
@@ -19,18 +20,10 @@ class CloudFiles extends StatefulWidget {
 
 class _CloudFilesState extends State<CloudFiles> {
 
-
-  late final TextEditingController _textEditingController;
-
   final accessToken=AuthProvider.driveAccessToken;
-
-
-
-
 
   @override
   void initState() {
-    _textEditingController=TextEditingController();
     super.initState();
   }
 
@@ -38,35 +31,33 @@ class _CloudFilesState extends State<CloudFiles> {
   @override
   Widget build(BuildContext context) {
       return Scaffold(
-        
         appBar: AppBar(
-          title: const Text('Cloud Files'),
+          title: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 0, 60, 0),
+            child: Column(
+              children: [
+                const Text('Storage'),
+                const SizedBox(height:4),
+
+                  LinearPercentIndicator(
+                    lineHeight: 10,
+                    percent: 0.4,
+                      linearStrokeCap: LinearStrokeCap.round,
+                    backgroundColor: Color(0xFFA9CBD7),
+                    progressColor: Color(0xFFE2465C),
+                  ),
+
+              ],
+            ),
+          ),
+
         ),
 
 
         body: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: _textEditingController,
-                  keyboardType: TextInputType.text,
-                  decoration: InputDecoration(
-                    labelText: 'enter your mind',
 
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.cyanAccent,width: 1)
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.cyanAccent,width: 1)
-                    )
-                  ),
-
-                ),
-              ),
               ElevatedButton(
                   onPressed: () async{
 
@@ -83,8 +74,8 @@ class _CloudFilesState extends State<CloudFiles> {
                           id: '1',
                           title: 'First Note1',
                           text: 'Hello Google Drive1',
-                          createdAt: DateTime.now(),
-                          updatedAt: DateTime.now(),
+                          //createdAt: DateTime.now(),
+                          //updatedAt: DateTime.now(),
                           imagesPath: ['null'],
                         ),
                       ];
@@ -121,7 +112,6 @@ class _CloudFilesState extends State<CloudFiles> {
 
   @override
   void dispose() {
-    _textEditingController.dispose();
     super.dispose();
   }
 
