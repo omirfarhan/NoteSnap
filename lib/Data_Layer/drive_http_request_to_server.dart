@@ -105,6 +105,35 @@ class DriveHttpRequestToServer {
     print('working at uploadNotesToFolder');
   }
 
+  Future<drive.File?> findNoteFile(String folderId, String filename, drive.DriveApi api)async{
+
+    final filelist=await api.files.list(
+      spaces: 'appDataFolder',
+      q: "'$folderId' in parents and name='$filename'",
+      $fields: "files(id, name)",
+    );
+
+    if(filelist.files != null && filelist.files!.isNotEmpty){
+      return filelist.files!.first;
+    }
+
+    return null;
+  }
+
+
+  Future<String> readFileContent(drive.DriveApi api, String fileId)async{
+
+    final media=await api.files.get(fileId,
+      downloadOptions: drive.DownloadOptions.fullMedia
+    ) as drive.Media;
+
+    final bytes=await media.stream.fold<List<int>>(
+      [],(previous, element) => previous..addAll(element)
+    );
+
+    return utf8.decode(bytes);
+
+  }
 
 
 
