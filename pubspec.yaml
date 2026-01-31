@@ -43,6 +43,7 @@ dependencies:
   googleapis: ^15.0.0
   http: ^1.6.0
   percent_indicator: ^4.2.5
+  cloud_functions: ^6.0.6
 
 
 

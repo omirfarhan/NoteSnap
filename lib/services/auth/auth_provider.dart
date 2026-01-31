@@ -1,9 +1,11 @@
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../Data_Layer/google_http_client.dart';
-
+import 'package:cloud_functions/cloud_functions.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -51,88 +53,59 @@ class AuthProvider extends ChangeNotifier{
 
     final GoogleSignInAccount account = await googleSignInn.authenticate();
     final idToken=await account.authentication.idToken;
-    //Google API access করার জন্য লাগে example: যেমন google Drive API
     final authClient=await account.authorizationClient;
 
+    /*
     //Scopes হলো permission সেট — ইউজারকে কোন কোন ডেটা অ্যাক্সেস করতে দেবে।
     GoogleSignInClientAuthorization? auth=await authClient.authorizationForScopes(
       scopes
     );
     final aacessToken=auth?.accessToken;
     AuthProvider.driveAccessToken=aacessToken;
+     */
 
-    /*
     final GoogleSignInServerAuthorization? serverAuth = await authClient.authorizeServer(scopes);
+
     final servercode=serverAuth!.serverAuthCode;
 
     if(servercode !=null){
-
-      final response=await http.post(
-        Uri.parse("http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/signIn"),
-        body: {"authCode": servercode}
-      );
-      
-      print('Backend Response ${response.body}');
-    }else{
-      print("Auth code missing!");
-    }
-
-     */
-
-    print('Server code: ${aacessToken}');
-
-    //HTTP request in server and data send to google drive
-    /*
-       final clientt=GoogleHttpClient({
-      'Authorization': 'Bearer $aacessToken',
-    });
-
-    final drive=ga.DriveApi(clientt);
-    final fileMetadata=ga.File();
-    fileMetadata.name='note.txt';
-    fileMetadata.parents=["appDataFolder"];
-
-    final content=utf8.encode('my createing note app i feel best proud');
-    final media=ga.Media(
-       Stream.value(content),
-      content.length,
-      contentType: 'text/plain'
-    );
-
-    var result=await drive.files.create(fileMetadata, uploadMedia: media);
-    print("Uploaded File ID: ${result.id}");
-
-        */
-    //file show data example : Text
-    /*
-    final getresult=await drive.files.get('1JRed4r6cLXJ_yw-7dr2KEBFobMOSNfeW58sRcUVNefBo8_OF',
-      downloadOptions: ga.DownloadOptions.fullMedia
-    ) as ga.Media;
-
-    var dataBytes = <int>[];
-    await getresult.stream.forEach((chunk) {
-      dataBytes.addAll(chunk);
-    });
-
-    var filetext=utf8.decode(dataBytes);
-
-    print("Uploaded FileText show: ${filetext}");
-
-     */
-
-    print('Access Token is=======: ${aacessToken}');
-
-    if(aacessToken == null){
-      final auth2=await authClient.authorizeScopes(
-        scopes
+      final url = 'https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/handleSignIn';
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'authCode': servercode}),
       );
 
-      if(auth2?.accessToken == null){
-        throw FirebaseAuthException(code: 'No access Token', message: 'fail to retrive access token');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success']) {
+          print('Access Token: ${data['tokens']['access_token']}');
+        } else {
+          print('Error: ${data['error']}');
+        }
+      } else {
+        print('HTTP Error: ${response.statusCode}');
       }
-      auth=auth2;
+
+
+      //print('server code: ${servercode}');
     }
 
+
+    //problem ekhane
+    // try{
+    //
+    //   final result= await FirebaseFunctions.instance.
+    //   httpsCallable('handleSignIn')
+    //       .call({
+    //     'authCode': servercode,
+    //   });
+    //
+    //   print(result.data);
+    //
+    // }catch (e){
+    //   print("Function call failed: $e");
+    // }
 
 
     final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);

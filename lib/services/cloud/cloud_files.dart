@@ -1,4 +1,6 @@
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
@@ -8,7 +10,7 @@ import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:provider/provider.dart';
 import '../../Data_Layer/google_http_client.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-
+import 'package:http/http.dart' as http;
 import '../auth/auth_provider.dart';
 
 class CloudFiles extends StatefulWidget {
@@ -20,11 +22,17 @@ class CloudFiles extends StatefulWidget {
 
 class _CloudFilesState extends State<CloudFiles> {
 
+  final uploadDriveFile=DriveHttpRequestToServer();
+
   final accessToken=AuthProvider.driveAccessToken;
+
+  double? percentage=DriveHttpRequestToServer.percentage;
+
 
   @override
   void initState() {
     super.initState();
+
   }
 
 
@@ -33,7 +41,7 @@ class _CloudFilesState extends State<CloudFiles> {
       return Scaffold(
         appBar: AppBar(
           title: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 60, 0),
+            padding: const EdgeInsets.fromLTRB(10, 0, 70, 0),
             child: Column(
               children: [
                 const Text('Storage'),
@@ -41,10 +49,18 @@ class _CloudFilesState extends State<CloudFiles> {
 
                   LinearPercentIndicator(
                     lineHeight: 10,
-                    percent: 0.4,
-                      linearStrokeCap: LinearStrokeCap.round,
+                    percent: percentage ?? 0.0,
+                    center: Text(
+                      "50.0%",
+                      style: new TextStyle(fontSize: 7),
+                    ),
                     backgroundColor: Color(0xFFA9CBD7),
-                    progressColor: Color(0xFFE2465C),
+                    progressColor: Color(0xFFFF2040),
+                    barRadius: Radius.circular(25),
+                    animation: true,
+                    animationDuration: 2500,
+
+
                   ),
 
               ],
@@ -56,12 +72,12 @@ class _CloudFilesState extends State<CloudFiles> {
 
         body: SafeArea(
           child: Column(
+
+
             children: [
 
               ElevatedButton(
                   onPressed: () async{
-
-                    final uploadDriveFile=DriveHttpRequestToServer();
 
                     if(accessToken !=null){
 
@@ -96,8 +112,37 @@ class _CloudFilesState extends State<CloudFiles> {
                   },
                   child: const Text('Save Drive')
               ),
+              ElevatedButton(
+                  onPressed: () async{
+                    String responseText = "";
+
+                    final url = Uri.parse(
+                        "https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/helloWorld");
+                    try {
+                      final response = await http.post( url,
+                        headers: {"Content-Type": "application/json"},
+                        body: jsonEncode({"text": "Hello omi"}),
+                      );
+                      if (response.statusCode == 200) {
+                        setState(() {
+                          print(response.body);
+                        });
+                      } else {
+                        setState(() {
+                          print("Error: ${response.statusCode}");
+                        }
+                        );
+                      }
+                    } catch (e) {
+                      setState(() {
+                        print("Exception: $e") ;
+                      });
+                    }
 
 
+                  },
+                  child: const Text('Server Response')
+              ),
 
 
             ],
@@ -106,8 +151,6 @@ class _CloudFilesState extends State<CloudFiles> {
         
       );
   }
-
-
 
 
   @override
