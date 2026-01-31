@@ -25,7 +25,7 @@ class DriveHttpRequestToServer {
 
     if(existingFolder.files != null && existingFolder.files!.isNotEmpty){
       final folder= existingFolder.files!.first;
-     // print('Alredy existing folder: ${folder.name}');
+      print('Alredy existing folder: ${folder.name}');
       return folder;
     }
 

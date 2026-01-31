@@ -45,67 +45,15 @@ class AuthProvider extends ChangeNotifier{
   static Future<UserCredential> signinwithGoogle() async{
     await _initSignin();
 
-    final scopes = [
-      'email',
-      'profile',
-      'https://www.googleapis.com/auth/drive.appdata',
-    ];
+    // final scopes = [
+    //   'email',
+    //   'profile',
+    //   'https://www.googleapis.com/auth/drive.appdata',
+    // ];
 
     final GoogleSignInAccount account = await googleSignInn.authenticate();
     final idToken=await account.authentication.idToken;
-    final authClient=await account.authorizationClient;
 
-    /*
-    //Scopes হলো permission সেট — ইউজারকে কোন কোন ডেটা অ্যাক্সেস করতে দেবে।
-    GoogleSignInClientAuthorization? auth=await authClient.authorizationForScopes(
-      scopes
-    );
-    final aacessToken=auth?.accessToken;
-    AuthProvider.driveAccessToken=aacessToken;
-     */
-
-    final GoogleSignInServerAuthorization? serverAuth = await authClient.authorizeServer(scopes);
-
-    final servercode=serverAuth!.serverAuthCode;
-
-    if(servercode !=null){
-      final url = 'https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/handleSignIn';
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'authCode': servercode}),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success']) {
-          print('Access Token: ${data['tokens']['access_token']}');
-        } else {
-          print('Error: ${data['error']}');
-        }
-      } else {
-        print('HTTP Error: ${response.statusCode}');
-      }
-
-
-      //print('server code: ${servercode}');
-    }
-
-
-    //problem ekhane
-    // try{
-    //
-    //   final result= await FirebaseFunctions.instance.
-    //   httpsCallable('handleSignIn')
-    //       .call({
-    //     'authCode': servercode,
-    //   });
-    //
-    //   print(result.data);
-    //
-    // }catch (e){
-    //   print("Function call failed: $e");
-    // }
 
 
     final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
