@@ -54,7 +54,14 @@ class AuthProvider extends ChangeNotifier{
     final GoogleSignInAccount account = await googleSignInn.authenticate();
     final idToken=await account.authentication.idToken;
 
+    final response= await http.post(
+      Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'idToken': idToken}),
+    );
 
+    print('Status: ${response.statusCode}');
+    print('Body: ${response.body}');
 
     final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
     return await FirebaseAuth.instance.signInWithCredential(credential);
