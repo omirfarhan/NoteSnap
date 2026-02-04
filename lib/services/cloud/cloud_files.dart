@@ -8,6 +8,7 @@ import 'package:notes/Data/notemodel.dart';
 import 'package:notes/Data_Layer/drive_http_request_to_server.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../Data_Layer/google_http_client.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:http/http.dart' as http;
@@ -25,6 +26,7 @@ class _CloudFilesState extends State<CloudFiles> {
   final uploadDriveFile=DriveHttpRequestToServer();
 
   final accessToken=AuthProvider.driveAccessToken;
+
 
   double? percentage=DriveHttpRequestToServer.percentage;
 
@@ -114,30 +116,33 @@ class _CloudFilesState extends State<CloudFiles> {
               ),
               ElevatedButton(
                   onPressed: () async{
-                    String responseText = "";
 
-                    final url = Uri.parse(
-                        "https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/helloWorld");
-                    try {
-                      final response = await http.post( url,
-                        headers: {"Content-Type": "application/json"},
-                        body: jsonEncode({"text": "Hello omi"}),
-                      );
-                      if (response.statusCode == 200) {
-                        setState(() {
-                          print(response.body);
-                        });
-                      } else {
-                        setState(() {
-                          print("Error: ${response.statusCode}");
-                        }
-                        );
-                      }
-                    } catch (e) {
-                      setState(() {
-                        print("Exception: $e") ;
-                      });
-                    }
+                    //final userId = FirebaseAuth.instance.currentUser!.uid;
+                    //user id ekhan theke jabe etai best practice
+
+                    final userId="test123";
+
+                    final response=await http.post(
+                      Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth'),
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-User-Id': userId,
+                      },
+                    );
+
+                    final consentUrl=jsonDecode(response.body)['consentUrl'];
+                    final uri=Uri.parse(consentUrl);
+                     await launchUrl(
+                      uri,
+                      mode: LaunchMode.externalApplication,
+                    );
+
+                    // final response2=await http.post(
+                    //   Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/oauthCallback'),
+                    //   headers: {'Content-Type': 'application/json'},
+                    // );
+                    // print('Status: ${response2.statusCode}');
+                    // print('Body: ${response2.body}');
 
 
                   },

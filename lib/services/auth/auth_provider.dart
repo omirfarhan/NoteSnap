@@ -6,7 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../Data_Layer/google_http_client.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 
 
@@ -14,8 +14,10 @@ class AuthProvider extends ChangeNotifier{
 
   static final GoogleSignIn googleSignInn=GoogleSignIn.instance;
   static String? driveAccessToken;
-  final FirebaseAuth _firebaseAuth=FirebaseAuth.instance;
+  static String? idToken;
 
+
+  final FirebaseAuth _firebaseAuth=FirebaseAuth.instance;
   String? photoUrl;
   String? email;
   String? profilename;
@@ -23,6 +25,7 @@ class AuthProvider extends ChangeNotifier{
 
   AuthProvider(){
     user =_firebaseAuth.currentUser;
+
       if(user != null){
         photoUrl = user!.photoURL;
         profilename =user!.displayName;
@@ -53,8 +56,26 @@ class AuthProvider extends ChangeNotifier{
 
     final GoogleSignInAccount account = await googleSignInn.authenticate();
     final idToken=await account.authentication.idToken;
+    AuthProvider.idToken=idToken;
 
-    final response= await http.post(
+    //
+    // final response= await http.post(
+    //   Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth'),
+    //   headers: {'Content-Type': 'application/json'},
+    //   body: jsonEncode({'idToken': idToken}),
+    // );
+    //
+    // print('Status: ${response.statusCode}');
+    // print('Body: ${response.body}');
+
+    final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
+    return await FirebaseAuth.instance.signInWithCredential(credential);
+
+  }
+
+  Future<void> connectingGoogleDrive() async{
+    
+    final response=await http.post(
       Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'idToken': idToken}),
@@ -63,13 +84,32 @@ class AuthProvider extends ChangeNotifier{
     print('Status: ${response.statusCode}');
     print('Body: ${response.body}');
 
-    final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
-    return await FirebaseAuth.instance.signInWithCredential(credential);
+
+    final consentUrl=jsonDecode(response.body)['consentUrl'];
+    final uri=Uri.parse(consentUrl);
+
+    // final url=Uri.parse('https://www.google.com');
+    //
+    // if(await canLaunchUrl(url)){
+    //   await launchUrl(
+    //       url,
+    //     mode: LaunchMode.externalApplication
+    //   );
+    // }
+
+
+     //Uri ursl = Uri.parse('https://www.google.com');
+    if (!await launchUrl(uri)) {
+      throw Exception('Could not launch ${uri}');
+    }
+
+
 
   }
 
+
   //For signOut
-    Future<void> signOut() async{
+  Future<void> signOut() async{
 
       await googleSignInn.signOut();
       await _firebaseAuth.signOut();
