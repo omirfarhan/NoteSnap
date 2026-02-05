@@ -120,13 +120,16 @@ class _CloudFilesState extends State<CloudFiles> {
                     //final userId = FirebaseAuth.instance.currentUser!.uid;
                     //user id ekhan theke jabe etai best practice
 
-                    final userId="test123";
+                    //final userId="test123";
+
+
 
                     final response=await http.post(
+
+                      //ekhane test er jonne use: http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/auth
                       Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth'),
                       headers: {
                         'Content-Type': 'application/json',
-                        'X-User-Id': userId,
                       },
                     );
 
