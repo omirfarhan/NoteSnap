@@ -126,8 +126,9 @@ class _CloudFilesState extends State<CloudFiles> {
 
                     final response=await http.post(
 
+                      //https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth
                       //ekhane test er jonne use: http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/auth
-                      Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth'),
+                      Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/auth'),
                       headers: {
                         'Content-Type': 'application/json',
                       },
