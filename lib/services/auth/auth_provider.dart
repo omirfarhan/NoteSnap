@@ -49,25 +49,11 @@ class AuthProvider extends ChangeNotifier{
   static Future<UserCredential> signinwithGoogle() async{
     await _initSignin();
 
-    // final scopes = [
-    //   'email',
-    //   'profile',
-    //   'https://www.googleapis.com/auth/drive.appdata',
-    // ];
+
 
     final GoogleSignInAccount account = await googleSignInn.authenticate();
     final idToken=await account.authentication.idToken;
     AuthProvider.idToken=idToken;
-
-    //
-    // final response= await http.post(
-    //   Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth'),
-    //   headers: {'Content-Type': 'application/json'},
-    //   body: jsonEncode({'idToken': idToken}),
-    // );
-    //
-    // print('Status: ${response.statusCode}');
-    // print('Body: ${response.body}');
 
     final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
     return await FirebaseAuth.instance.signInWithCredential(credential);
@@ -75,7 +61,7 @@ class AuthProvider extends ChangeNotifier{
   }
 
   Future<void> connectingGoogleDrive() async{
-    
+
     final response=await http.post(
       Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth'),
       headers: {'Content-Type': 'application/json'},

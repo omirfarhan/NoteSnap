@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 import 'package:notes/services/auth/auth_service_deep_listener.dart';
@@ -23,8 +26,6 @@ class _SettingsPageState extends State<SettingsPage> {
   final authService=Authservice();
   late final user =authService.currentuser;
   bool get isloggedIn => user != null;
-
-
 
   @override
   void initState() {
@@ -217,7 +218,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         height: 10,
                       ),
 
-                      buildProfileCreator(context, user!.displayName??'profile name'),
+                      buildProfileCreator(context, 'user!.displayName'??'profile name'),
                       Divider(thickness: 1),
                       buildCloudService(context, 'Backup Email'),
 
@@ -277,9 +278,9 @@ class _SettingsPageState extends State<SettingsPage> {
             // await context.read<AuthProvider>().signinwithgoogle();
             // print(authService!.email);
              print(user!.displayName);
-            setState(() {
-              profilename=user!.displayName!;
-            });
+            // setState(() {
+            //   profilename=user!.displayName!;
+            // });
 
 
 
@@ -305,9 +306,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: CircleAvatar(
                     radius: 50,
                     backgroundImage: user?.photoURL!= null ?
-                    NetworkImage(user!.photoURL!)
+                    NetworkImage('user!.photoURL!')
                         : null,
-                    child: user!.photoURL == null ?
+                    child: 'user!.photoURL' == null ?
                     const Icon(Icons.person)
                     :null ,
                   )

@@ -1,8 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:notes/constants/routes.dart';
-import 'package:notes/services/auth/auth_provider.dart';
-import 'package:notes/services/auth/auth_service_deep_listener.dart';
+import 'package:notes/services/auth/main_auth_provider.dart';
 import 'package:notes/services/cloud/cloud_files.dart';
 import 'package:notes/ui/settings_page.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +17,7 @@ void main() async {
 
     MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_) => AuthProvider())
+          ChangeNotifierProvider(create: (_) => MainAuthProvider())
         ],
       child: const MyApp(),
     )
