@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 import 'package:notes/services/auth/auth_service_deep_listener.dart';
+import 'package:notes/services/auth/authservice.dart';
 import 'package:notes/views/logincontroller.dart';
 import 'package:provider/provider.dart';
 import '../constants/routes.dart';
@@ -14,10 +15,22 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
+
+
 class _SettingsPageState extends State<SettingsPage> {
 
   final controllerss=LoginController();
+  final authService=Authservice();
+  late final user =authService.currentuser;
+  bool get isloggedIn => user != null;
 
+
+
+  @override
+  void initState() {
+    super.initState();
+    controllerss.init();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -191,7 +204,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget ProfileSectionContainer(BuildContext context) {
 
-    final auth = context.watch<AuthProvider>();
+    //final auth = context.watch<AuthProvider>();
 
     return Container(
                   width: MediaQuery.sizeOf(context).width,
@@ -204,7 +217,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         height: 10,
                       ),
 
-                      buildProfileCreator(context, auth.profilename??'profile name'),
+                      buildProfileCreator(context, user!.displayName??'profile name'),
                       Divider(thickness: 1),
                       buildCloudService(context, 'Backup Email'),
 
@@ -254,12 +267,21 @@ class _SettingsPageState extends State<SettingsPage> {
           //email navigator page e jabe
 
           try{
+            await controllerss.login();
 
+            if(user == null){
+              //ekhane ekta dialoge hobe
+              print('User not logged in yet');
+            }
 
             // await context.read<AuthProvider>().signinwithgoogle();
-            // print(auth.email);
-            // print(auth.profilename);
-            // profilename=auth.profilename!;
+            // print(authService!.email);
+             print(user!.displayName);
+            setState(() {
+              profilename=user!.displayName!;
+            });
+
+
 
           }catch(e){
             print('Google sign in faild $e');
@@ -282,10 +304,10 @@ class _SettingsPageState extends State<SettingsPage> {
                // borderRadius: BorderRadius.circular(50),
                   child: CircleAvatar(
                     radius: 50,
-                    backgroundImage: auth.photoUrl != null ?
-                    NetworkImage(auth.photoUrl!)
+                    backgroundImage: user?.photoURL!= null ?
+                    NetworkImage(user!.photoURL!)
                         : null,
-                    child: auth.photoUrl == null ?
+                    child: user!.photoURL == null ?
                     const Icon(Icons.person)
                     :null ,
                   )
@@ -296,18 +318,24 @@ class _SettingsPageState extends State<SettingsPage> {
             SizedBox(
               width: 15,
             ),
-            Text('${profilename}',
-            style: TextStyle(
-              color: Color(0xFFF7FBFD),
-                fontWeight: FontWeight.w100,
-              fontFamily: 'ArchivoBlack',
-              fontSize: 15
-            )
-            ),
+
+              Text(profilename.length >16
+              ?'${profilename.substring(0,16)}...'
+              : profilename,
+              style: TextStyle(
+                color: Color(0xFFF7FBFD),
+                  fontWeight: FontWeight.w100,
+                fontFamily: 'ArchivoBlack',
+                fontSize: 15,
+              ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+
 
             const Spacer(),
 
-            auth.isLoggedIn? TextButton(onPressed: ()async{
+            isloggedIn? TextButton(onPressed: ()async{
              //await auth.signOut();
              ScaffoldMessenger.of(context).showSnackBar(
                  SnackBar(content: Text('You have logged out successfully!'),

@@ -13,6 +13,7 @@ import '../../Data_Layer/google_http_client.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:http/http.dart' as http;
 import '../auth/auth_provider.dart';
+import '../auth/authservice.dart';
 
 class CloudFiles extends StatefulWidget {
   const CloudFiles({super.key});
@@ -117,6 +118,9 @@ class _CloudFilesState extends State<CloudFiles> {
               ElevatedButton(
                   onPressed: () async{
 
+                    final authService=Authservice().currentuser;
+                    print('Your Auth Service: ${authService}');
+
                     //final userId = FirebaseAuth.instance.currentUser!.uid;
                     //user id ekhan theke jabe etai best practice
 
@@ -124,22 +128,22 @@ class _CloudFilesState extends State<CloudFiles> {
 
 
 
-                    final response=await http.post(
-
-                      //https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth
-                      //ekhane test er jonne use: http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/auth
-                      Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/auth'),
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                    );
-
-                    final consentUrl=jsonDecode(response.body)['consentUrl'];
-                    final uri=Uri.parse(consentUrl);
-                     await launchUrl(
-                      uri,
-                      mode: LaunchMode.inAppBrowserView,
-                    );
+                    // final response=await http.post(
+                    //
+                    //   //https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth
+                    //   //ekhane test er jonne use: http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/auth
+                    //   Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/auth'),
+                    //   headers: {
+                    //     'Content-Type': 'application/json',
+                    //   },
+                    // );
+                    //
+                    // final consentUrl=jsonDecode(response.body)['consentUrl'];
+                    // final uri=Uri.parse(consentUrl);
+                    //  await launchUrl(
+                    //   uri,
+                    //   mode: LaunchMode.inAppBrowserView,
+                    // );
 
                     // final response2=await http.post(
                     //   Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/oauthCallback'),

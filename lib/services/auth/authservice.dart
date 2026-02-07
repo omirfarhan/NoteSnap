@@ -4,6 +4,8 @@ class Authservice {
   final FirebaseAuth _auth=FirebaseAuth.instance;
   User? get currentuser => _auth.currentUser;
 
+
+
   //firebase Sign hobe
   Future<UserCredential> signInwithCustomCredential(String token)async{
 
