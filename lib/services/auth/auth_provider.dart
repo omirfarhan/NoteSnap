@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 
 
+
 class AuthProvider extends ChangeNotifier{
 
   static final GoogleSignIn googleSignInn=GoogleSignIn.instance;
@@ -89,7 +90,7 @@ class AuthProvider extends ChangeNotifier{
     final uri=Uri.parse(consentUrl);
 
     // final url=Uri.parse('https://www.google.com');
-    //
+
     // if(await canLaunchUrl(url)){
     //   await launchUrl(
     //       url,

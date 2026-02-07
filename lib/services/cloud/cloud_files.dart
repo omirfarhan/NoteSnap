@@ -138,7 +138,7 @@ class _CloudFilesState extends State<CloudFiles> {
                     final uri=Uri.parse(consentUrl);
                      await launchUrl(
                       uri,
-                      mode: LaunchMode.externalApplication,
+                      mode: LaunchMode.inAppBrowserView,
                     );
 
                     // final response2=await http.post(

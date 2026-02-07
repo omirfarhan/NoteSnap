@@ -37,7 +37,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="notesapp"
-                    android:host="auth" />
+                    android:host="auth"
+                    />
 
             </intent-filter>
 

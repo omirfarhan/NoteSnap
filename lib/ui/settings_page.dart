@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:notes/services/auth/auth_provider.dart';
+import 'package:notes/services/auth/auth_service_deep_listener.dart';
+import 'package:notes/views/logincontroller.dart';
 import 'package:provider/provider.dart';
 import '../constants/routes.dart';
 
@@ -14,6 +16,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
 
+  final controllerss=LoginController();
 
 
   @override
@@ -235,7 +238,8 @@ class _SettingsPageState extends State<SettingsPage> {
   //Google Authentication
   Widget buildProfileCreator(BuildContext context ,String profilename){
 
-    final auth=context.watch<AuthProvider>();
+    //final auth=context.watch<AuthProvider>();
+
 
     return Material(
       color: Colors.transparent,
@@ -251,16 +255,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
           try{
 
-            await context.read<AuthProvider>().signinwithgoogle();
-            print(auth.email);
-            print(auth.profilename);
-            profilename=auth.profilename!;
+
+            // await context.read<AuthProvider>().signinwithgoogle();
+            // print(auth.email);
+            // print(auth.profilename);
+            // profilename=auth.profilename!;
 
           }catch(e){
             print('Google sign in faild $e');
           }
-
-
 
 
         },
@@ -305,7 +308,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const Spacer(),
 
             auth.isLoggedIn? TextButton(onPressed: ()async{
-             await auth.signOut();
+             //await auth.signOut();
              ScaffoldMessenger.of(context).showSnackBar(
                  SnackBar(content: Text('You have logged out successfully!'),
                  backgroundColor: Color(0xFF6365EF),
