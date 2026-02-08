@@ -16,7 +16,7 @@ class MainAuthProvider extends ChangeNotifier{
   Future<void> loginwithToken(String token)async{
     _loading =true;
     _error=null;
-
+    notifyListeners();
     try{
       final credential=await _authservice.signInwithCustomCredential(token);
       _user=credential.user;

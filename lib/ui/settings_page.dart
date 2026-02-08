@@ -1,10 +1,9 @@
 import 'dart:async';
 
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:notes/services/auth/auth_provider.dart';
-import 'package:notes/services/auth/auth_service_deep_listener.dart';
-import 'package:notes/services/auth/authservice.dart';
+import 'package:notes/services/auth/main_auth_provider.dart';
 import 'package:notes/views/logincontroller.dart';
 import 'package:provider/provider.dart';
 import '../constants/routes.dart';
@@ -22,73 +21,78 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
 
-  final controllerss=LoginController();
-  final authService=Authservice();
-  late final user =authService.currentuser;
-  bool get isloggedIn => user != null;
+  late final LoginController _loginController;
+  bool isLoggedin=true;
 
   @override
   void initState() {
     super.initState();
-    controllerss.init();
+    final authProvider = Provider.of<MainAuthProvider>(context, listen: false);
+    _loginController = LoginController(authProvider);
+    _loginController.init();
   }
 
   @override
   Widget build(BuildContext context) {
 
-
-
-    return Scaffold(
-
-      appBar: AppBar(
-        title: const Text('Settings Page',
-        ),
-      ),
+    return WillPopScope(
+        onWillPop: () async {
+          return true;
+        },
+        child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Settings Page'),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ),
 
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                buildtitle('Cloud Service'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildtitle('Cloud Service'),
 
-                CloudServiceContainer(context),
+                    CloudServiceContainer(context),
 
-                SizedBox(
-                  height: 10,
+                    SizedBox(
+                      height: 10,
+                    ),
+
+                    buildtitle('Profile'),
+
+                    ProfileSectionContainer(context),
+
+                    SizedBox(
+                      height: 18,
+                    ),
+
+                    buildtitle('Security'),
+                    SecuritySectionContainer(context),
+
+                    SizedBox(
+                      height: 18,
+                    ),
+
+                    buildtitle('About'),
+
+                    AboutSectionContainer(context),
+
+
+                  ],
                 ),
-
-                buildtitle('Profile'),
-                
-                ProfileSectionContainer(context),
-
-                SizedBox(
-                  height: 18,
-                ),
-
-                buildtitle('Security'),
-                SecuritySectionContainer(context),
-
-                SizedBox(
-                  height: 18,
-                ),
-
-                buildtitle('About'),
-
-                AboutSectionContainer(context),
-
-
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
+          )
 
-
-
+    ),
     );
   }
 
@@ -205,6 +209,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget ProfileSectionContainer(BuildContext context) {
 
+
     //final auth = context.watch<AuthProvider>();
 
     return Container(
@@ -218,7 +223,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         height: 10,
                       ),
 
-                      buildProfileCreator(context, 'user!.displayName'??'profile name'),
+                      buildProfileCreator(context),
                       Divider(thickness: 1),
                       buildCloudService(context, 'Backup Email'),
 
@@ -250,114 +255,114 @@ class _SettingsPageState extends State<SettingsPage> {
 
 
   //Google Authentication
-  Widget buildProfileCreator(BuildContext context ,String profilename){
+  Widget buildProfileCreator(BuildContext context){
 
-    //final auth=context.watch<AuthProvider>();
+    return Selector<MainAuthProvider,({User? user, String name })>(
 
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-
-        splashColor: Colors.white.withOpacity(0.25),
-        borderRadius: BorderRadius.circular(1),
-
-
-
-        onTap: () async{
-          //email navigator page e jabe
-
-          try{
-            await controllerss.login();
-
-            if(user == null){
-              //ekhane ekta dialoge hobe
-              print('User not logged in yet');
-            }
-
-            // await context.read<AuthProvider>().signinwithgoogle();
-            // print(authService!.email);
-             print(user!.displayName);
-            // setState(() {
-            //   profilename=user!.displayName!;
-            // });
-
-
-
-          }catch(e){
-            print('Google sign in faild $e');
-          }
-
-
-        },
-
-
-        child: Row(
-          children: [
-            SizedBox(
-              width: 10,
-            ),
-
-            SizedBox(
-              height: 50,
-              width: 50,
-              child: ClipRRect(
-               // borderRadius: BorderRadius.circular(50),
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundImage: user?.photoURL!= null ?
-                    NetworkImage('user!.photoURL!')
-                        : null,
-                    child: 'user!.photoURL' == null ?
-                    const Icon(Icons.person)
-                    :null ,
-                  )
-              )
-            ),
-
-
-            SizedBox(
-              width: 15,
-            ),
-
-              Text(profilename.length >16
-              ?'${profilename.substring(0,16)}...'
-              : profilename,
-              style: TextStyle(
-                color: Color(0xFFF7FBFD),
-                  fontWeight: FontWeight.w100,
-                fontFamily: 'ArchivoBlack',
-                fontSize: 15,
-              ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-
-
-            const Spacer(),
-
-            isloggedIn? TextButton(onPressed: ()async{
-             //await auth.signOut();
-             ScaffoldMessenger.of(context).showSnackBar(
-                 SnackBar(content: Text('You have logged out successfully!'),
-                 backgroundColor: Color(0xFF6365EF),
-                 )
-             );
-            },
-              child: Text('Log Out',
-                  style: TextStyle(
-                      color: Color(0xFFF7FBFD),
-                      fontWeight: FontWeight.w100,
-                      fontFamily: 'ArchivoBlack',
-                      fontSize: 15
-                  )
-              ),
-            ):const SizedBox.shrink()
-
-          ],
-        ),
-
+      selector: (context, authProvider) => (
+        user:authProvider.user,
+        name:authProvider.user?.displayName ?? 'Tap to Login'
       ),
+
+      builder: (context, data, child) {
+        final user=data.user;
+        final name=data.name;
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+
+            splashColor: Colors.white.withOpacity(0.25),
+            borderRadius: BorderRadius.circular(1),
+
+
+
+            onTap: user == null
+                ? () async {
+
+              try {
+                await _loginController.login();
+              } catch (e) {
+                if (mounted) {
+                  debugPrint('Login failed: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Login failed: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            }
+                : null,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 10,
+                ),
+
+                SizedBox(
+                    height: 50,
+                    width: 50,
+                    child: ClipRRect(
+                      // borderRadius: BorderRadius.circular(50),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundImage: user?.photoURL!= null ?
+                          NetworkImage(user!.photoURL!)
+                              : null,
+                          child: user?.photoURL == null ?
+                          const Icon(Icons.person)
+                              :null ,
+                        )
+                    )
+                ),
+
+
+                SizedBox(
+                  width: 15,
+                ),
+
+                Text(name.length >16
+                    ?'${name.substring(0,16)}...'
+                    : name,
+                  style: TextStyle(
+                    color: Color(0xFFF7FBFD),
+                    fontWeight: FontWeight.w100,
+                    fontFamily: 'ArchivoBlack',
+                    fontSize: 15,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+
+
+                const Spacer(),
+
+                isLoggedin? TextButton(onPressed: ()async{
+                  //await auth.signOut();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('You have logged out successfully!'),
+                        backgroundColor: Color(0xFF6365EF),
+                      )
+                  );
+                },
+                  child: Text('Log Out',
+                      style: TextStyle(
+                          color: Color(0xFFF7FBFD),
+                          fontWeight: FontWeight.w100,
+                          fontFamily: 'ArchivoBlack',
+                          fontSize: 15
+                      )
+                  ),
+                ):const SizedBox.shrink()
+
+              ],
+            ),
+
+          ),
+        );
+      },
     );
 
   }
@@ -418,7 +423,11 @@ class _SettingsPageState extends State<SettingsPage> {
     
   }
 
-
+  @override
+  void dispose() {
+    super.dispose();
+    _loginController.dispose();
+  }
 
 
 }

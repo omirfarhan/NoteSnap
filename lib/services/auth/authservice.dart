@@ -9,7 +9,7 @@ class Authservice {
   //firebase Sign hobe
   Future<UserCredential> signInwithCustomCredential(String token)async{
 
-    final credential=_auth.signInWithCustomToken(token);
+    final credential=await _auth.signInWithCustomToken(token);
     print('custom credential is ${credential}');
     return credential;
 

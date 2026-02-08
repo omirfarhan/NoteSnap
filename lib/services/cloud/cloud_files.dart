@@ -7,6 +7,8 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:notes/Data/notemodel.dart';
 import 'package:notes/Data_Layer/drive_http_request_to_server.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
+import 'package:notes/services/auth/main_auth_provider.dart';
+import 'package:notes/views/logincontroller.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../Data_Layer/google_http_client.dart';
@@ -27,7 +29,8 @@ class _CloudFilesState extends State<CloudFiles> {
   final uploadDriveFile=DriveHttpRequestToServer();
 
   final accessToken=AuthProvider.driveAccessToken;
-
+  late final LoginController _loginController;
+  Authservice? authservice;
 
   double? percentage=DriveHttpRequestToServer.percentage;
 
@@ -35,12 +38,16 @@ class _CloudFilesState extends State<CloudFiles> {
   @override
   void initState() {
     super.initState();
-
+    // final authProvider = Provider.of<MainAuthProvider>(context, listen: false);
+    // _loginController = LoginController(authProvider);
+    // _loginController.init();
   }
 
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<MainAuthProvider>(context);
+
       return Scaffold(
         appBar: AppBar(
           title: Padding(
@@ -117,9 +124,12 @@ class _CloudFilesState extends State<CloudFiles> {
               ),
               ElevatedButton(
                   onPressed: () async{
+                    // await _loginController.login();
 
-                    final authService=Authservice().currentuser;
-                    print('Your Auth Service: ${authService}');
+                    // Login complete হওয়ার পর user check করুন
+                    print('User after login: ${authProvider.user?.displayName}');
+
+                    print('Your Auth Service: ${authProvider.user}');
 
                     //final userId = FirebaseAuth.instance.currentUser!.uid;
                     //user id ekhan theke jabe etai best practice
@@ -169,6 +179,7 @@ class _CloudFilesState extends State<CloudFiles> {
   @override
   void dispose() {
     super.dispose();
+    _loginController.dispose();
   }
 
 }

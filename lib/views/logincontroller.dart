@@ -49,6 +49,7 @@ class LoginController {
 
   Future<void> _handleToken(String token) async{
     await mainauthProvider.loginwithToken(token);
+
   }
 
   void dispose(){
