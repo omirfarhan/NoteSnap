@@ -22,7 +22,6 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
 
   late final LoginController _loginController;
-  bool isLoggedin=true;
 
   @override
   void initState() {
@@ -257,16 +256,19 @@ class _SettingsPageState extends State<SettingsPage> {
   //Google Authentication
   Widget buildProfileCreator(BuildContext context){
 
-    return Selector<MainAuthProvider,({User? user, String name })>(
+    return Selector<MainAuthProvider,({String name,String? photo,bool hasLoggedIn, })>(
 
       selector: (context, authProvider) => (
-        user:authProvider.user,
-        name:authProvider.user?.displayName ?? 'Tap to Login'
+        name:authProvider.displayName ?? 'Tap to Login',
+        photo: authProvider.photoUrl,
+        hasLoggedIn: authProvider.hasLoggedIn
       ),
 
       builder: (context, data, child) {
-        final user=data.user;
-        final name=data.name;
+
+        final displayName=data.name;
+        final photoUrl = data.photo;
+        final hasLoggedIn=data.hasLoggedIn;
 
         return Material(
           color: Colors.transparent,
@@ -277,7 +279,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
 
 
-            onTap: user == null
+            onTap: !hasLoggedIn
                 ? () async {
 
               try {
@@ -308,10 +310,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       // borderRadius: BorderRadius.circular(50),
                         child: CircleAvatar(
                           radius: 50,
-                          backgroundImage: user?.photoURL!= null ?
-                          NetworkImage(user!.photoURL!)
+                          backgroundImage: photoUrl!= null ?
+                          NetworkImage(photoUrl)
                               : null,
-                          child: user?.photoURL == null ?
+                          child: photoUrl == null ?
                           const Icon(Icons.person)
                               :null ,
                         )
@@ -323,9 +325,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   width: 15,
                 ),
 
-                Text(name.length >16
-                    ?'${name.substring(0,16)}...'
-                    : name,
+                Text(displayName.length >16
+                    ?'${displayName.substring(0,16)}...'
+                    : displayName,
                   style: TextStyle(
                     color: Color(0xFFF7FBFD),
                     fontWeight: FontWeight.w100,
@@ -339,7 +341,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                 const Spacer(),
 
-                isLoggedin? TextButton(onPressed: ()async{
+                hasLoggedIn? TextButton(onPressed: ()async{
                   //await auth.signOut();
                   ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('You have logged out successfully!'),

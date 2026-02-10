@@ -46,6 +46,8 @@ dependencies:
   cloud_functions: ^6.0.6
   url_launcher: ^6.3.2
   app_links: ^7.0.0
+  shared_preferences: ^2.5.4
+  cached_network_image: ^3.4.1
 
 
 
