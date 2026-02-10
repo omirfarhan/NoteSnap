@@ -1,6 +1,7 @@
 import 'dart:async';
 
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:notes/services/auth/main_auth_provider.dart';
@@ -306,18 +307,31 @@ class _SettingsPageState extends State<SettingsPage> {
                 SizedBox(
                     height: 50,
                     width: 50,
-                    child: ClipRRect(
-                      // borderRadius: BorderRadius.circular(50),
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundImage: photoUrl!= null ?
-                          NetworkImage(photoUrl)
-                              : null,
-                          child: photoUrl == null ?
-                          const Icon(Icons.person)
-                              :null ,
-                        )
+                    child: photoUrl != null 
+                        ? CachedNetworkImage(
+                      imageUrl: photoUrl,
+                      imageBuilder: (context, imageProvider) => CircleAvatar(
+                        radius: 25,
+                        backgroundImage: imageProvider,
+                      ),
+                      placeholder: (context, url) => const CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Color(0xFF5BB5D7),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+
+                      errorWidget: (context, url, error) => const CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Color(0xFF5BB5D7),
+                        child: Icon(Icons.person),
+                      ),
                     )
+                        :const CircleAvatar(
+                      radius: 25,
+                      backgroundColor: Color(0xFF5BB5D7),
+                      child: Icon(Icons.person),
+                    )
+
                 ),
 
 
