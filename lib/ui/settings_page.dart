@@ -257,12 +257,13 @@ class _SettingsPageState extends State<SettingsPage> {
   //Google Authentication
   Widget buildProfileCreator(BuildContext context){
 
-    return Selector<MainAuthProvider,({String name,String? photo,bool hasLoggedIn, })>(
+    return Selector<MainAuthProvider,({String name,String? photo,bool hasLoggedIn,Future<bool> Function() signout})>(
 
       selector: (context, authProvider) => (
         name:authProvider.displayName ?? 'Tap to Login',
         photo: authProvider.photoUrl,
-        hasLoggedIn: authProvider.hasLoggedIn
+        hasLoggedIn: authProvider.hasLoggedIn,
+        signout: authProvider.SignOut,
       ),
 
       builder: (context, data, child) {
@@ -270,6 +271,7 @@ class _SettingsPageState extends State<SettingsPage> {
         final displayName=data.name;
         final photoUrl = data.photo;
         final hasLoggedIn=data.hasLoggedIn;
+        final logOut=data.signout;
 
         return Material(
           color: Colors.transparent,
@@ -356,7 +358,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 const Spacer(),
 
                 hasLoggedIn? TextButton(onPressed: ()async{
-                  //await auth.signOut();
+                  try{
+                    final success= await logOut;
+
+                  }catch (e){
+                    print('error occure is : $e');
+                  }
+
                   ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('You have logged out successfully!'),
                         backgroundColor: Color(0xFF6365EF),

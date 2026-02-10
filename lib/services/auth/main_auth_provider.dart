@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:notes/services/auth/authservice.dart';
 import 'package:notes/services/shared_preference_service.dart';
+import 'package:http/http.dart' as http;
 
 class MainAuthProvider extends ChangeNotifier{
   final Authservice _authservice=Authservice();
@@ -47,15 +50,6 @@ class MainAuthProvider extends ChangeNotifier{
     });
   }
 
-  // Future<void> signIn(User user)async{
-  //   _user=user;
-  //
-  //
-  //
-  // }
-
-
-
   Future<void> loginwithToken(String token)async{
     _loading =true;
     _error=null;
@@ -78,6 +72,43 @@ class MainAuthProvider extends ChangeNotifier{
     _loading=false;
     notifyListeners();
   }
+
+  Future<bool> SignOut()async{
+    print('user tap is signOut');
+    final user=_user;
+    if(user == null){
+      // already signed out
+      return true;
+    }
+
+    bool backendSuccess=false;
+
+    try{
+      final response=await http.post(
+        Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/signOut'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({ 'uid':user.uid })
+      )
+          .timeout(const Duration(seconds: 10));
+      
+      if(response.statusCode==200){
+        backendSuccess=true;
+      }else{
+        print('Backend signOut faild: ${response.statusCode} ${response.body}');
+      }
+
+    }catch (e){
+      'SignOut API error: $e';
+    }
+
+    try{
+      await FirebaseAuth.instance.signOut();
+    }catch (e){
+      print('Firebase signOut error: $e');
+    }
+    return backendSuccess;
+  }
+
 
   bool get hasLoggedIn{
     return _user != null || _cacheUserData != null;
