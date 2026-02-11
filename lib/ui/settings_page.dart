@@ -359,7 +359,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                 hasLoggedIn? TextButton(onPressed: ()async{
                   try{
-                    final success= await logOut;
+                    final success= await logOut();
 
                   }catch (e){
                     print('error occure is : $e');
