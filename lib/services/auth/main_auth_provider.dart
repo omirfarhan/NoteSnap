@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,11 +8,10 @@ import 'package:notes/services/auth/authservice.dart';
 import 'package:notes/services/shared_preference_service.dart';
 import 'package:http/http.dart' as http;
 
-import '../../network_check_helper.dart';
 
 class MainAuthProvider extends ChangeNotifier{
   final Authservice _authservice=Authservice();
-  final hasInternetConnection=HasInternetConnection();
+
 
   User? _user;
   bool _loading=false;
@@ -28,6 +29,11 @@ class MainAuthProvider extends ChangeNotifier{
   String? get photoUrl => _user?.photoURL ?? _cacheUserData?['photoUrl'];
   String? get uid => _user?.uid ?? _cacheUserData?['uid'];
 
+  //loading Method
+  void setLoading(bool value){
+    _loading = value;
+    notifyListeners();
+  }
 
   MainAuthProvider(){
     _loadCacheUser();
@@ -40,9 +46,7 @@ class MainAuthProvider extends ChangeNotifier{
   }
 
   void _initAuthListener(){
-    FirebaseAuth.instance.authStateChanges().listen((User? user) {
-
-
+    Authservice.auth.authStateChanges().listen((User? user) {
       if(user != null){
         // User login থাকলে data save করা
         _cacheService.saveUserData(
@@ -78,50 +82,44 @@ class MainAuthProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  Future<bool> SignOut()async{
+  Future<String?> SignOut()async{
 
     final Uid=uid;
-    print('user tap is signOut and uid is: ${user?.uid}');
-    if(Uid == null){
-      // already signed out
-      return true;
-    }
+    print('user tap is signOut and uid is: ${Uid}');
 
-    final checknetwork=await hasInternetConnection;
-    bool backendSuccess=false;
-
-    if(checknetwork){
       try{
         final response=await http.post(
             Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/signOut'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({ 'uid':Uid})
-        )
-            .timeout(const Duration(seconds: 10));
+        ).timeout(const Duration(seconds: 30));
 
         await FirebaseAuth.instance.signOut();
         _user=null;
-        // Cache clear করা
         await _cacheService.clearUserData();
         _cacheUserData=null;
 
-        if(response.statusCode==200){
-          backendSuccess=true;
-          print('response status Code: 200');
-        }else{
-          print('Backend signOut faild: ${response.statusCode} ${response.body}');
+        if (response.statusCode == 200) {
+          return "You have logged out successfully!";
         }
+        // if(response.statusCode==200){
+        //   backendSuccess=true;
+        //   print('response status Code: 200');
+        // }else{
+        //   print('Backend signOut faild: ${response.statusCode} ${response.body}');
+        // }
 
-      }catch (e){
-        'SignOut API error: $e';
+      }on TimeoutException{
+        return "Server is taking too long. Check your internet.";
+      }on SocketException{
+        return "No internet connection";
+      } catch (e){
+        return "Something went wrong.";
       }
-    }else{
-      //alert dialoge hobe
-      print('please connection your data');
-    }
+
 
     notifyListeners();
-    return backendSuccess;
+    return null;
   }
 
 

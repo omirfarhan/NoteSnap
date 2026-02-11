@@ -209,9 +209,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget ProfileSectionContainer(BuildContext context) {
 
-
-    //final auth = context.watch<AuthProvider>();
-
     return Container(
                   width: MediaQuery.sizeOf(context).width,
 
@@ -257,13 +254,20 @@ class _SettingsPageState extends State<SettingsPage> {
   //Google Authentication
   Widget buildProfileCreator(BuildContext context){
 
-    return Selector<MainAuthProvider,({String name,String? photo,bool hasLoggedIn,Future<bool> Function() signout})>(
+    return Selector<MainAuthProvider,({
+    String name,String?
+    photo,bool hasLoggedIn,
+    Future<String?> Function() signout,
+    bool isloading,
+
+    })>(
 
       selector: (context, authProvider) => (
         name:authProvider.displayName ?? 'Tap to Login',
         photo: authProvider.photoUrl,
         hasLoggedIn: authProvider.hasLoggedIn,
         signout: authProvider.SignOut,
+        isloading: authProvider.isLoading,
       ),
 
       builder: (context, data, child) {
@@ -272,6 +276,7 @@ class _SettingsPageState extends State<SettingsPage> {
         final photoUrl = data.photo;
         final hasLoggedIn=data.hasLoggedIn;
         final logOut=data.signout;
+        final isLoading=data.isloading;
 
         return Material(
           color: Colors.transparent,
@@ -282,11 +287,17 @@ class _SettingsPageState extends State<SettingsPage> {
 
 
 
-            onTap: !hasLoggedIn
+            onTap: isLoading
+                ? null
+                :!hasLoggedIn
                 ? () async {
 
               try {
-                await _loginController.login();
+               final error= await _loginController.login();
+               if(error != null && context.mounted){
+                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+               }
+
               } catch (e) {
                 if (mounted) {
                   debugPrint('Login failed: $e');
@@ -309,7 +320,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 SizedBox(
                     height: 50,
                     width: 50,
-                    child: photoUrl != null 
+                    child: isLoading
+                  ? const CircularProgressIndicator(
+                      strokeWidth: 2,
+                    )
+                    : photoUrl != null
                         ? CachedNetworkImage(
                       imageUrl: photoUrl,
                       imageBuilder: (context, imageProvider) => CircleAvatar(
@@ -361,15 +376,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   try{
                     final success= await logOut();
 
+                    if(success != null && context.mounted){
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+                    }
+
                   }catch (e){
                     print('error occure is : $e');
                   }
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('You have logged out successfully!'),
-                        backgroundColor: Color(0xFF6365EF),
-                      )
-                  );
                 },
                   child: Text('Log Out',
                       style: TextStyle(
