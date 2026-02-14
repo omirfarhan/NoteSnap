@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 
 class AuthProvider extends ChangeNotifier{
 
+
   static final GoogleSignIn googleSignInn=GoogleSignIn.instance;
   static String? driveAccessToken;
   static String? idToken;
@@ -34,7 +35,9 @@ class AuthProvider extends ChangeNotifier{
       }
   }
   bool get isLoggedIn => user != null;
-
+  String? get profileName => user?.displayName;
+  String? get gmail => user?.email;
+  String? get photoURL=> user?.photoURL;
 
   static bool isinitalized= false;
   static Future<void> _initSignin() async{
@@ -47,13 +50,36 @@ class AuthProvider extends ChangeNotifier{
 
   //For SignIn
   static Future<UserCredential> signinwithGoogle() async{
+    final String backendUrl = 'http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/exchangeToken';
     await _initSignin();
-
-
+    final scopes= [
+      'https://www.googleapis.com/auth/drive.appdata',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+    ];
 
     final GoogleSignInAccount account = await googleSignInn.authenticate();
     final idToken=await account.authentication.idToken;
-    AuthProvider.idToken=idToken;
+    final GoogleSignInServerAuthorization? serverAuth=
+    await account.authorizationClient.authorizeServer(scopes);
+
+    final authCode= serverAuth?.serverAuthCode;
+    print('authCode:======== $authCode');
+
+    final response = await http.post(
+      Uri.parse('$backendUrl/exchangeToken'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'code': authCode}),
+    );
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      print('✅ Success! Tokens saved for user: ${data['email']}');
+      return data;
+    } else {
+      print('❌ Backend error: ${response.body}');
+    }
+
+    //AuthProvider.idToken=idToken;
 
     final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
     return await FirebaseAuth.instance.signInWithCredential(credential);

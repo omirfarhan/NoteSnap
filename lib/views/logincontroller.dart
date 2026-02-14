@@ -13,6 +13,8 @@ class LoginController {
   late final DeepLinkServices _deepLinkServices;
 
   final MainAuthProvider mainauthProvider;
+  String? lastProcessToken;
+  Set<String?> _invalidadeToken={};
 
   LoginController(this.mainauthProvider){
     _deepLinkServices=DeepLinkServices(
@@ -25,8 +27,9 @@ class LoginController {
   }
 
   Future<String?> login()async{
-    mainauthProvider.setLoading(true);
 
+    mainauthProvider.setLoading(true);
+    lastProcessToken =null;
     //ekhane ekta alertdialoge create hobe
     //jodi user login kore tahole done dibe ar jodi na kore tahole login faild please login ei type er alertdialoge dibe
 
@@ -47,10 +50,21 @@ class LoginController {
 
       final consentUrl=jsonDecode(response.body)['consentUrl'];
       final uri=Uri.parse(consentUrl);
-      await launchUrl(
+
+      final launched= await launchUrl(
         uri,
         mode: LaunchMode.inAppBrowserView,
       );
+      
+      await Future.delayed(const Duration(seconds: 2));
+
+      if(!launched){
+        return 'Could not open browser.';
+      }
+
+      if(!mainauthProvider.hasLoggedIn){
+        mainauthProvider.setLoading(false);
+      }
 
       return null;
     }on TimeoutException{
@@ -67,12 +81,35 @@ class LoginController {
 
 
   Future<void> _handleToken(String token) async{
+
+    if(lastProcessToken == token){
+      print('Ignor duplicate token');
+      return;
+    }
+
+
+    lastProcessToken = token;
+    print('🔑 Processing new token$lastProcessToken');
     await mainauthProvider.loginwithToken(token);
+    mainauthProvider.setLoading(false);
 
   }
 
+  void invalidateCurrentToken(){
+
+    if(lastProcessToken != null){
+      _invalidadeToken.add(lastProcessToken);
+      print('🗑️ Invalidated token: $lastProcessToken');
+      lastProcessToken=null;
+    }
+
+  }
+
+
   void dispose(){
     _deepLinkServices.dispose();
+    lastProcessToken=null;
+    _invalidadeToken.clear();
   }
 
 

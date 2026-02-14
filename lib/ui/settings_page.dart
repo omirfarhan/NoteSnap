@@ -2,12 +2,13 @@ import 'dart:async';
 
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 import 'package:notes/services/auth/main_auth_provider.dart';
 import 'package:notes/views/logincontroller.dart';
 import 'package:provider/provider.dart';
 import '../constants/routes.dart';
+import 'package:notes/services/auth/auth_provider.dart';
 
 
 
@@ -27,9 +28,9 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    final authProvider = Provider.of<MainAuthProvider>(context, listen: false);
-    _loginController = LoginController(authProvider);
-    _loginController.init();
+    // final authProvider = Provider.of<MainAuthProvider>(context, listen: false);
+    // _loginController = LoginController(authProvider);
+    // _loginController.init();
   }
 
   @override
@@ -254,29 +255,12 @@ class _SettingsPageState extends State<SettingsPage> {
   //Google Authentication
   Widget buildProfileCreator(BuildContext context){
 
-    return Selector<MainAuthProvider,({
-    String name,String?
-    photo,bool hasLoggedIn,
-    Future<String?> Function() signout,
-    bool isloading,
+    final auth=context.watch<AuthProvider>();
 
-    })>(
+    final displayName = auth.profileName ?? 'Tap to Login';
+    final photoUrl = auth.photoURL;
+    final hasLoggedIn = auth.isLoggedIn;
 
-      selector: (context, authProvider) => (
-        name:authProvider.displayName ?? 'Tap to Login',
-        photo: authProvider.photoUrl,
-        hasLoggedIn: authProvider.hasLoggedIn,
-        signout: authProvider.SignOut,
-        isloading: authProvider.isLoading,
-      ),
-
-      builder: (context, data, child) {
-
-        final displayName=data.name;
-        final photoUrl = data.photo;
-        final hasLoggedIn=data.hasLoggedIn;
-        final logOut=data.signout;
-        final isLoading=data.isloading;
 
         return Material(
           color: Colors.transparent,
@@ -287,16 +271,14 @@ class _SettingsPageState extends State<SettingsPage> {
 
 
 
-            onTap: isLoading
-                ? null
-                :!hasLoggedIn
+            onTap:!hasLoggedIn
                 ? () async {
 
               try {
-               final error= await _loginController.login();
-               if(error != null && context.mounted){
-                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
-               }
+               await auth.signinwithgoogle();
+               // if(context.mounted){
+               //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+               // }
 
               } catch (e) {
                 if (mounted) {
@@ -320,11 +302,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 SizedBox(
                     height: 50,
                     width: 50,
-                    child: isLoading
-                  ? const CircularProgressIndicator(
-                      strokeWidth: 2,
-                    )
-                    : photoUrl != null
+                    child: photoUrl != null
                         ? CachedNetworkImage(
                       imageUrl: photoUrl,
                       imageBuilder: (context, imageProvider) => CircleAvatar(
@@ -374,11 +352,12 @@ class _SettingsPageState extends State<SettingsPage> {
 
                 hasLoggedIn? TextButton(onPressed: ()async{
                   try{
-                    final success= await logOut();
+                    //_loginController.invalidateCurrentToken();
+                    final success= await auth.signOut();
 
-                    if(success != null && context.mounted){
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
-                    }
+                    // if(success != null && context.mounted){
+                    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+                    // }
 
                   }catch (e){
                     print('error occure is : $e');
@@ -400,8 +379,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
           ),
         );
-      },
-    );
+
 
   }
   
@@ -465,6 +443,7 @@ class _SettingsPageState extends State<SettingsPage> {
   void dispose() {
     super.dispose();
     _loginController.dispose();
+
   }
 
 

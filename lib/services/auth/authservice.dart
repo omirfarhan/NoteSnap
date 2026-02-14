@@ -6,11 +6,11 @@ class Authservice {
 
 
 
+
   //firebase Sign hobe
   Future<UserCredential> signInwithCustomCredential(String token)async{
     final credential=await auth.signInWithCustomToken(token);
     //login hower por ekhan theke data ta add korbo
-
 
     print('custom credential is ${credential}');
     return credential;
