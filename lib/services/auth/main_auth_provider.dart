@@ -123,7 +123,7 @@ class MainAuthProvider extends ChangeNotifier{
         if (response.statusCode == 200) {
           return "You have logged out successfully!";
         }
-
+        notifyListeners();
       }on TimeoutException{
         return "Server is taking too long. Check your internet.";
       }on SocketException{

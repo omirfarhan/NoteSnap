@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:notes/services/auth/main_auth_provider.dart';
 import 'package:notes/views/logincontroller.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 
@@ -22,15 +23,11 @@ class SettingsPage extends StatefulWidget {
 
 
 class _SettingsPageState extends State<SettingsPage> {
-
-  late final LoginController _loginController;
+  bool _isLoggingOut = false;
 
   @override
   void initState() {
     super.initState();
-    // final authProvider = Provider.of<MainAuthProvider>(context, listen: false);
-    // _loginController = LoginController(authProvider);
-    // _loginController.init();
   }
 
   @override
@@ -254,32 +251,22 @@ class _SettingsPageState extends State<SettingsPage> {
 
   //Google Authentication
   Widget buildProfileCreator(BuildContext context){
-
     final auth=context.watch<AuthProvider>();
-
     final displayName = auth.profileName ?? 'Tap to Login';
     final photoUrl = auth.photoURL;
     final hasLoggedIn = auth.isLoggedIn;
-
-
         return Material(
           color: Colors.transparent,
           child: InkWell(
-
             splashColor: Colors.white.withOpacity(0.25),
             borderRadius: BorderRadius.circular(1),
-
-
-
             onTap:!hasLoggedIn
                 ? () async {
-
               try {
                await auth.signinwithgoogle();
                // if(context.mounted){
                //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
                // }
-
               } catch (e) {
                 if (mounted) {
                   debugPrint('Login failed: $e');
@@ -298,7 +285,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 SizedBox(
                   width: 10,
                 ),
-
                 SizedBox(
                     height: 50,
                     width: 50,
@@ -314,7 +300,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         backgroundColor: Color(0xFF5BB5D7),
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
-
                       errorWidget: (context, url, error) => const CircleAvatar(
                         radius: 25,
                         backgroundColor: Color(0xFF5BB5D7),
@@ -333,7 +318,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 SizedBox(
                   width: 15,
                 ),
-
                 Text(displayName.length >16
                     ?'${displayName.substring(0,16)}...'
                     : displayName,
@@ -346,25 +330,31 @@ class _SettingsPageState extends State<SettingsPage> {
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
-
-
                 const Spacer(),
-
-                hasLoggedIn? TextButton(onPressed: ()async{
+                hasLoggedIn?
+                TextButton(onPressed:
+                    _isLoggingOut ? null
+                    : ()async{
+                      setState(() => _isLoggingOut = true);
                   try{
-                    //_loginController.invalidateCurrentToken();
                     final success= await auth.signOut();
-
-                    // if(success != null && context.mounted){
-                    //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
-                    // }
-
+                    if(success != null && context.mounted){
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+                    }
+                    if (context.mounted) {
+                      setState(() => _isLoggingOut = false);
+                    }
                   }catch (e){
                     print('error occure is : $e');
                   }
-
                 },
-                  child: Text('Log Out',
+                  child:_isLoggingOut?
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2,),
+                      )
+                 :const Text('Log Out',
                       style: TextStyle(
                           color: Color(0xFFF7FBFD),
                           fontWeight: FontWeight.w100,
@@ -372,8 +362,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           fontSize: 15
                       )
                   ),
-                ):const SizedBox.shrink()
-
+                ):
+                const SizedBox.shrink()
               ],
             ),
 
@@ -404,16 +394,10 @@ class _SettingsPageState extends State<SettingsPage> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-
         splashColor: Colors.white.withOpacity(0.25),
         borderRadius: BorderRadius.circular(1),
-
         onTap: (){
-
-
           print('Backup Email ');
-
-
         },
 
         child: Padding(
@@ -442,8 +426,6 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void dispose() {
     super.dispose();
-    _loginController.dispose();
-
   }
 
 

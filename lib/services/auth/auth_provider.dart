@@ -1,23 +1,17 @@
 
+import 'dart:async';
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../Data_Layer/google_http_client.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
-
-
 class AuthProvider extends ChangeNotifier{
-
-
   static final GoogleSignIn googleSignInn=GoogleSignIn.instance;
   static String? driveAccessToken;
-  static String? idToken;
-
+  static String? googleuserid;
 
   final FirebaseAuth _firebaseAuth=FirebaseAuth.instance;
   String? photoUrl;
@@ -26,14 +20,30 @@ class AuthProvider extends ChangeNotifier{
   User? user;
 
   AuthProvider(){
-    user =_firebaseAuth.currentUser;
-
-      if(user != null){
-        photoUrl = user!.photoURL;
-        profilename =user!.displayName;
-        email=user!.email;
-      }
+    init();
   }
+
+  Future<void> init() async {
+    await saveGoogleuserID();
+    user = _firebaseAuth.currentUser;
+
+    if (user != null) {
+      photoUrl = user!.photoURL;
+      profilename = user!.displayName;
+      email = user!.email;
+    }
+
+    notifyListeners();
+  }
+
+
+
+  Future<void> saveGoogleuserID()async{
+    SharedPreferences prefs=await SharedPreferences.getInstance();
+    googleuserid=prefs.getString("googleuserid");
+    notifyListeners();
+  }
+
   bool get isLoggedIn => user != null;
   String? get profileName => user?.displayName;
   String? get gmail => user?.email;
@@ -48,9 +58,9 @@ class AuthProvider extends ChangeNotifier{
   }
 
 
+
   //For SignIn
   static Future<UserCredential> signinwithGoogle() async{
-    final String backendUrl = 'http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/exchangeToken';
     await _initSignin();
     final scopes= [
       'https://www.googleapis.com/auth/drive.appdata',
@@ -63,66 +73,56 @@ class AuthProvider extends ChangeNotifier{
     final GoogleSignInServerAuthorization? serverAuth=
     await account.authorizationClient.authorizeServer(scopes);
 
+    final googleuid=await account.id;
+    googleuserid=googleuid;
+    _saveGoogleUserid(googleuserid!);
     final authCode= serverAuth?.serverAuthCode;
-    print('authCode:======== $authCode');
-
-    final response = await http.post(
-      Uri.parse('$backendUrl/exchangeToken'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'code': authCode}),
-    );
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      print('✅ Success! Tokens saved for user: ${data['email']}');
-      return data;
-    } else {
-      print('❌ Backend error: ${response.body}');
-    }
-
-    //AuthProvider.idToken=idToken;
-
+    await _sendAuthtoBackend(authCode);
     final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
     return await FirebaseAuth.instance.signInWithCredential(credential);
 
   }
 
-  Future<void> connectingGoogleDrive() async{
+  static Future<void> _saveGoogleUserid(String userID)async{
+    SharedPreferences prefs=await SharedPreferences.getInstance();
+    prefs.setString("googleuserid", userID);
+    print('save google user id:======== $userID');
+  }
 
-    final response=await http.post(
-      Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'idToken': idToken}),
-    );
-
-    print('Status: ${response.statusCode}');
-    print('Body: ${response.body}');
-
-
-    final consentUrl=jsonDecode(response.body)['consentUrl'];
-    final uri=Uri.parse(consentUrl);
-
-    // final url=Uri.parse('https://www.google.com');
-
-    // if(await canLaunchUrl(url)){
-    //   await launchUrl(
-    //       url,
-    //     mode: LaunchMode.externalApplication
-    //   );
-    // }
-
-
-     //Uri ursl = Uri.parse('https://www.google.com');
-    if (!await launchUrl(uri)) {
-      throw Exception('Could not launch ${uri}');
+  static Future<void> _sendAuthtoBackend(final authCode)async{
+    try{
+      final response =await http.post(
+        Uri.parse('http://10.214.51.221:5001/notes-moinul-flutter-project/us-central1/exchangeToken'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'code': authCode}),
+      );
+      if(response.statusCode == 200){
+        final data=json.decode(response.body);
+        print('Success! Tokens saved for user: ${data['email']}');
+      }else{
+        print('backend Error');
+      }
+    }catch (e){
+      print('No Send data to backend $e');
     }
-
-
 
   }
 
 
+
   //For signOut
-  Future<void> signOut() async{
+  Future<String?> signOut() async{
+    notifyListeners();
+    try{
+     final response= await http.post(
+          Uri.parse('http://10.214.51.221:5001/notes-moinul-flutter-project/us-central1/signOut'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({ 'uid':googleuserid})
+      ).timeout(const Duration(seconds: 5));
+
+     if(response.statusCode != 200){
+       return "server error";
+     }
 
       await googleSignInn.signOut();
       await _firebaseAuth.signOut();
@@ -131,7 +131,17 @@ class AuthProvider extends ChangeNotifier{
       profilename=null;
       email=null;
 
-    notifyListeners();
+      return "You have logged out successfully!";
+    }on TimeoutException{
+      return "Server is taking too long. Check your internet.";
+    }on SocketException{
+      return "No internet connection";
+    } catch (e){
+      return "Something went wrong.";
+    }
+
+
+
    }
 
    Future<void> signinwithgoogle() async{
