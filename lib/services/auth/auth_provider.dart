@@ -12,6 +12,7 @@ class AuthProvider extends ChangeNotifier{
   static final GoogleSignIn googleSignInn=GoogleSignIn.instance;
   static String? driveAccessToken;
   static String? googleuserid;
+  static const String _userkey="googleuserid";
 
   final FirebaseAuth _firebaseAuth=FirebaseAuth.instance;
   String? photoUrl;
@@ -39,8 +40,8 @@ class AuthProvider extends ChangeNotifier{
 
 
   Future<void> saveGoogleuserID()async{
-    SharedPreferences prefs=await SharedPreferences.getInstance();
-    googleuserid=prefs.getString("googleuserid");
+    final prefs=await SharedPreferences.getInstance();
+    googleuserid= prefs.getString(_userkey);
     notifyListeners();
   }
 
@@ -84,15 +85,15 @@ class AuthProvider extends ChangeNotifier{
   }
 
   static Future<void> _saveGoogleUserid(String userID)async{
-    SharedPreferences prefs=await SharedPreferences.getInstance();
-    prefs.setString("googleuserid", userID);
+    final prefs=await SharedPreferences.getInstance();
+     prefs.setString(_userkey, userID);
     print('save google user id:======== $userID');
   }
 
   static Future<void> _sendAuthtoBackend(final authCode)async{
     try{
       final response =await http.post(
-        Uri.parse('http://10.214.51.221:5001/notes-moinul-flutter-project/us-central1/exchangeToken'),
+        Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/exchangeToken'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'code': authCode}),
       );
@@ -105,7 +106,6 @@ class AuthProvider extends ChangeNotifier{
     }catch (e){
       print('No Send data to backend $e');
     }
-
   }
 
 
@@ -115,22 +115,20 @@ class AuthProvider extends ChangeNotifier{
     notifyListeners();
     try{
      final response= await http.post(
-          Uri.parse('http://10.214.51.221:5001/notes-moinul-flutter-project/us-central1/signOut'),
+          Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/signOut'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({ 'uid':googleuserid})
       ).timeout(const Duration(seconds: 5));
-
      if(response.statusCode != 200){
        return "server error";
      }
-
       await googleSignInn.signOut();
       await _firebaseAuth.signOut();
       user=null;
       photoUrl=null;
       profilename=null;
       email=null;
-
+      _clearUserData();
       return "You have logged out successfully!";
     }on TimeoutException{
       return "Server is taking too long. Check your internet.";
@@ -140,9 +138,14 @@ class AuthProvider extends ChangeNotifier{
       return "Something went wrong.";
     }
 
-
-
    }
+
+   Future<void> _clearUserData()async{
+    final prefs=await SharedPreferences.getInstance();
+    await prefs.remove(_userkey);
+    googleuserid =null;
+   }
+
 
    Future<void> signinwithgoogle() async{
     final userdata=await AuthProvider.signinwithGoogle();

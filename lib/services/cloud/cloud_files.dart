@@ -29,24 +29,21 @@ class _CloudFilesState extends State<CloudFiles> {
   final uploadDriveFile=DriveHttpRequestToServer();
 
   final accessToken=AuthProvider.driveAccessToken;
-  late final LoginController _loginController;
-  Authservice? authservice;
 
   double? percentage=DriveHttpRequestToServer.percentage;
+
 
 
   @override
   void initState() {
     super.initState();
-    // final authProvider = Provider.of<MainAuthProvider>(context, listen: false);
-    // _loginController = LoginController(authProvider);
-    // _loginController.init();
+
   }
 
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<MainAuthProvider>(context);
+
 
       return Scaffold(
         appBar: AppBar(
@@ -127,9 +124,7 @@ class _CloudFilesState extends State<CloudFiles> {
                     // await _loginController.login();
 
                     // Login complete হওয়ার পর user check করুন
-                    print('User after login: ${authProvider.user?.displayName}');
-
-                    print('Your Auth Service: ${authProvider.user}');
+                    print('google userId: === ${AuthProvider.googleuserid}');
 
                     //final userId = FirebaseAuth.instance.currentUser!.uid;
                     //user id ekhan theke jabe etai best practice
@@ -179,7 +174,6 @@ class _CloudFilesState extends State<CloudFiles> {
   @override
   void dispose() {
     super.dispose();
-    _loginController.dispose();
   }
 
 }
