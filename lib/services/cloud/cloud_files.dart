@@ -7,8 +7,6 @@ import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:notes/Data/notemodel.dart';
 import 'package:notes/Data_Layer/drive_http_request_to_server.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
-import 'package:notes/services/auth/main_auth_provider.dart';
-import 'package:notes/views/logincontroller.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../Data_Layer/google_http_client.dart';
@@ -121,15 +119,36 @@ class _CloudFilesState extends State<CloudFiles> {
               ),
               ElevatedButton(
                   onPressed: () async{
-                    // await _loginController.login();
 
                     // Login complete হওয়ার পর user check করুন
-                    print('google userId: === ${AuthProvider.googleuserid}');
+                    final googleUserId=await AuthProvider.googleuserid;
 
-                    //final userId = FirebaseAuth.instance.currentUser!.uid;
-                    //user id ekhan theke jabe etai best practice
+                    print('google userId: === ${googleUserId}');
+                    
+                    if(googleUserId != null && googleUserId.isNotEmpty){
 
-                    //final userId="test123";
+                     try{
+                       final response = await http.post(
+                           Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/getRefreshToken'),
+                           headers: {'Content-Type': 'application/json'},
+                           body: jsonEncode({'userId': googleUserId})
+                       );
+
+                       if(response.statusCode == 200){
+                         final data=json.decode(response.body);
+                         print('your server accessToken is: ${data['accessToken']}');
+                       }else{
+                         print('backend Error');
+                       }
+
+                     }catch (error){
+                       print('server error: $error');
+                     }
+
+                    }else{
+                      print('please connect your account');
+                    }
+
 
 
 
