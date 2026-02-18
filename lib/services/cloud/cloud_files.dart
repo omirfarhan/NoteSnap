@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:notes/Data/notemodel.dart';
+import 'package:notes/Data/user_model.dart';
 import 'package:notes/Data_Layer/drive_http_request_to_server.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:provider/provider.dart';
@@ -26,9 +27,12 @@ class _CloudFilesState extends State<CloudFiles> {
 
   final uploadDriveFile=DriveHttpRequestToServer();
 
-  final accessToken=AuthProvider.driveAccessToken;
+  String? accessTokem;
 
   double? percentage=DriveHttpRequestToServer.percentage;
+
+  List<UserModel> users=[];
+  List<UserModel> filedata=[];
 
 
 
@@ -84,16 +88,16 @@ class _CloudFilesState extends State<CloudFiles> {
               ElevatedButton(
                   onPressed: () async{
 
-                    if(accessToken !=null){
-
+                    if(accessTokem !=null){
+                      print('accessToken is : $accessTokem');
                       final client=GoogleHttpClient({
-                        'Authorization': 'Bearer $accessToken',
+                        'Authorization': 'Bearer $accessTokem',
                       });
 
                       final notes = [
                         Notemodel(
                           id: '1',
-                          title: 'First Note1',
+                          title: 'Second folder2',
                           text: 'Hello Google Drive1',
                           //createdAt: DateTime.now(),
                           //updatedAt: DateTime.now(),
@@ -103,7 +107,7 @@ class _CloudFilesState extends State<CloudFiles> {
 
 
 
-                      final createSubFolder=await uploadDriveFile.createFolder('1234', client);
+                      final createSubFolder=await uploadDriveFile.createFolder('new folder 123', client);
                       final uploadToServer=await uploadDriveFile.uploadNotesToFolder(client, createSubFolder,notes);
 
                       print('upload to server Report: ${createSubFolder}');
@@ -136,7 +140,10 @@ class _CloudFilesState extends State<CloudFiles> {
 
                        if(response.statusCode == 200){
                          final data=json.decode(response.body);
-                         print('your server accessToken is: ${data['accessToken']}');
+                         final accesstoken=data['accessToken'];
+                         accessTokem=accesstoken;
+                         await loadDriveFile();
+                         print('your server accessToken is: $accessTokem');
                        }else{
                          print('backend Error');
                        }
@@ -180,6 +187,41 @@ class _CloudFilesState extends State<CloudFiles> {
                   },
                   child: const Text('Server Response')
               ),
+              Expanded(
+                child: ListView.builder(
+
+                  itemCount: users.length,
+                    itemBuilder: (context, index) {
+                    final folder=users[index];
+                    return ListTile(
+                      leading: const Icon(Icons.folder),
+                      title: Text(users[index].name ?? 'Unknown' ),
+                      onTap: ()async{
+                        await _loadDrivefiless(folder.id!);
+                        print('folder id: ${folder.id}');
+                      },
+                    );
+                    },
+                ),
+              ),
+              if(filedata.isNotEmpty) ...[
+                const Divider(),
+                Expanded(
+                    child: ListView.builder(
+                        itemCount: filedata.length,
+                      itemBuilder: (context, index) {
+                        final file = filedata[index];
+                        return ListTile(
+                          leading: const Icon(Icons.insert_drive_file),
+                          title: Text(file.name?? 'Unnamed'),
+                        );
+
+                      },
+                    ),
+
+                )
+
+              ]
 
 
             ],
@@ -189,6 +231,37 @@ class _CloudFilesState extends State<CloudFiles> {
       );
   }
 
+  Future<void> _loadDrivefiless(String folderid)async{
+    if(accessTokem == null){
+      print('please set accessToken');
+    }
+
+    final client=GoogleHttpClient({
+      'Authorization': 'Bearer $accessTokem',
+    });
+
+    final filess=await uploadDriveFile.listFilesInFolder(client, folderid);
+
+    setState(() {
+      filedata=filess;
+    });
+
+  }
+
+  Future<void> loadDriveFile()async{
+    if(accessTokem == null){
+      print('please set accessToken');
+    }
+
+    final client=GoogleHttpClient({
+      'Authorization': 'Bearer $accessTokem',
+    });
+
+    final files=await uploadDriveFile.getappDataFile(client);
+    setState(() {
+      users =files;
+    });
+  }
 
   @override
   void dispose() {

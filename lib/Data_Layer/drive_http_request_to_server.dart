@@ -1,5 +1,6 @@
 
 import 'package:notes/Data/notemodel.dart';
+import 'package:notes/Data/user_model.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'dart:convert';
@@ -11,7 +12,6 @@ class DriveHttpRequestToServer {
   final AccessToken=AuthProvider.driveAccessToken;
 
   static double? percentage=0.0;
-
 
 
   Future<drive.File> createFolder(String folderName, GoogleHttpClient client) async {
@@ -37,7 +37,7 @@ class DriveHttpRequestToServer {
     final result = await drivetoserverupload.files.create(folder);
 
     //eta diye koto gula file create hoise egula dekha jay
-    /*
+
     final fileList = await drivetoserverupload.files.list(
       spaces: "appDataFolder", // শুধু appDataFolder এর ভেতর খুঁজবে
        $fields: "files(id, name, mimeType)",
@@ -45,17 +45,51 @@ class DriveHttpRequestToServer {
 
     print("📂 appDataFolder contents:");
     for (drive.File filess in fileList.files ?? []) {
-
-
       print('📁 File/Folder name: ${filess.name}');
       print('📁 File/Folder id: ${filess.id}');
+      final filename=filess.name;
+      final id=filess.id;
+      UserModel(
+        name: filename,
+        id: id,
+      );
     }
 
-     */
 
-    //print('✅ Created folder id: ${result.name}');
+
+    print('✅ Created folder id: ${result.name}');
     return result;
   }
+
+  Future<List<UserModel>> getappDataFile(GoogleHttpClient client)async{
+    final driveapi=drive.DriveApi(client);
+
+    final folderList= await driveapi.files.list(
+      spaces: "appDataFolder",
+      q: "mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+      $fields: "files(id, name, mimeType)",
+    );
+
+    return (folderList.files ?? [])
+        .where((f) => f.name != null && f.id != null)
+        .map((f) => UserModel(name: f.name, id: f.id)).toList();
+
+  }
+
+  Future<List<UserModel>> listFilesInFolder(GoogleHttpClient client, String folderid)async{
+    final driveapi=drive.DriveApi(client);
+    final filelist=await driveapi.files.list(
+      spaces: "appDataFolder",
+      q: "'$folderid' in parents and trashed = false",
+      $fields: "files(id, name, mimeType)",
+    );
+    return (filelist.files ?? [])
+        .where((f) => f.name != null && f.id != null)
+        .map((f) => UserModel(name: f.name, id: f.id)).toList();
+  }
+
+
+
 
   Future<void> uploadNotesToFolder(GoogleHttpClient client, drive.File folder,
       List<Notemodel> notes)async{
@@ -86,12 +120,8 @@ class DriveHttpRequestToServer {
           continue;
         }
 
-
-
       }else{
-
         //if file does not exists then create new file
-
         final noteFile=drive.File();
         noteFile.name=filename;
         noteFile.parents=[folder.id!];
@@ -102,7 +132,6 @@ class DriveHttpRequestToServer {
               Stream.value(utf8.encode(jsondata)),
               utf8.encode(jsondata).length
           )
-
         );
 
         print('new file create at: ${filename}');
@@ -138,9 +167,7 @@ class DriveHttpRequestToServer {
     final bytes=await media.stream.fold<List<int>>(
       [],(previous, element) => previous..addAll(element)
     );
-
     return utf8.decode(bytes);
-
   }
 
 

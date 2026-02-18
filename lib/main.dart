@@ -10,8 +10,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // final deepLinkService=DeepLinkServices();
-  // await deepLinkService.initDeepLinkListener();
 
   runApp(
 
