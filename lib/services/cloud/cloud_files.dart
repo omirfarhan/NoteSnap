@@ -1,5 +1,6 @@
 
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -14,7 +15,7 @@ import '../../Data_Layer/google_http_client.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:http/http.dart' as http;
 import '../auth/auth_provider.dart';
-import '../auth/authservice.dart';
+
 
 class CloudFiles extends StatefulWidget {
   const CloudFiles({super.key});
@@ -26,10 +27,18 @@ class CloudFiles extends StatefulWidget {
 class _CloudFilesState extends State<CloudFiles> {
 
   final uploadDriveFile=DriveHttpRequestToServer();
+  final authprovider=AuthProvider();
+
+  late AuthProvider authProviderr;
+  bool isLoading = true;
 
   String? accessTokem;
+   double? _percentvalue;
+   double? _percent;
+  double? get percentvalue => _percentvalue;
+  double? get percent => _percent;
 
-  double? percentage=DriveHttpRequestToServer.percentage;
+
 
   List<UserModel> users=[];
   List<UserModel> filedata=[];
@@ -39,7 +48,7 @@ class _CloudFilesState extends State<CloudFiles> {
   @override
   void initState() {
     super.initState();
-
+    Future.microtask(() => _loadAccessToken());
   }
 
 
@@ -56,12 +65,14 @@ class _CloudFilesState extends State<CloudFiles> {
                 const Text('Storage'),
                 const SizedBox(height:4),
 
+
+
                   LinearPercentIndicator(
                     lineHeight: 10,
-                    percent: percentage ?? 0.0,
+                    percent: percentvalue ?? 0,
                     center: Text(
-                      "50.0%",
-                      style: new TextStyle(fontSize: 7),
+                      "${(percent ?? 0).toStringAsFixed(1)} %",
+                      style: new TextStyle(fontSize: 6),
                     ),
                     backgroundColor: Color(0xFFA9CBD7),
                     progressColor: Color(0xFFFF2040),
@@ -114,7 +125,7 @@ class _CloudFilesState extends State<CloudFiles> {
 
 
                     }else{
-                      await AuthProvider.signinwithGoogle();
+                      //await AuthProvider.signinwithGoogle();
                     }
 
 
@@ -125,7 +136,7 @@ class _CloudFilesState extends State<CloudFiles> {
                   onPressed: () async{
 
                     // Login complete হওয়ার পর user check করুন
-                    final googleUserId=await AuthProvider.googleuserid;
+                    final googleUserId=await authprovider.googleuserId;
 
                     print('google userId: === ${googleUserId}');
                     
@@ -143,6 +154,7 @@ class _CloudFilesState extends State<CloudFiles> {
                          final accesstoken=data['accessToken'];
                          accessTokem=accesstoken;
                          await loadDriveFile();
+
                          print('your server accessToken is: $accessTokem');
                        }else{
                          print('backend Error');
@@ -187,6 +199,12 @@ class _CloudFilesState extends State<CloudFiles> {
                   },
                   child: const Text('Server Response')
               ),
+
+              ElevatedButton(onPressed: ()async{
+                //await getdriveStorage();
+                print('accessTOKEN value: ${authProviderr.accessToken}');
+                //print('percent value: ${percent}');
+              }, child: const Text('Storage Check')),
               Expanded(
                 child: ListView.builder(
 
@@ -262,6 +280,63 @@ class _CloudFilesState extends State<CloudFiles> {
       users =files;
     });
   }
+
+
+  // drive storage check
+  Future<void> getdriveStorage()async {
+    if (authProviderr.accessToken != null) {
+      final client = GoogleHttpClient({
+        'Authorization': 'Bearer ${authProviderr.accessToken}',
+      });
+
+      final driveapi = drive.DriveApi(client);
+      final about = await driveapi.about.get(
+        $fields: 'storageQuota',
+      );
+
+      final quota = about.storageQuota;
+      final totalstorage = int.tryParse(quota?.limit ?? '0') ?? 0;
+      final usedStorage = int.tryParse(quota?.usage ?? '0') ?? 0;
+
+      double totalGBstorage = totalstorage / (1024 * 1024 * 1024);
+      double usedGBStorage = usedStorage / (1024 * 1024 * 1024);
+      //double percentage = (usedGBStorage/totalGBstorage) * 100;
+      double percentvalues=(usedGBStorage/totalGBstorage);
+      if(percentvalues>1.0){
+        percentvalues=1.0;
+      }
+      double percent = percentvalues * 100;
+      setState(() {
+        _percentvalue=percentvalues;
+        _percent=percent;
+      });
+
+      //print('total percentage : ${percentage.toStringAsFixed(2)} %');
+      print('total storage: $totalGBstorage');
+      print('used storage: ${usedGBStorage.toStringAsFixed(2)} GB');
+    }
+  }
+
+
+  Future<void> _loadAccessToken() async {
+    authProviderr = Provider.of<AuthProvider>(context, listen: false);
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      await authProviderr.getAccessTokenFromServer(); // এই method provider এ রাখবে
+      await getdriveStorage();
+    } catch (e) {
+      print("Error loading token: $e");
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
 
   @override
   void dispose() {

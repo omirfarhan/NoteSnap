@@ -10,12 +10,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 class AuthProvider extends ChangeNotifier{
-  static final GoogleSignIn googleSignInn=GoogleSignIn.instance;
-  static String? driveAccessToken;
-  static String? googleuserid;
-  static const String _userkey="googleuserid";
+   final GoogleSignIn googleSignInn=GoogleSignIn.instance;
+   String? driveAccessToken;
 
+   String _userkey="googleuserid";
+   String? _googleUserId;
+   String? get googleuserId => _googleUserId;
 
+   String? _accessToken;
+   String? get accessToken=> _accessToken;
 
   final FirebaseAuth _firebaseAuth=FirebaseAuth.instance;
   String? photoUrl;
@@ -24,6 +27,22 @@ class AuthProvider extends ChangeNotifier{
   User? user;
 
   AuthProvider(){
+    _firebaseAuth.authStateChanges().listen((User? firebaseUser) {
+      user=firebaseUser;
+      if(user != null){
+        photoUrl=user!.photoURL;
+        email=user!.email;
+        profilename=user!.displayName;
+
+      }else{
+        photoUrl=null;
+        email=null;
+        profilename=null;
+        _googleUserId=null;
+      }
+      notifyListeners();
+    });
+    
     init();
   }
 
@@ -44,7 +63,7 @@ class AuthProvider extends ChangeNotifier{
 
   Future<void> saveGoogleuserID()async{
     final prefs=await SharedPreferences.getInstance();
-    googleuserid= prefs.getString(_userkey);
+    _googleUserId= prefs.getString(_userkey);
     notifyListeners();
   }
 
@@ -53,8 +72,9 @@ class AuthProvider extends ChangeNotifier{
   String? get gmail => user?.email;
   String? get photoURL=> user?.photoURL;
 
-  static bool isinitalized= false;
-  static Future<void> _initSignin() async{
+
+   bool isinitalized= false;
+   Future<void> _initSignin() async{
     if(!isinitalized){
       await googleSignInn.initialize(serverClientId: "84036142309-o3fo97q8hdn43as73p6jaevqdph86hvr.apps.googleusercontent.com");
     }
@@ -64,7 +84,8 @@ class AuthProvider extends ChangeNotifier{
 
 
   //For SignIn
-  static Future<UserCredential> signinwithGoogle() async{
+   /*
+   Future<UserCredential> signinwithGoogle() async{
     await _initSignin();
     final scopes= [
       'https://www.googleapis.com/auth/drive.appdata',
@@ -87,7 +108,46 @@ class AuthProvider extends ChangeNotifier{
 
   }
 
-  static Future<void> _saveGoogleUserid(String userID)async{
+    */
+
+   Future<void> signinwithGoogle() async {
+     await _initSignin();
+
+     final scopes = [
+       'https://www.googleapis.com/auth/drive.appdata',
+       'https://www.googleapis.com/auth/userinfo.email',
+       'https://www.googleapis.com/auth/userinfo.profile',
+     ];
+
+     final account = await googleSignInn.authenticate();
+     final idToken = await account.authentication.idToken;
+
+     final serverAuth =
+     await account.authorizationClient.authorizeServer(scopes);
+
+     _googleUserId = account.id;
+     await _saveGoogleUserid(_googleUserId!);
+
+
+     final authCode = serverAuth?.serverAuthCode;
+     await _sendAuthtoBackend(authCode);
+
+     final credential =
+     GoogleAuthProvider.credential(idToken: idToken);
+
+     final userCredential =
+     await _firebaseAuth.signInWithCredential(credential);
+
+     user = userCredential.user;
+     photoUrl = user?.photoURL;
+     profilename = user?.displayName;
+     email = user?.email;
+
+     notifyListeners();  // 🔥 এখন ProxyProvider নিশ্চিতভাবে trigger হবে
+   }
+
+
+   Future<void> _saveGoogleUserid(String userID)async{
     final prefs=await SharedPreferences.getInstance();
      prefs.setString(_userkey, userID);
     print('save google user id:======== $userID');
@@ -115,12 +175,12 @@ class AuthProvider extends ChangeNotifier{
 
   //For signOut
   Future<String?> signOut() async{
-    notifyListeners();
+
     try{
      final response= await http.post(
           Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/signOut'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({ 'uid':googleuserid})
+          body: jsonEncode({ 'uid':_googleUserId})
       ).timeout(const Duration(seconds: 5));
      if(response.statusCode != 200){
        return "server error";
@@ -132,7 +192,9 @@ class AuthProvider extends ChangeNotifier{
       profilename=null;
       email=null;
       _clearUserData();
-      return "You have logged out successfully!";
+     notifyListeners();
+     return "You have logged out successfully!";
+
     }on TimeoutException{
       return "Server is taking too long. Check your internet.";
     }on SocketException{
@@ -146,10 +208,34 @@ class AuthProvider extends ChangeNotifier{
    Future<void> _clearUserData()async{
     final prefs=await SharedPreferences.getInstance();
     await prefs.remove(_userkey);
-    googleuserid =null;
+    _googleUserId =null;
    }
 
 
+   Future<void> getAccessTokenFromServer() async {
+     try{
+       final response =await http.post(
+           Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/getRefreshToken'),
+           headers: {'Content-Type': 'application/json'},
+           body: jsonEncode({'userId': googleuserId})
+       );
+
+       if(response.statusCode == 200){
+         final data= jsonDecode(response.body);
+         _accessToken=data['accessToken'];
+         print('your server accessToken is: $_accessToken');
+         notifyListeners();
+       }else{
+         print('backend Error');
+       }
+
+     }catch (e){
+       print('server error: $e');
+     }
+   }
+
+
+/*
    Future<void> signinwithgoogle() async{
     final userdata=await AuthProvider.signinwithGoogle();
     user=userdata.user;
@@ -158,6 +244,8 @@ class AuthProvider extends ChangeNotifier{
     photoUrl=user!.photoURL;
     notifyListeners();
    }
+
+    */
 
 
 

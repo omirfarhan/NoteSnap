@@ -5,15 +5,8 @@ import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'dart:convert';
 
-import 'package:notes/services/auth/auth_provider.dart';
-
 class DriveHttpRequestToServer {
-
-  final AccessToken=AuthProvider.driveAccessToken;
-
-  static double? percentage=0.0;
-
-
+ // final AccessToken=AuthProvider.driveAccessToken;
   Future<drive.File> createFolder(String folderName, GoogleHttpClient client) async {
     final drivetoserverupload = drive.DriveApi(client);
 
@@ -172,39 +165,39 @@ class DriveHttpRequestToServer {
 
 
   //Drive Storage check
-Future<void> getDriveStorage()async{
-
-    if(AccessToken!= null){
-      final client=GoogleHttpClient({
-        'Authorization': 'Bearer $AccessToken',
-      });
-
-      final api=drive.DriveApi(client);
-      final about=await api.about.get(
-        $fields: 'storageQuota',
-      );
-
-      final quota=about.storageQuota!;
-      final totalStorage=int.parse(quota.limit!);
-      final usedStorage=int.parse(quota.usage!);
-      //final freeStorage=totalStorage - usedStorage;
-
-      double totalstorageGB=totalStorage/(1024*1024*1024);
-      double usesStorageGB=usedStorage/(1024*1024*1024);
-
-      percentage=usesStorageGB/totalstorageGB;
-
-
-      // print("Total Storage: ${bytesToGB.toStringAsFixed(2)} GB");
-      // print("Uses Storage: ${usedStorage}");
-      // print("Free Storage: ${freeStorage}");
-
-
-    }
-
-
-
-}
+// Future<void> getDriveStorage()async{
+//
+//     if(AccessToken!= null){
+//       final client=GoogleHttpClient({
+//         'Authorization': 'Bearer $AccessToken',
+//       });
+//
+//       final api=drive.DriveApi(client);
+//       final about=await api.about.get(
+//         $fields: 'storageQuota',
+//       );
+//
+//       final quota=about.storageQuota!;
+//       final totalStorage=int.parse(quota.limit!);
+//       final usedStorage=int.parse(quota.usage!);
+//       //final freeStorage=totalStorage - usedStorage;
+//
+//       double totalstorageGB=totalStorage/(1024*1024*1024);
+//       double usesStorageGB=usedStorage/(1024*1024*1024);
+//
+//       percentage=usesStorageGB/totalstorageGB;
+//
+//
+//       // print("Total Storage: ${bytesToGB.toStringAsFixed(2)} GB");
+//       // print("Uses Storage: ${usedStorage}");
+//       // print("Free Storage: ${freeStorage}");
+//
+//
+//     }
+//
+//
+//
+// }
 
 
 

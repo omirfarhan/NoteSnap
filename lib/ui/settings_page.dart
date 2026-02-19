@@ -258,7 +258,7 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap:!hasLoggedIn
                 ? () async {
               try {
-               await auth.signinwithgoogle();
+               await auth.signinwithGoogle();
                // if(context.mounted){
                //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
                // }
