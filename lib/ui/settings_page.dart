@@ -19,6 +19,9 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _isLoggingOut = false;
+  bool _isLogin = false;
+
+
 
   @override
   void initState() {
@@ -250,6 +253,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final displayName = auth.profileName ?? 'Tap to Login';
     final photoUrl = auth.photoURL;
     final hasLoggedIn = auth.isLoggedIn;
+    final isauthentication=auth.isAuthenticating;
         return Material(
           color: Colors.transparent,
           child: InkWell(
@@ -262,6 +266,8 @@ class _SettingsPageState extends State<SettingsPage> {
                // if(context.mounted){
                //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
                // }
+
+
               } catch (e) {
                 if (mounted) {
                   debugPrint('Login failed: $e');
@@ -283,7 +289,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 SizedBox(
                     height: 50,
                     width: 50,
-                    child: photoUrl != null
+                    child: isauthentication?
+                        Center(
+                          child: const SizedBox(
+                            width: 25,
+                            height: 25,
+                            child: CircularProgressIndicator(strokeWidth: 2,),
+                          ),
+                        )
+                    : photoUrl != null
                         ? CachedNetworkImage(
                       imageUrl: photoUrl,
                       imageBuilder: (context, imageProvider) => CircleAvatar(

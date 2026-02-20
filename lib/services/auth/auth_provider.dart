@@ -12,7 +12,8 @@ import 'package:http/http.dart' as http;
 class AuthProvider extends ChangeNotifier{
    final GoogleSignIn googleSignInn=GoogleSignIn.instance;
    String? driveAccessToken;
-
+   bool _isAuthenticating=false;
+   bool get isAuthenticating => _isAuthenticating;
    String _userkey="googleuserid";
    String? _googleUserId;
    String? get googleuserId => _googleUserId;
@@ -121,30 +122,30 @@ class AuthProvider extends ChangeNotifier{
      ];
 
      final account = await googleSignInn.authenticate();
-     final idToken = await account.authentication.idToken;
+     _isAuthenticating=true;
+     notifyListeners();
+     try {
+       final idToken = await account.authentication.idToken;
+       final serverAuth = await account.authorizationClient.authorizeServer(scopes);
 
-     final serverAuth =
-     await account.authorizationClient.authorizeServer(scopes);
+       _googleUserId = account.id;
+       await _saveGoogleUserid(_googleUserId!);
 
-     _googleUserId = account.id;
-     await _saveGoogleUserid(_googleUserId!);
+       final authCode = serverAuth?.serverAuthCode;
+       await _sendAuthtoBackend(authCode);
 
+       final credential = GoogleAuthProvider.credential(idToken: idToken);
+       final userCredential = await _firebaseAuth.signInWithCredential(credential);
 
-     final authCode = serverAuth?.serverAuthCode;
-     await _sendAuthtoBackend(authCode);
-
-     final credential =
-     GoogleAuthProvider.credential(idToken: idToken);
-
-     final userCredential =
-     await _firebaseAuth.signInWithCredential(credential);
-
-     user = userCredential.user;
-     photoUrl = user?.photoURL;
-     profilename = user?.displayName;
-     email = user?.email;
-
-     notifyListeners();  // 🔥 এখন ProxyProvider নিশ্চিতভাবে trigger হবে
+       user = userCredential.user;
+       photoUrl = user?.photoURL;
+       profilename = user?.displayName;
+       email = user?.email;
+     } finally {
+       // ✅ সফল বা ব্যর্থ যাই হোক, loading বন্ধ
+       _isAuthenticating = false;
+       notifyListeners();
+     } // 🔥 এখন ProxyProvider নিশ্চিতভাবে trigger হবে
    }
 
 

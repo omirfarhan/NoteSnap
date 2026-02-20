@@ -147,79 +147,8 @@ class _CloudFilesState extends State<CloudFiles> {
                   },
                   child: const Text('Save Drive')
               ),
-              ElevatedButton(
-                  onPressed: () async{
-
-                    // Login complete হওয়ার পর user check করুন
-                    final googleUserId=await authprovider.googleuserId;
-
-                    print('google userId: === ${googleUserId}');
-                    
-                    if(googleUserId != null && googleUserId.isNotEmpty){
-
-                     try{
-                       final response = await http.post(
-                           Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/getRefreshToken'),
-                           headers: {'Content-Type': 'application/json'},
-                           body: jsonEncode({'userId': googleUserId})
-                       );
-
-                       if(response.statusCode == 200){
-                         final data=json.decode(response.body);
-                         final accesstoken=data['accessToken'];
-                         accessTokem=accesstoken;
-                         await loadDriveFile();
-
-                         print('your server accessToken is: $accessTokem');
-                       }else{
-                         print('backend Error');
-                       }
-
-                     }catch (error){
-                       print('server error: $error');
-                     }
-
-                    }else{
-                      print('please connect your account');
-                    }
 
 
-
-
-                    // final response=await http.post(
-                    //
-                    //   //https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/auth
-                    //   //ekhane test er jonne use: http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/auth
-                    //   Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/auth'),
-                    //   headers: {
-                    //     'Content-Type': 'application/json',
-                    //   },
-                    // );
-                    //
-                    // final consentUrl=jsonDecode(response.body)['consentUrl'];
-                    // final uri=Uri.parse(consentUrl);
-                    //  await launchUrl(
-                    //   uri,
-                    //   mode: LaunchMode.inAppBrowserView,
-                    // );
-
-                    // final response2=await http.post(
-                    //   Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/oauthCallback'),
-                    //   headers: {'Content-Type': 'application/json'},
-                    // );
-                    // print('Status: ${response2.statusCode}');
-                    // print('Body: ${response2.body}');
-
-
-                  },
-                  child: const Text('Server Response')
-              ),
-
-              ElevatedButton(onPressed: ()async{
-                //await getdriveStorage();
-                print('accessTOKEN value: ${authProviderr.accessToken}');
-                //print('percent value: ${percent}');
-              }, child: const Text('Storage Check')),
               Expanded(
                 child: ListView.builder(
 
