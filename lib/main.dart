@@ -73,14 +73,20 @@ class MainPage extends StatelessWidget {
 
 
         ),),
+
+        actions: [
+          IconButton(onPressed: (){
+            Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SettingsPage()
+                ));
+          }, icon: Icon(Icons.settings))
+        ],
       ),
 
       body: SafeArea(
         child: Center(
-          child: ElevatedButton(onPressed: () {
-            Navigator.of(context).pushNamed(SettingspageRoute);
-        
-          }, child: const Text('Settings')),
+
         ),
       ),
 

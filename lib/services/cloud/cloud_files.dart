@@ -33,7 +33,7 @@ class _CloudFilesState extends State<CloudFiles> {
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
   bool _wasDisconnected = false;
   late AuthProvider authProviderr;
-  bool isLoading = true;
+  bool isLoading = false;
 
   String? accessTokem;
    double? _percentvalue;
@@ -107,10 +107,7 @@ class _CloudFilesState extends State<CloudFiles> {
 
         body: SafeArea(
           child: Column(
-
-
             children: [
-
               ElevatedButton(
                   onPressed: () async{
 
@@ -148,43 +145,61 @@ class _CloudFilesState extends State<CloudFiles> {
                   child: const Text('Save Drive')
               ),
 
+              if(isLoading)
+                const Expanded(
+                    child:Center(
+                       child: SizedBox(
+                          width: 25,
+                          height: 25,
+                          child: CircularProgressIndicator(strokeWidth: 2,),
+                        ),
+                    ),
 
-              Expanded(
-                child: ListView.builder(
-
-                  itemCount: users.length,
-                    itemBuilder: (context, index) {
-                    final folder=users[index];
-                    return ListTile(
-                      leading: const Icon(Icons.folder),
-                      title: Text(users[index].name ?? 'Unknown' ),
-                      onTap: ()async{
-                        await _loadDrivefiless(folder.id!);
-                        print('folder id: ${folder.id}');
-                      },
-                    );
-                    },
-                ),
-              ),
-              if(filedata.isNotEmpty) ...[
-                const Divider(),
+                )
+              else ...[
                 Expanded(
+                  child: users.isEmpty ?
+                      const Center(
+                        child: Text(
+                          'No note is created',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white54
+                          ),
+                        ),
+                      )
+        :ListView.builder(
+                    itemCount: users.length,
+                    itemBuilder: (context, index) {
+                      final folder=users[index];
+                      return ListTile(
+                        leading: const Icon(Icons.folder),
+                        title: Text(users[index].name ?? 'Unknown' ),
+                        onTap: ()async{
+                          await _loadDrivefiless(folder.id!);
+                          print('folder id: ${folder.id}');
+                        },
+                      );
+                    },
+                  ),
+                ),
+                if(filedata.isNotEmpty) ...[
+                  const Divider(),
+                  Expanded(
                     child: ListView.builder(
-                        itemCount: filedata.length,
+                      itemCount: filedata.length,
                       itemBuilder: (context, index) {
                         final file = filedata[index];
                         return ListTile(
                           leading: const Icon(Icons.insert_drive_file),
                           title: Text(file.name?? 'Unnamed'),
                         );
-
                       },
                     ),
 
-                )
-
-              ]
-
+                  ),
+                ],
+              ],
 
             ],
           ),

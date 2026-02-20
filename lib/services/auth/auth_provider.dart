@@ -10,7 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
 class AuthProvider extends ChangeNotifier{
-   final GoogleSignIn googleSignInn=GoogleSignIn.instance;
+
+  final GoogleSignIn googleSignInn=GoogleSignIn.instance;
    String? driveAccessToken;
    bool _isAuthenticating=false;
    bool get isAuthenticating => _isAuthenticating;
@@ -189,6 +190,7 @@ class AuthProvider extends ChangeNotifier{
      }
       await googleSignInn.signOut();
       await _firebaseAuth.signOut();
+      _accessToken=null;
       user=null;
       photoUrl=null;
       profilename=null;
@@ -230,8 +232,9 @@ class AuthProvider extends ChangeNotifier{
          expiretime=DateTime.now().add(Duration(hours: 1));
          notifyListeners();
        }else{
-         print('backend Error');
+         return "Please signin your gmail!";
        }
+
      }on TimeoutException{
        return "Server is taking too long. Check your internet.";
      }on SocketException{
