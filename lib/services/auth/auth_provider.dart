@@ -19,6 +19,7 @@ class AuthProvider extends ChangeNotifier{
 
    String? _accessToken;
    String? get accessToken=> _accessToken;
+   DateTime? expiretime;
 
   final FirebaseAuth _firebaseAuth=FirebaseAuth.instance;
   String? photoUrl;
@@ -212,7 +213,7 @@ class AuthProvider extends ChangeNotifier{
    }
 
 
-   Future<void> getAccessTokenFromServer() async {
+   Future<String?> getAccessTokenFromServer() async {
      try{
        final response =await http.post(
            Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/getRefreshToken'),
@@ -223,16 +224,22 @@ class AuthProvider extends ChangeNotifier{
        if(response.statusCode == 200){
          final data= jsonDecode(response.body);
          _accessToken=data['accessToken'];
+
          print('your server accessToken is: $_accessToken');
+         expiretime=DateTime.now().add(Duration(hours: 1));
          notifyListeners();
        }else{
          print('backend Error');
        }
-
-     }catch (e){
-       print('server error: $e');
+     }on TimeoutException{
+       return "Server is taking too long. Check your internet.";
+     }on SocketException{
+       return "No internet connection";
+     } catch (e){
+       return "Something went wrong.";
      }
    }
+
 
 
 /*

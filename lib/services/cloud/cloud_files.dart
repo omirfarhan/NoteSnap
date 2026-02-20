@@ -1,5 +1,8 @@
 
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
@@ -27,6 +30,8 @@ class _CloudFilesState extends State<CloudFiles> {
   final uploadDriveFile=DriveHttpRequestToServer();
   final authprovider=AuthProvider();
 
+  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
+  bool _wasDisconnected = false;
   late AuthProvider authProviderr;
   bool isLoading = true;
 
@@ -46,7 +51,19 @@ class _CloudFilesState extends State<CloudFiles> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => _loadAccessToken());
+   Future.microtask(() => _loadAccessToken());
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
+      final isConnected = results.any((r) => r != ConnectivityResult.none);
+
+      if (!isConnected) {
+        // Net গেছে - track করো
+        _wasDisconnected = true;
+      } else if (isConnected && _wasDisconnected) {
+        // Net ফিরে এসেছে - reload করো
+        _wasDisconnected = false;
+        _loadAccessToken(); // ✅ Auto reload
+      }
+    });
   }
 
 
@@ -324,10 +341,14 @@ class _CloudFilesState extends State<CloudFiles> {
     });
 
     try {
-      await authProviderr.getAccessTokenFromServer(); // এই method provider এ রাখবে
+      final success= await authProviderr.getAccessTokenFromServer(); // এই method provider এ রাখবে
+      if(success!= null){
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+      }
       await getdriveStorage();
       await loadDriveFile();
-    } catch (e) {
+
+    }catch (e) {
       print("Error loading token: $e");
     }
 
@@ -339,6 +360,7 @@ class _CloudFilesState extends State<CloudFiles> {
 
   @override
   void dispose() {
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 
