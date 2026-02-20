@@ -1,7 +1,5 @@
 
 import 'dart:convert';
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
@@ -250,12 +248,12 @@ class _CloudFilesState extends State<CloudFiles> {
   }
 
   Future<void> _loadDrivefiless(String folderid)async{
-    if(accessTokem == null){
+    if(authProviderr.accessToken == null){
       print('please set accessToken');
     }
 
     final client=GoogleHttpClient({
-      'Authorization': 'Bearer $accessTokem',
+      'Authorization': 'Bearer ${authProviderr.accessToken}',
     });
 
     final filess=await uploadDriveFile.listFilesInFolder(client, folderid);
@@ -267,12 +265,12 @@ class _CloudFilesState extends State<CloudFiles> {
   }
 
   Future<void> loadDriveFile()async{
-    if(accessTokem == null){
+    if(authProviderr.accessToken == null){
       print('please set accessToken');
     }
 
     final client=GoogleHttpClient({
-      'Authorization': 'Bearer $accessTokem',
+      'Authorization': 'Bearer ${authProviderr.accessToken}',
     });
 
     final files=await uploadDriveFile.getappDataFile(client);
@@ -328,6 +326,7 @@ class _CloudFilesState extends State<CloudFiles> {
     try {
       await authProviderr.getAccessTokenFromServer(); // এই method provider এ রাখবে
       await getdriveStorage();
+      await loadDriveFile();
     } catch (e) {
       print("Error loading token: $e");
     }
