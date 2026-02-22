@@ -83,17 +83,63 @@ class MainPage extends StatelessWidget {
           }, icon: Icon(Icons.settings))
         ],
       ),
+      body: GridView(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2
 
-      body: SafeArea(
-        child: Center(
-
-        ),
+          ),
+          children: [
+      myGridview(1),
+      myGridview(2),
+      myGridview(3),
+      myGridview(4),
+      myGridview(5),
+      myGridview(6),
+      myGridview(7),
+      myGridview(8),
+      ],
       ),
 
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          print('Floating action button');
+        },
+        backgroundColor: Color(0xFF219BCB),
+        splashColor: Colors.transparent,
+        highlightElevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50)
+        ),
+        elevation: 0,
+        child: Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Color(0xFFFFFFFF),
+          ),
+          padding: const EdgeInsets.all(6),
+          child: const Icon(
+            Icons.add,
+            size: 35,
+            color: Color(0xFF219BCB),
+
+          ),
+        ),
+
+
+      ),
 
 
     );
   }
+}
+
+Widget myGridview(int index){
+  return Container(
+  margin: const EdgeInsets.all(8),
+    color: Color(0xFF61AEC8),
+    child: Text('$index'),
+  );
+
 }
 
 
