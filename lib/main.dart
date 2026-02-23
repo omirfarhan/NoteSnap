@@ -23,8 +23,18 @@ void main() async {
 }
 
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final List<String> imageList=[
+    'images/tree.jpg',
+    'images/tree.jpg'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -83,21 +93,44 @@ class MainPage extends StatelessWidget {
           }, icon: Icon(Icons.settings))
         ],
       ),
-      body: GridView(
+      body:Padding(
+        padding: const EdgeInsets.fromLTRB(0, 2, 0, 20),
+        child: GridView.builder(
+          itemCount: 10,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2
+            crossAxisCount: 2,
 
+            mainAxisSpacing: 8,
           ),
-          children: [
-      myGridview(1),
-      myGridview(2),
-      myGridview(3),
-      myGridview(4),
-      myGridview(5),
-      myGridview(6),
-      myGridview(7),
-      myGridview(8),
-      ],
+          itemBuilder: (context,int index) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              child: Container(
+                color: Color(0xFF4CA0BC),
+                child: Column(
+
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: 100,
+                      decoration:  BoxDecoration(
+                          image: DecorationImage(image: NetworkImage('https://thumb.photo-ac.com/98/98328339ce5727d17948b5722e2d804b_w.jpeg'),
+                            fit: BoxFit.cover,)
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 5,
+                    )
+
+
+
+
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
 
       floatingActionButton: FloatingActionButton(
@@ -133,13 +166,7 @@ class MainPage extends StatelessWidget {
   }
 }
 
-Widget myGridview(int index){
-  return Container(
-  margin: const EdgeInsets.all(8),
-    color: Color(0xFF61AEC8),
-    child: Text('$index'),
-  );
 
-}
+
 
 
