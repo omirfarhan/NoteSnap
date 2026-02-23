@@ -23,18 +23,8 @@ void main() async {
 }
 
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  final List<String> imageList=[
-    'images/tree.jpg',
-    'images/tree.jpg'
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +38,9 @@ class _MyAppState extends State<MyApp> {
         CloudFilesRoute: (context) => const CloudFiles()
       },
 
+      //0xFF239AC4
       theme: ThemeData(
-        scaffoldBackgroundColor: Color(0xFF239AC4), //Full app background color set
+        scaffoldBackgroundColor: Color(0xFF137FA5), //Full app background color set
         appBarTheme: AppBarTheme(
 
           backgroundColor: Color(0xFF137FA5),
@@ -68,10 +59,11 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-
 class MainPage extends StatelessWidget {
   const MainPage({super.key});
 
+  final imageUrl='https://thumb.photo-ac.com/98/98328339ce5727d17948b5722e2d804b_w.jpeg';
+  //https://thumb.photo-ac.com/98/98328339ce5727d17948b5722e2d804b_w.jpeg
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,45 +85,102 @@ class MainPage extends StatelessWidget {
           }, icon: Icon(Icons.settings))
         ],
       ),
-      body:Padding(
-        padding: const EdgeInsets.fromLTRB(0, 2, 0, 20),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
         child: GridView.builder(
-          itemCount: 10,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
 
-            mainAxisSpacing: 8,
-          ),
-          itemBuilder: (context,int index) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 5),
-              child: Container(
-                color: Color(0xFF4CA0BC),
-                child: Column(
+                itemCount: 10,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 5,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: imageUrl != null && imageUrl.isNotEmpty
+                    ? 0.9
+                    :1.4
+                ),
+                itemBuilder: (context,int index) {
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(5, 0, 5, 5),
+                    child: Container(
+                      decoration: BoxDecoration(
 
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      height: 100,
-                      decoration:  BoxDecoration(
-                          image: DecorationImage(image: NetworkImage('https://thumb.photo-ac.com/98/98328339ce5727d17948b5722e2d804b_w.jpeg'),
-                            fit: BoxFit.cover,)
+                          color: Color(0xFF50A5C2),
+                        borderRadius: BorderRadius.circular(5)
+                      ),
+                      clipBehavior: Clip.hardEdge,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if(imageUrl != null && imageUrl.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(5, 8, 5, 3),
+                              child: Container(
+                                width: double.infinity,
+                                height: 70,
+                                decoration:  BoxDecoration(
+                                    image: DecorationImage(image: NetworkImage(imageUrl),
+                                      fit: BoxFit.cover,)
+                                ),
+                              ),
+                            ),
+
+
+                             Expanded(
+                               child: Padding(
+                                padding: const EdgeInsets.fromLTRB(5, 0, 5, 0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('The note app title is the day',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: Color(0xFFDBF5FB)
+                                      ),
+                                    ),
+                                     Expanded(
+                                       child: Text('The note app more is ready when the data is coming the ready to gap format',
+                                         style: TextStyle(
+                                           color:Color(0xFFDBF5FB).withOpacity(0.9),
+                                           fontSize: 12
+                                         ),
+
+                                       ),
+                                     ),
+                                    Row(
+                                      children: [
+                                        Text('22 Feb, 2026', style: TextStyle(
+                                          color: Color(0xFFDBF5FB),
+                                          fontSize: 12, fontWeight: FontWeight.w800
+                                        ),)
+                                      ],
+                                    )
+
+
+                                  ],
+                                ),
+                                                           ),
+                             ),
+
+
+
+
+
+
+
+                        ],
                       ),
                     ),
-                    const SizedBox(
-                      height: 5,
-                    )
-
-
-
-
-                  ],
-                ),
+                  );
+                },
               ),
-            );
-          },
-        ),
       ),
+
+
+
 
       floatingActionButton: FloatingActionButton(
         onPressed: () {
