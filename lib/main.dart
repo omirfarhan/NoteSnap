@@ -5,6 +5,7 @@ import 'package:notes/constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 
 import 'package:notes/services/cloud/cloud_files.dart';
+import 'package:notes/ui/create_note.dart';
 import 'package:notes/ui/settings_page.dart';
 import 'package:provider/provider.dart';
 
@@ -34,7 +35,8 @@ class MyApp extends StatelessWidget {
       home: const MainPage(),
       routes: {
         SettingspageRoute: (context) => const SettingsPage(),
-        CloudFilesRoute: (context) => const CloudFiles()
+        CloudFilesRoute: (context) => const CloudFiles(),
+        CreateNoteRoute: (context) => const CreateNote()
       },
       //0xFF239AC4
       theme: ThemeData(
@@ -73,12 +75,19 @@ class MainPage extends StatelessWidget {
         ),),
 
         actions: [
+
+          IconButton(onPressed: (){
+
+          }, icon: Icon(Icons.folder_copy_outlined)),
+
+
           IconButton(onPressed: (){
             Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => SettingsPage()
                 ));
-          }, icon: Icon(Icons.settings))
+          }, icon: Icon(Icons.settings)),
+
         ],
       ),
       body: Padding(
@@ -230,6 +239,7 @@ class MainPage extends StatelessWidget {
 
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          Navigator.of(context).pushNamed(CreateNoteRoute);
           print('Floating action button');
         },
         backgroundColor: Color(0xFF219BCB),
