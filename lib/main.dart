@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:notes/constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 
@@ -29,20 +30,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-
       title: 'Note App',
       home: const MainPage(),
-
       routes: {
         SettingspageRoute: (context) => const SettingsPage(),
         CloudFilesRoute: (context) => const CloudFiles()
       },
-
       //0xFF239AC4
       theme: ThemeData(
         scaffoldBackgroundColor: Color(0xFF137FA5), //Full app background color set
         appBarTheme: AppBarTheme(
-
           backgroundColor: Color(0xFF137FA5),
           titleTextStyle: TextStyle(
               color: Colors.white,
@@ -69,11 +66,10 @@ class MainPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         //backgroundColor: Color(0xFF137FA5),
-        title: const Text('Home Page',
+        title: const Text('Note storage',
         style: TextStyle(
-          fontFamily: 'Regular',
-
-
+          fontFamily: 'Fredoka',
+          fontWeight: FontWeight.w600
         ),),
 
         actions: [
@@ -86,17 +82,64 @@ class MainPage extends StatelessWidget {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
-        child: GridView.builder(
+        padding: const EdgeInsets.fromLTRB(10, 5, 10, 0),
+        child: Column(
+          children: [
+            TextField(
+              autocorrect: false,
+              enableSuggestions: false,
+              spellCheckConfiguration: SpellCheckConfiguration.disabled(),
+              cursorColor: Color(0xFFC8E1E4),
+              style: TextStyle(
+                color: Color(0xFFC8E1E4),
+                fontSize: 14,
 
+
+              ),
+              decoration: InputDecoration(
+                prefixIcon: Icon(FontAwesomeIcons.magnifyingGlass, 
+                  color: Color(0xFFB8E2E8),size: 16,
+                ),
+                fillColor: Color(0xFF0B7197),
+                filled: true,
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+                prefixIconConstraints: BoxConstraints(minHeight: 38,minWidth: 38),
+                hintText: 'Search notes...',
+                hintStyle: TextStyle(
+                  color: Color(0xFFC8E1E4),
+                  fontSize: 12,
+                  fontFamily: 'Fredoka',
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(50),
+                  borderSide: BorderSide(color: Color(0xFFC6E1E5)),
+                ),
+
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(50),
+                  borderSide: BorderSide(color: Color(0xFFC6E1E5)),
+
+                )
+              
+              ),
+
+            ),
+
+            const SizedBox(
+              height: 18,
+            ),
+            Expanded(
+              child: GridView.builder(
                 itemCount: 10,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 5,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: imageUrl != null && imageUrl.isNotEmpty
-                    ? 0.9
-                    :1.4
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 5,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: imageUrl.isNotEmpty
+                        ? 0.9
+                        :1.4
                 ),
                 itemBuilder: (context,int index) {
                   return Padding(
@@ -104,15 +147,15 @@ class MainPage extends StatelessWidget {
                     child: Container(
                       decoration: BoxDecoration(
 
-                          color: Color(0xFF50A5C2),
-                        borderRadius: BorderRadius.circular(5)
+                          color: Color(0xFF58B4D3),
+                          borderRadius: BorderRadius.circular(5)
                       ),
                       clipBehavior: Clip.hardEdge,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if(imageUrl != null && imageUrl.isNotEmpty)
+                          if(imageUrl.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.fromLTRB(5, 8, 5, 3),
                               child: Container(
@@ -126,59 +169,62 @@ class MainPage extends StatelessWidget {
                             ),
 
 
-                             Expanded(
-                               child: Padding(
-                                padding: const EdgeInsets.fromLTRB(5, 0, 5, 0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('The note app title is the day',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(5, 0, 5, 0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('The note app title is the day',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontFamily: 'Fredoka',
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
                                         color: Color(0xFFDBF5FB)
-                                      ),
                                     ),
-                                     Expanded(
-                                       child: Text('The note app more is ready when the data is coming the ready to gap format',
-                                         style: TextStyle(
-                                           color:Color(0xFFDBF5FB).withOpacity(0.9),
-                                           fontSize: 12
-                                         ),
+                                  ),
+                                  Expanded(
+                                    child: Text('The note app more is ready when the data is coming the ready to gap format the ready method pixel',
+                                      style: TextStyle(
+                                        color:Color(0xFFDBF5FB),
+                                        fontFamily: 'Fredoka',
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: 12,
+                                        height: 1.2,
 
-                                       ),
-                                     ),
-                                    Row(
-                                      children: [
-                                        Text('22 Feb, 2026', style: TextStyle(
+                                      ),
+                                      maxLines: 4,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      Text('22 Feb, 2026', style: TextStyle(
                                           color: Color(0xFFDBF5FB),
-                                          fontSize: 12, fontWeight: FontWeight.w800
-                                        ),)
-                                      ],
-                                    )
+                                          fontSize: 10,
+                                          fontFamily: 'Fredoka',
+                                          fontWeight: FontWeight.w600
+                                      ),)
+                                    ],
+                                  )
 
 
-                                  ],
-                                ),
-                                                           ),
-                             ),
-
-
-
-
-
-
-
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   );
                 },
               ),
+            ),
+          ],
+        ),
       ),
-
 
 
 
