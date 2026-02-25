@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import 'package:sqflite/sqflite.dart';
@@ -11,12 +14,131 @@ class CouldNotDeleteUser implements Exception {}
 class userAlreadyExists implements Exception {}
 class CouldnotFindUser implements Exception {}
 class CouldNotFindFolder implements Exception {}
+class CouldNotdeleteNote implements Exception {}
+class CouldNotFindNote implements Exception {}
+class CouldNotUpdateNote implements Exception {}
+class Databaseallreadyopen implements Exception {}
 
 
 class NotesService {
   Database? _db;
+  List<DatabaseNote> _notes= [];
+  List<Map<String, dynamic>>noteContent=[];
 
+  final _noteStreamController=StreamController<List<DatabaseNote>>.broadcast();
+
+  Future<void> _ensureDbisOpen()async{
+    try{
+      await open();
+    }on Databaseallreadyopen{
+    }
+  }
+
+  Future<void> getCacheNote()async{
+    final allNotes=await getallNotes();
+    _notes=allNotes.toList();
+    _noteStreamController.add(_notes);
+  }
+
+  Future<Folder> getOrCreateFolder({ required String foldername})async{
+    try{
+      final folder=await getFolder(foldername: foldername);
+      return folder;
+    }on CouldNotFindFolder{
+      final createdFolder=await createFolder(foldername: foldername);
+      return createdFolder;
+    }catch (e){
+      rethrow;
+    }
+  }
+
+  Future<DatabaseNote> updateNote({
+    required DatabaseNote note,
+    required String text,
+  })async{
+    await _ensureDbisOpen();
+    final db=_getDatabaseorThrow();
+    final updateContent=jsonEncode(noteContent);
+    await getNote(id: note.id);
+
+    final updateCount=await db.update(noteTable, {
+      titleColumn: text,
+      contentColumn: updateContent
+    });
+
+    if(updateCount == 0){
+      throw CouldNotUpdateNote();
+    }else{
+      final updateNote=await getNote(id: note.id);
+      _notes.removeWhere((note)=> note.id==updateNote.id);
+      _notes.add(updateNote);
+      return updateNote;
+    }
+
+
+  }
+
+  Future<Iterable<DatabaseNote>> getallNotes()async{
+    await _ensureDbisOpen();
+    final db=_getDatabaseorThrow();
+    final notes= await db.query(noteTable);
+    return notes.map((noteRow) => DatabaseNote.fromRow(noteRow));
+  }
+
+  Future<DatabaseNote> getNote({required int id})async{
+    await _ensureDbisOpen();
+    final db=_getDatabaseorThrow();
+    final notes=await db.query(noteTable, limit: 1,  where: 'id = ? ', whereArgs: [id]);
+
+    if(notes.isEmpty){
+      throw CouldNotFindNote();
+    }else{
+      final note=DatabaseNote.fromRow(notes.first);
+      _notes.removeWhere((note) => note.id ==id);
+      _notes.add(note);
+      _noteStreamController.add(_notes);
+      return note;
+    }
+
+
+  }
+
+  //kisu baki ase
+  Future<int> deleteAllNotes()async{
+    await _ensureDbisOpen();
+    final db= _getDatabaseorThrow();
+    final numberofDeletetions= await db.delete(noteTable);
+    _notes=[];
+    //stream controller use
+    return numberofDeletetions;
+  }
+  //kisu baki ase
+  Future<void> deleteNote({required int id})async{
+    await _ensureDbisOpen();
+    final db=_getDatabaseorThrow();
+    final deleteCount=await db.delete(
+     noteTable,
+      where: ' id = ? ',
+      whereArgs: [id]
+    );
+    if(deleteCount == 0){
+      throw CouldNotdeleteNote();
+    }else{
+      _notes.removeWhere((note)=> note.id ==id);
+      //notesStreamController add korte hobe
+    }
+
+  }
+
+  //image tao add korte hobe
+  void addText(String text){
+    noteContent.add({
+      "type": "text",
+      "value": text
+    });
+  }
   Future<DatabaseNote> createNote({required Folder owner})async{
+    await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
     final dbFolder=await getFolder(foldername: owner.foldername);
 
@@ -29,12 +151,24 @@ class NotesService {
       noteTable,{
       folderIdColumn: owner.id,
       titleColumn: text,
-     // contentColumn:
+      contentColumn:jsonEncode(noteContent)
     });
 
+    final note=DatabaseNote(
+        id: noteid,
+        userId: owner.id,
+        title: text,
+        content: jsonEncode(noteContent)
+    );
+
+    _notes.add(note);
+    //streamController use korte hobe
+
+    return note;
   }
 
   Future<Folder> getFolder({required String foldername})async{
+    await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
     final result=await db.query(
         folderTable,
@@ -50,6 +184,7 @@ class NotesService {
   }
 
   Future<Folder> createFolder({required String foldername})async{
+    await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
     final results=await db.query(
         folderTable,limit: 1,
@@ -65,7 +200,8 @@ class NotesService {
     return Folder(id: folderId, foldername: foldername);
   }
 
-  Future<void> deleteUser({required String foldername})async{
+  Future<void> deleteFolder({required String foldername})async{
+    await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
     final deleteAccount= await db.delete(
         folderTable,where: 'foldername = ?',
