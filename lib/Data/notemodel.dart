@@ -6,13 +6,15 @@ class Notemodel {
   //DateTime updatedAt;
   List<String> imagesPath;
 
+
   Notemodel({
     required this.id,
     required this.title,
     required this.text,
     //required this.createdAt,
     //required this.updatedAt,
-    required this.imagesPath
+    required this.imagesPath,
+
 });
 
 
