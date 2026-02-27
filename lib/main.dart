@@ -5,6 +5,7 @@ import 'package:notes/constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 
 import 'package:notes/services/cloud/cloud_files.dart';
+import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/create_note.dart';
 import 'package:notes/ui/settings_page.dart';
 import 'package:provider/provider.dart';
@@ -45,7 +46,9 @@ class MyApp extends StatelessWidget {
           backgroundColor: Color(0xFF137FA5),
           titleTextStyle: TextStyle(
               color: Colors.white,
-              fontSize: 18
+              fontSize: 18,
+              fontFamily: 'Fredoka',
+              fontWeight: FontWeight.w600
           ),
           iconTheme: IconThemeData(
               color: Colors.white
@@ -58,10 +61,27 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MainPage extends StatelessWidget {
+class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
+  @override
+  State<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+  late final NotesService _notesService;
+
+  @override
+  void initState() {
+    super.initState();
+    _notesService=NotesService();
+    _notesService.open(); // এখানে open করুন
+  }
+
+
+
   final imageUrl='https://thumb.photo-ac.com/98/98328339ce5727d17948b5722e2d804b_w.jpeg';
+
   //https://thumb.photo-ac.com/98/98328339ce5727d17948b5722e2d804b_w.jpeg
   @override
   Widget build(BuildContext context) {
@@ -69,15 +89,12 @@ class MainPage extends StatelessWidget {
       appBar: AppBar(
         //backgroundColor: Color(0xFF137FA5),
         title: const Text('Note storage',
-        style: TextStyle(
-          fontFamily: 'Fredoka',
-          fontWeight: FontWeight.w600
-        ),),
+        ),
 
         actions: [
 
           IconButton(onPressed: (){
-
+            _notesService.debugPrintAllNotes();
           }, icon: Icon(Icons.folder_copy_outlined)),
 
 
@@ -106,7 +123,7 @@ class MainPage extends StatelessWidget {
 
               ),
               decoration: InputDecoration(
-                prefixIcon: Icon(FontAwesomeIcons.magnifyingGlass, 
+                prefixIcon: Icon(FontAwesomeIcons.magnifyingGlass,
                   color: Color(0xFFB8E2E8),size: 16,
                 ),
                 fillColor: Color(0xFF0B7197),
@@ -131,7 +148,7 @@ class MainPage extends StatelessWidget {
                   borderSide: BorderSide(color: Color(0xFFC6E1E5)),
 
                 )
-              
+
               ),
 
             ),
@@ -140,96 +157,117 @@ class MainPage extends StatelessWidget {
               height: 18,
             ),
             Expanded(
-              child: GridView.builder(
-                itemCount: 10,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 5,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: imageUrl.isNotEmpty
-                        ? 0.9
-                        :1.4
-                ),
-                itemBuilder: (context,int index) {
+              child: StreamBuilder<List<DatabaseNote>>(
+                stream: _notesService.allNotes,
+                builder: (context, snapshot) {
+                  switch(snapshot.connectionState){
+                    case ConnectionState.waiting:
+                    case ConnectionState.active:
+                      if(snapshot.hasData){
+                        final notes=snapshot.data!;
+                        return GridView.builder(
+                  itemCount: notes.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 5,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: imageUrl.isNotEmpty
+                  ? 0.9
+                      :1.4
+                  ),
+                  itemBuilder: (context, index) {
+                  final note=notes[index];
                   return Padding(
-                    padding: const EdgeInsets.fromLTRB(5, 0, 5, 5),
-                    child: Container(
-                      decoration: BoxDecoration(
+                  padding: const EdgeInsets.fromLTRB(5, 0, 5, 5),
+                  child: Container(
+                  decoration: BoxDecoration(
 
-                          color: Color(0xFF58B4D3),
-                          borderRadius: BorderRadius.circular(5)
-                      ),
-                      clipBehavior: Clip.hardEdge,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if(imageUrl.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(5, 8, 5, 3),
-                              child: Container(
-                                width: double.infinity,
-                                height: 70,
-                                decoration:  BoxDecoration(
-                                    image: DecorationImage(image: NetworkImage(imageUrl),
-                                      fit: BoxFit.cover,)
-                                ),
-                              ),
-                            ),
-
-
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(5, 0, 5, 0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('The note app title is the day',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                        fontFamily: 'Fredoka',
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
-                                        color: Color(0xFFDBF5FB)
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text('The note app more is ready when the data is coming the ready to gap format the ready method pixel',
-                                      style: TextStyle(
-                                        color:Color(0xFFDBF5FB),
-                                        fontFamily: 'Fredoka',
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 12,
-                                        height: 1.2,
-
-                                      ),
-                                      maxLines: 4,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text('22 Feb, 2026', style: TextStyle(
-                                          color: Color(0xFFDBF5FB),
-                                          fontSize: 10,
-                                          fontFamily: 'Fredoka',
-                                          fontWeight: FontWeight.w600
-                                      ),)
-                                    ],
-                                  )
+                  color: Color(0xFF58B4D3),
+                  borderRadius: BorderRadius.circular(5)
+                  ),
+                  clipBehavior: Clip.hardEdge,
+                  child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                  if(imageUrl.isNotEmpty)
+                  Padding(
+                  padding: const EdgeInsets.fromLTRB(5, 8, 5, 3),
+                  child: Container(
+                  width: double.infinity,
+                  height: 70,
+                  decoration:  BoxDecoration(
+                  image: DecorationImage(image: NetworkImage(imageUrl),
+                  fit: BoxFit.cover,)
+                  ),
+                  ),
+                  ),
 
 
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  Expanded(
+                  child: Padding(
+                  padding: const EdgeInsets.fromLTRB(5, 0, 5, 0),
+                  child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                  Text(note.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                  fontFamily: 'Fredoka',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  color: Color(0xFFDBF5FB)
+                  ),
+                  ),
+                  Expanded(
+                  child: Text('description',
+                  style: TextStyle(
+                  color:Color(0xFFDBF5FB),
+                  fontFamily: 'Fredoka',
+                  fontWeight: FontWeight.w400,
+                  fontSize: 12,
+                  height: 1.2,
+
+                  ),
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  ),
+                  ),
+                  Row(
+                  children: [
+                  Text('22 Feb, 2026', style: TextStyle(
+                  color: Color(0xFFDBF5FB),
+                  fontSize: 10,
+                  fontFamily: 'Fredoka',
+                  fontWeight: FontWeight.w600
+                  ),)
+                  ],
+                  )
+
+
+                  ],
+                  ),
+                  ),
+                  ),
+                  ],
+                  ),
+                  ),
                   );
+                  },
+                  );
+
+                      }else{
+                        return const Center(child: Text('No notes yet'),);
+                      }
+                    default:
+                      return const Center(child: CircularProgressIndicator(),);
+
+                  }
                 },
-              ),
+              )
+
+
             ),
           ],
         ),

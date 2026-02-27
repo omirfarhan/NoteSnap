@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-
+import 'package:notes/extensions/list.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
@@ -18,34 +18,77 @@ class CouldNotdeleteNote implements Exception {}
 class CouldNotFindNote implements Exception {}
 class CouldNotUpdateNote implements Exception {}
 class Databaseallreadyopen implements Exception {}
-
+class UserShouldBeSetBeforeReadingAllNotes implements Exception {}
 
 class NotesService {
   Database? _db;
+  Folder? _folder;
   List<DatabaseNote> _notes= [];
   List<Map<String, dynamic>>noteContent=[];
 
-  final _noteStreamController=StreamController<List<DatabaseNote>>.broadcast();
+  late final StreamController<List<DatabaseNote>> _noteStreamController;
+
+  static final NotesService _shared = NotesService._shareInstance();
+  NotesService._shareInstance() {
+    _noteStreamController=StreamController<List<DatabaseNote>>.broadcast(
+        onListen: () {
+          _noteStreamController.sink.add(_notes);
+        },
+    );
+  }
+
+  factory NotesService() => _shared;
+
+
+  Stream<List<DatabaseNote>> get allNotes =>
+  _noteStreamController.stream.filter((note){
+    final currentfolder=_folder;
+    if(currentfolder != null){
+      return note.userId==currentfolder.id;
+    }else{
+      throw UserShouldBeSetBeforeReadingAllNotes();
+    }
+
+  });
+
 
   Future<void> _ensureDbisOpen()async{
     try{
       await open();
-    }on Databaseallreadyopen{
+    }on DatabaseAlreadyopenException{
     }
   }
 
-  Future<void> getCacheNote()async{
+  Future<void> _cacheNote()async{
     final allNotes=await getallNotes();
     _notes=allNotes.toList();
     _noteStreamController.add(_notes);
   }
 
-  Future<Folder> getOrCreateFolder({ required String foldername})async{
+
+  Future<void> debugPrintAllNotes() async {
+    await _ensureDbisOpen(); // এই লাইনটা যোগ করুন
+    final db = _getDatabaseorThrow();
+    final result = await db.query(noteTable);
+    print(result);
+  }
+
+  Future<Folder> getOrCreateFolder({
+    required String foldername,
+    bool setCurrentFolder=true
+  })async{
     try{
       final folder=await getFolder(foldername: foldername);
+      if(setCurrentFolder){
+        _folder=folder;
+      }
       return folder;
+
     }on CouldNotFindFolder{
       final createdFolder=await createFolder(foldername: foldername);
+      if(setCurrentFolder){
+        _folder=createdFolder;
+      }
       return createdFolder;
     }catch (e){
       rethrow;
@@ -58,13 +101,17 @@ class NotesService {
   })async{
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
-    final updateContent=jsonEncode(noteContent);
+
     await getNote(id: note.id);
 
     final updateCount=await db.update(noteTable, {
       titleColumn: text,
-      contentColumn: updateContent
-    });
+      contentColumn: text
+          //jsonEncode(noteContent)
+    },
+      where: 'id = ?',
+      whereArgs: [note.id],
+    );
 
     if(updateCount == 0){
       throw CouldNotUpdateNote();
@@ -72,6 +119,7 @@ class NotesService {
       final updateNote=await getNote(id: note.id);
       _notes.removeWhere((note)=> note.id==updateNote.id);
       _notes.add(updateNote);
+      _noteStreamController.add(_notes);
       return updateNote;
     }
 
@@ -110,6 +158,7 @@ class NotesService {
     final numberofDeletetions= await db.delete(noteTable);
     _notes=[];
     //stream controller use
+    _noteStreamController.add(_notes);
     return numberofDeletetions;
   }
   //kisu baki ase
@@ -125,7 +174,7 @@ class NotesService {
       throw CouldNotdeleteNote();
     }else{
       _notes.removeWhere((note)=> note.id ==id);
-      //notesStreamController add korte hobe
+      _noteStreamController.add(_notes);
     }
 
   }
@@ -138,9 +187,12 @@ class NotesService {
     });
   }
   Future<DatabaseNote> createNote({required Folder owner})async{
+    noteContent=[];
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
+
     final dbFolder=await getFolder(foldername: owner.foldername);
+    print('Found folder: ${dbFolder.id} - ${dbFolder.foldername}');
 
     if(dbFolder != owner){
       throw CouldNotFindFolder();
@@ -154,6 +206,7 @@ class NotesService {
       contentColumn:jsonEncode(noteContent)
     });
 
+    print('Inserted note with id: $noteid');
     final note=DatabaseNote(
         id: noteid,
         userId: owner.id,
@@ -162,7 +215,7 @@ class NotesService {
     );
 
     _notes.add(note);
-    //streamController use korte hobe
+    _noteStreamController.add(_notes);
 
     return note;
   }
@@ -176,9 +229,9 @@ class NotesService {
         where: 'foldername = ?',
         whereArgs: [foldername.toLowerCase()]
     );
-    if(result.isEmpty){
-      throw CouldnotFindUser();
-    }else{
+    if (result.isEmpty) {
+      throw CouldNotFindFolder(); // CouldnotFindUser থেকে change করুন
+    } else {
       return Folder.fromRow(result.first);
     }
   }
@@ -241,7 +294,7 @@ class NotesService {
 
       await db.execute(CreateFolderTable);
       await db.execute(createNoteTable);
-
+      await _cacheNote();
     }on MissingPlatformDirectoryException{
       throw UnabletoGetDocuments();
     }
@@ -328,8 +381,8 @@ const createNoteTable='''CREATE TABLE IF NOT EXISTS "note" (
 const idColumn='id';
 const nameColumn='foldername';
 const folderIdColumn='user_id';
-const titleColumn='titlecolumn';
+const titleColumn='title';
 const contentColumn='content';
 const dbname='note.db';
-const folderTable='folder';
+const folderTable='user';
 const noteTable='note';
