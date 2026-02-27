@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:googleapis/shared.dart';
 import 'package:notes/constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 
@@ -70,15 +71,29 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   late final NotesService _notesService;
+  bool _isready=false;
+
 
   @override
   void initState() {
     super.initState();
     _notesService=NotesService();
-    _notesService.open(); // এখানে open করুন
+    //_notesService.open();
+    //_openDb();
   }
 
-
+  Future<void> _openDb() async {
+    await _notesService.open();
+    await _notesService.getOrCreateFolder(foldername: 'all');
+    // setState(() {
+    //   _isready = true;
+    // });
+  }
+  @override
+  void dispose() {
+    _notesService.close();
+    super.dispose();
+  }
 
   final imageUrl='https://thumb.photo-ac.com/98/98328339ce5727d17948b5722e2d804b_w.jpeg';
 
@@ -157,114 +172,124 @@ class _MainPageState extends State<MainPage> {
               height: 18,
             ),
             Expanded(
-              child: StreamBuilder<List<DatabaseNote>>(
-                stream: _notesService.allNotes,
-                builder: (context, snapshot) {
-                  switch(snapshot.connectionState){
-                    case ConnectionState.waiting:
-                    case ConnectionState.active:
-                      if(snapshot.hasData){
-                        final notes=snapshot.data!;
-                        return GridView.builder(
-                  itemCount: notes.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 5,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: imageUrl.isNotEmpty
-                  ? 0.9
-                      :1.4
-                  ),
-                  itemBuilder: (context, index) {
-                  final note=notes[index];
-                  return Padding(
-                  padding: const EdgeInsets.fromLTRB(5, 0, 5, 5),
-                  child: Container(
-                  decoration: BoxDecoration(
+              child:FutureBuilder(
+                  future: _notesService.getOrCreateFolder(foldername: 'all'),
+                  builder: (context, snapshot) {
+                    switch(snapshot.connectionState){
+                      case ConnectionState.done:
+                        return  StreamBuilder<List<DatabaseNote>>(
+                          stream: _notesService.allNotes,
+                          builder: (context, snapshot) {
+                            switch(snapshot.connectionState){
+                              case ConnectionState.waiting:
+                              case ConnectionState.active:
+                                if(snapshot.hasData){
+                                  final notes=snapshot.data!;
+                                  return GridView.builder(
+                                    itemCount: notes.length,
+                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        mainAxisSpacing: 5,
+                                        crossAxisSpacing: 10,
+                                        childAspectRatio: imageUrl.isNotEmpty
+                                            ? 0.9
+                                            :1.4
+                                    ),
+                                    itemBuilder: (context, index) {
+                                      final note=notes[index];
+                                      return Padding(
+                                        padding: const EdgeInsets.fromLTRB(5, 0, 5, 5),
+                                        child: Container(
+                                          decoration: BoxDecoration(
 
-                  color: Color(0xFF58B4D3),
-                  borderRadius: BorderRadius.circular(5)
-                  ),
-                  clipBehavior: Clip.hardEdge,
-                  child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                  if(imageUrl.isNotEmpty)
-                  Padding(
-                  padding: const EdgeInsets.fromLTRB(5, 8, 5, 3),
-                  child: Container(
-                  width: double.infinity,
-                  height: 70,
-                  decoration:  BoxDecoration(
-                  image: DecorationImage(image: NetworkImage(imageUrl),
-                  fit: BoxFit.cover,)
-                  ),
-                  ),
-                  ),
-
-
-                  Expanded(
-                  child: Padding(
-                  padding: const EdgeInsets.fromLTRB(5, 0, 5, 0),
-                  child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                  Text(note.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                  fontFamily: 'Fredoka',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: Color(0xFFDBF5FB)
-                  ),
-                  ),
-                  Expanded(
-                  child: Text('description',
-                  style: TextStyle(
-                  color:Color(0xFFDBF5FB),
-                  fontFamily: 'Fredoka',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 12,
-                  height: 1.2,
-
-                  ),
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  ),
-                  ),
-                  Row(
-                  children: [
-                  Text('22 Feb, 2026', style: TextStyle(
-                  color: Color(0xFFDBF5FB),
-                  fontSize: 10,
-                  fontFamily: 'Fredoka',
-                  fontWeight: FontWeight.w600
-                  ),)
-                  ],
-                  )
+                                              color: Color(0xFF58B4D3),
+                                              borderRadius: BorderRadius.circular(5)
+                                          ),
+                                          clipBehavior: Clip.hardEdge,
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              if(imageUrl.isNotEmpty)
+                                                Padding(
+                                                  padding: const EdgeInsets.fromLTRB(5, 8, 5, 3),
+                                                  child: Container(
+                                                    width: double.infinity,
+                                                    height: 70,
+                                                    decoration:  BoxDecoration(
+                                                        image: DecorationImage(image: NetworkImage(imageUrl),
+                                                          fit: BoxFit.cover,)
+                                                    ),
+                                                  ),
+                                                ),
 
 
-                  ],
-                  ),
-                  ),
-                  ),
-                  ],
-                  ),
-                  ),
-                  );
+                                              Expanded(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.fromLTRB(5, 0, 5, 0),
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(note.title,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: TextStyle(
+                                                            fontFamily: 'Fredoka',
+                                                            fontWeight: FontWeight.w600,
+                                                            fontSize: 13,
+                                                            color: Color(0xFFDBF5FB)
+                                                        ),
+                                                      ),
+                                                      Expanded(
+                                                        child: Text('description',
+                                                          style: TextStyle(
+                                                            color:Color(0xFFDBF5FB),
+                                                            fontFamily: 'Fredoka',
+                                                            fontWeight: FontWeight.w400,
+                                                            fontSize: 12,
+                                                            height: 1.2,
+
+                                                          ),
+                                                          maxLines: 4,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                      Row(
+                                                        children: [
+                                                          Text('22 Feb, 2026', style: TextStyle(
+                                                              color: Color(0xFFDBF5FB),
+                                                              fontSize: 10,
+                                                              fontFamily: 'Fredoka',
+                                                              fontWeight: FontWeight.w600
+                                                          ),)
+                                                        ],
+                                                      )
+
+
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+
+                                }else{
+                                  return const Center(child: Text(''),);
+                                }
+                              default:
+                                return const Center(child: CircularProgressIndicator(),);
+
+                            }
+                          },
+                        );
+                      default:
+                        return const CircularProgressIndicator();
+                    }
                   },
-                  );
-
-                      }else{
-                        return const Center(child: Text('No notes yet'),);
-                      }
-                    default:
-                      return const Center(child: CircularProgressIndicator(),);
-
-                  }
-                },
               )
 
 

@@ -101,7 +101,7 @@ class NotesService {
   })async{
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
-
+    print('Updating note ${note.id} with text: $text'); // এখানে
     await getNote(id: note.id);
 
     final updateCount=await db.update(noteTable, {
@@ -112,7 +112,7 @@ class NotesService {
       where: 'id = ?',
       whereArgs: [note.id],
     );
-
+    print('Update count: $updateCount'); // এখানে
     if(updateCount == 0){
       throw CouldNotUpdateNote();
     }else{

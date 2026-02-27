@@ -15,7 +15,7 @@ class _CreateNoteState extends State<CreateNote> {
   late final NotesService _notesService;
   late final TextEditingController _textEditingController;
 
-  late Future<DatabaseNote> _noteFuture;
+
 
   Future<DatabaseNote> createNote(BuildContext context)async{
     final widgetNote=context.arguments<DatabaseNote>();
@@ -84,7 +84,7 @@ class _CreateNoteState extends State<CreateNote> {
     super.initState();
     _notesService = NotesService();
     _textEditingController = TextEditingController();
-    _noteFuture = createNote(context);
+
     //age
     // _notesService=NotesService();
     // _textEditingController=TextEditingController();
@@ -114,7 +114,7 @@ class _CreateNoteState extends State<CreateNote> {
       ),
 
       body: FutureBuilder(
-          future:_noteFuture ,
+          future:createNote(context) ,
           builder: (context, snapshot) {
             switch(snapshot.connectionState){
               case ConnectionState.done:
