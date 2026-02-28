@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
 
@@ -14,7 +15,7 @@ class _CreateNoteState extends State<CreateNote> {
   DatabaseNote? _note;
   late final NotesService _notesService;
   late final TextEditingController _textEditingController;
-
+  late final TextEditingController _textEdtdescriptioncontroller;
 
 
   Future<DatabaseNote> createNote(BuildContext context)async{
@@ -22,7 +23,7 @@ class _CreateNoteState extends State<CreateNote> {
     if(widgetNote != null){
       _note=widgetNote;
       _textEditingController.text=widgetNote.title;
-
+      //ekhane _textEdtdescriptioncontroller er kaj ase
       return widgetNote;
     }
 
@@ -75,6 +76,8 @@ class _CreateNoteState extends State<CreateNote> {
 
   void _setupTextControllerlistener(){
     _textEditingController.removeListener(_textControllerListener);
+    _textEdtdescriptioncontroller.removeListener(_textControllerListener);
+    _textEditingController.addListener(_textControllerListener);
     _textEditingController.addListener(_textControllerListener);
   }
 
@@ -84,7 +87,7 @@ class _CreateNoteState extends State<CreateNote> {
     super.initState();
     _notesService = NotesService();
     _textEditingController = TextEditingController();
-
+    _textEdtdescriptioncontroller=TextEditingController();
     //age
     // _notesService=NotesService();
     // _textEditingController=TextEditingController();
@@ -97,18 +100,41 @@ class _CreateNoteState extends State<CreateNote> {
     saveNoteifTextNoteEmpty();
     _deleteNoteifTextIsEmpty();
     _textEditingController.dispose();
+    _textEdtdescriptioncontroller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFF137FA5),
       appBar: AppBar(
-        title: const Text('Create Note'),
+        title: Padding(
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 15),
+            child: const Text('January 19, 10:23 PM',
+            style: TextStyle(fontSize: 10,
+                color: Color(0xFF9EDDE4),
+              fontFamily: 'Regular'
+
+            ),),
+        ),
+
         actions: [
+
+          IconButton(onPressed: (){
+            _notesService.debugPrintAllNotes();
+          },
+          icon: Icon(FontAwesomeIcons.chevronLeft),
+            padding: EdgeInsets.zero,
+          ),
+          IconButton(onPressed: (){
+            _notesService.debugPrintAllNotes();
+          }, icon: Icon(FontAwesomeIcons.chevronRight)),
+          SizedBox(width: 20), // gap control এখানে
+
           IconButton(onPressed: (){
              _notesService.debugPrintAllNotes();
-          }, icon: Icon(Icons.folder_copy_outlined)),
+          }, icon: Icon(FontAwesomeIcons.checkCircle)),
 
         ],
       ),
@@ -120,12 +146,53 @@ class _CreateNoteState extends State<CreateNote> {
               case ConnectionState.done:
                 _setupTextControllerlistener();
 
-                return TextField(
-                  controller: _textEditingController,
-                  keyboardType: TextInputType.multiline,
-                  maxLines: null,
-                  decoration: InputDecoration(
-                    hintText: 'start type your note'
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Column(
+                    children: [
+                         TextField(
+                          cursorColor: Color(0xFFC8E1E4),
+                          autocorrect: false,
+                         // enableSuggestions: false,
+                          controller: _textEditingController,
+                          keyboardType: TextInputType.multiline,
+                          maxLines: null,
+                          decoration: InputDecoration(
+                            hintText: 'Title',
+                            hintStyle: TextStyle(
+                              color: Color(0xFFD2FEFF),
+                              fontFamily: 'Regular'
+                            ),
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none
+                          ),
+                          style: TextStyle(
+                              color: Color(0xFFD2FEFF),
+                              fontFamily: 'Regular',
+                          ),
+                        ),
+                      TextField(
+                        cursorColor: Color(0xFFC8E1E4),
+                        autocorrect: false,
+                        // enableSuggestions: false,
+                        controller: _textEdtdescriptioncontroller,
+                        keyboardType: TextInputType.multiline,
+                        maxLines: null,
+                        decoration: InputDecoration(
+                            hintText: 'description',
+                            hintStyle: TextStyle(
+                                color: Color(0xFFD2FEFF),
+                                fontFamily: 'Regular'
+                            ),
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none
+                        ),
+                        style: TextStyle(
+                          color: Color(0xFFD2FEFF),
+                          fontFamily: 'Regular',
+                        ),
+                      ),
+                    ],
                   ),
                 );
                 default: return const CircularProgressIndicator();

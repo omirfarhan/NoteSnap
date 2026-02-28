@@ -71,7 +71,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   late final NotesService _notesService;
-  bool _isready=false;
+
 
 
   @override
@@ -234,7 +234,7 @@ class _MainPageState extends State<MainPage> {
                                                         maxLines: 1,
                                                         overflow: TextOverflow.ellipsis,
                                                         style: TextStyle(
-                                                            fontFamily: 'Fredoka',
+                                                            fontFamily: 'Regular',
                                                             fontWeight: FontWeight.w600,
                                                             fontSize: 13,
                                                             color: Color(0xFFDBF5FB)
@@ -244,7 +244,7 @@ class _MainPageState extends State<MainPage> {
                                                         child: Text('description',
                                                           style: TextStyle(
                                                             color:Color(0xFFDBF5FB),
-                                                            fontFamily: 'Fredoka',
+                                                            fontFamily: 'Regular',
                                                             fontWeight: FontWeight.w400,
                                                             fontSize: 12,
                                                             height: 1.2,
