@@ -241,7 +241,7 @@ class _MainPageState extends State<MainPage> {
                                                         ),
                                                       ),
                                                       Expanded(
-                                                        child: Text('description',
+                                                        child: Text(note.content,
                                                           style: TextStyle(
                                                             color:Color(0xFFDBF5FB),
                                                             fontFamily: 'Regular',

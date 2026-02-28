@@ -98,6 +98,7 @@ class NotesService {
   Future<DatabaseNote> updateNote({
     required DatabaseNote note,
     required String text,
+    required String content
   })async{
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
@@ -106,8 +107,7 @@ class NotesService {
 
     final updateCount=await db.update(noteTable, {
       titleColumn: text,
-      contentColumn: text
-          //jsonEncode(noteContent)
+      contentColumn: content
     },
       where: 'id = ?',
       whereArgs: [note.id],

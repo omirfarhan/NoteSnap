@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:notes/services/crud/notes_service.dart';
@@ -23,6 +25,7 @@ class _CreateNoteState extends State<CreateNote> {
     if(widgetNote != null){
       _note=widgetNote;
       _textEditingController.text=widgetNote.title;
+      _textEdtdescriptioncontroller.text=widgetNote.content;
       //ekhane _textEdtdescriptioncontroller er kaj ase
       return widgetNote;
     }
@@ -51,7 +54,7 @@ class _CreateNoteState extends State<CreateNote> {
 
   void _deleteNoteifTextIsEmpty(){
     final note= _note;
-    if(_textEditingController.text.isEmpty && note != null){
+    if(_textEditingController.text.isEmpty &&_textEdtdescriptioncontroller.text.isEmpty && note != null){
       _notesService.deleteNote(id: note.id);
     }
   }
@@ -59,9 +62,13 @@ class _CreateNoteState extends State<CreateNote> {
   void saveNoteifTextNoteEmpty()async{
     final note=_note;
     final text=_textEditingController.text;
+    final content=_textEdtdescriptioncontroller.text;
 
-    if(note != null && text.isNotEmpty){
-      await _notesService.updateNote(note: note, text: text);
+
+    if(note != null && (text.isNotEmpty || content.isNotEmpty)){
+      _notesService.noteContent=[];
+      _notesService.addText(content);
+      await _notesService.updateNote(note: note, text: text, content: content);
     }
   }
 
@@ -71,14 +78,34 @@ class _CreateNoteState extends State<CreateNote> {
     if(note == null){
       return;
     }
-    await _notesService.updateNote(note: note, text: text);
+    await _notesService.updateNote(
+      note: note,
+      text: text,
+      content: jsonEncode(_notesService.noteContent)
+    );
   }
+
+  void _descriptionControllerListener()async{
+    final note=_note;
+    final text=_textEdtdescriptioncontroller.text;
+
+    if(note == null) return;
+    _notesService.noteContent=[];
+    _notesService.addText(text);
+    await _notesService.updateNote(
+        note: note,
+        text: _textEditingController.text,
+        content: jsonEncode(_notesService.noteContent)
+    );
+  }
+
 
   void _setupTextControllerlistener(){
     _textEditingController.removeListener(_textControllerListener);
-    _textEdtdescriptioncontroller.removeListener(_textControllerListener);
     _textEditingController.addListener(_textControllerListener);
-    _textEditingController.addListener(_textControllerListener);
+    _textEdtdescriptioncontroller.removeListener(_descriptionControllerListener);
+    _textEdtdescriptioncontroller.addListener(_descriptionControllerListener);
+
   }
 
 
@@ -88,6 +115,7 @@ class _CreateNoteState extends State<CreateNote> {
     _notesService = NotesService();
     _textEditingController = TextEditingController();
     _textEdtdescriptioncontroller=TextEditingController();
+
     //age
     // _notesService=NotesService();
     // _textEditingController=TextEditingController();
