@@ -124,17 +124,17 @@ class _CreateNoteState extends State<CreateNote> {
           IconButton(onPressed: (){
             _notesService.debugPrintAllNotes();
           },
-          icon: Icon(FontAwesomeIcons.chevronLeft),
+          icon: Icon(Icons.chevron_left_outlined),
             padding: EdgeInsets.zero,
           ),
           IconButton(onPressed: (){
             _notesService.debugPrintAllNotes();
-          }, icon: Icon(FontAwesomeIcons.chevronRight)),
+          }, icon: Icon(Icons.chevron_right_outlined)),
           SizedBox(width: 20), // gap control এখানে
 
           IconButton(onPressed: (){
              _notesService.debugPrintAllNotes();
-          }, icon: Icon(FontAwesomeIcons.checkCircle)),
+          }, icon: Icon(Icons.check_circle_outline_rounded)),
 
         ],
       ),
