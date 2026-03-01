@@ -180,6 +180,13 @@ class NotesService {
   }
 
   //image tao add korte hobe
+  void addImage(String imagePath){
+    noteContent.add({
+      "type": "image",
+      "value": imagePath
+    });
+  }
+
   void addText(String text){
     noteContent.add({
       "type": "text",

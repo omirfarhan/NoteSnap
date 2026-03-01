@@ -13,12 +13,14 @@ class CreateNote extends StatefulWidget {
 }
 
 class _CreateNoteState extends State<CreateNote> {
-
+  bool _isInitialized = false; // দুইবার call হওয়া ঠেকাতে
+  bool _isLoading = true;
   DatabaseNote? _note;
   late final NotesService _notesService;
   late final TextEditingController _textEditingController;
   late final TextEditingController _textEdtdescriptioncontroller;
 
+  late final FocusNode _descriptionFocusNode;
 
   Future<DatabaseNote> createNote(BuildContext context)async{
     final widgetNote=context.arguments<DatabaseNote>();
@@ -116,10 +118,40 @@ class _CreateNoteState extends State<CreateNote> {
     _textEditingController = TextEditingController();
     _textEdtdescriptioncontroller=TextEditingController();
 
+    _descriptionFocusNode = FocusNode();
+
+    // WidgetsBinding.instance.addPostFrameCallback((_){
+    //   _descriptionFocusNode.requestFocus();
+    // });
+
     //age
     // _notesService=NotesService();
     // _textEditingController=TextEditingController();
     // super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      _isInitialized = true; // একবারই চলবে
+      _initNote();
+    }
+  }
+
+  Future<void> _initNote() async {
+    await createNote(context);
+    _setupTextControllerlistener();
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      // TextField ready হওয়ার পর focus দাও
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _descriptionFocusNode.requestFocus();
+      });
+    }
   }
 
 
@@ -134,8 +166,10 @@ class _CreateNoteState extends State<CreateNote> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: Color(0xFF137FA5),
+        resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Padding(
           padding: const EdgeInsets.fromLTRB(0, 0, 0, 15),
@@ -146,6 +180,7 @@ class _CreateNoteState extends State<CreateNote> {
 
             ),),
         ),
+
 
         actions: [
 
@@ -167,70 +202,133 @@ class _CreateNoteState extends State<CreateNote> {
 
         ],
       ),
+        bottomNavigationBar: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          color: Colors.black,
+          child: SafeArea(
+            top: false,
+            child: Container(
+              height: 55,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Icon(Icons.text_fields, color: Colors.white),
+                  Icon(Icons.check_circle_outline, color: Colors.white),
+                  Icon(Icons.timer_outlined, color: Colors.white),
+                  IconButton(onPressed: (){print('icon');}, icon: Icon(Icons.image)),
+                  Icon(Icons.mic_none, color: Colors.white),
+                  Icon(Icons.keyboard_alt_outlined, color: Colors.white),
+                ],
+              ),
+            ),
+          ),
+        ),
 
-      body: FutureBuilder(
-          future:createNote(context) ,
-          builder: (context, snapshot) {
-            switch(snapshot.connectionState){
-              case ConnectionState.done:
-                _setupTextControllerlistener();
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Column(
-                    children: [
-                         TextField(
+      body:_isLoading
+          ? const Center(child: CircularProgressIndicator())
+              : Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Column(
+                      children: [
+                        TextField(
                           cursorColor: Color(0xFFC8E1E4),
                           autocorrect: false,
-                         // enableSuggestions: false,
                           controller: _textEditingController,
                           keyboardType: TextInputType.multiline,
                           maxLines: null,
                           decoration: InputDecoration(
-                            hintText: 'Title',
-                            hintStyle: TextStyle(
-                              color: Color(0xFFD2FEFF),
-                              fontFamily: 'Regular'
-                            ),
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none
+                              hintText: 'Title',
+                              hintStyle: TextStyle(
+                                  color: Color(0xFFD2FEFF),
+                                  fontFamily: 'Regular'
+                              ),
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none
                           ),
                           style: TextStyle(
-                              color: Color(0xFFD2FEFF),
-                              fontFamily: 'Regular',
+                            color: Color(0xFFD2FEFF),
+                            fontFamily: 'Regular',
                           ),
                         ),
-                      TextField(
-                        cursorColor: Color(0xFFC8E1E4),
-                        autocorrect: false,
-                        // enableSuggestions: false,
-                        controller: _textEdtdescriptioncontroller,
-                        keyboardType: TextInputType.multiline,
-                        maxLines: null,
-                        decoration: InputDecoration(
-                            hintText: 'description',
-                            hintStyle: TextStyle(
-                                color: Color(0xFFD2FEFF),
-                                fontFamily: 'Regular'
+                        Expanded(
+                          child: TextField(
+                            focusNode: _descriptionFocusNode,
+                            cursorColor: Color(0xFFC8E1E4),
+                            autocorrect: false,
+                            // enableSuggestions: false,
+                            controller: _textEdtdescriptioncontroller,
+                            keyboardType: TextInputType.multiline,
+                            expands: true,
+                            maxLines: null,
+                            decoration: InputDecoration(
+                                hintText: 'description',
+                                hintStyle: TextStyle(
+                                    color: Color(0xFFD2FEFF),
+                                    fontFamily: 'Regular'
+                                ),
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none
                             ),
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none
+                            style: TextStyle(
+                              color: Color(0xFFD2FEFF),
+                              fontFamily: 'Regular',
+                            ),
+                          ),
                         ),
-                        style: TextStyle(
-                          color: Color(0xFFD2FEFF),
-                          fontFamily: 'Regular',
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                );
-                default: return const CircularProgressIndicator();
-            }
+                  // Padding(
+                  //   padding: EdgeInsets.only(
+                  //     bottom: MediaQuery.of(context).viewInsets.bottom,
+                  //   ),
+                  //   child: Container(
+                  //     color: Colors.black,
+                  //     child: Row(
+                  //       children: [
+                  //         IconButton(
+                  //           icon: Icon(Icons.image, color: Colors.white),
+                  //           onPressed: () {},
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // )
+                  // AnimatedPositioned(
+                  //   duration: const Duration(milliseconds: 200),
+                  //   left: 0,
+                  //   right: 0,
+                  //   bottom: keyboardOpen
+                  //       ? MediaQuery.of(context).viewInsets.bottom
+                  //       : -60,
+                  //   height: 60,
+                  //   child: Container(
+                  //     color: Colors.black,
+                  //     child: Row(
+                  //       children: [
+                  //         IconButton(
+                  //           icon: const Icon(Icons.image, color: Colors.white),
+                  //           onPressed: () {},
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
 
-          },
-      ),
+
+
+
+                ],
+              )
 
     );
   }
 }
 
+//default: return const CircularProgressIndicator();
