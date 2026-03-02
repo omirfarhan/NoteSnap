@@ -13,6 +13,7 @@ class CreateNote extends StatefulWidget {
 }
 
 class _CreateNoteState extends State<CreateNote> {
+  bool _isDescriptionFocused = false;
   bool _isInitialized = false; // দুইবার call হওয়া ঠেকাতে
   bool _isLoading = true;
   DatabaseNote? _note;
@@ -119,15 +120,13 @@ class _CreateNoteState extends State<CreateNote> {
     _textEdtdescriptioncontroller=TextEditingController();
 
     _descriptionFocusNode = FocusNode();
-
-    // WidgetsBinding.instance.addPostFrameCallback((_){
-    //   _descriptionFocusNode.requestFocus();
-    // });
-
-    //age
-    // _notesService=NotesService();
-    // _textEditingController=TextEditingController();
-    // super.initState();
+    _descriptionFocusNode.addListener(() {
+      if (mounted) {
+        setState(() {
+          _isDescriptionFocused = _descriptionFocusNode.hasFocus;
+        });
+      }
+    });
   }
 
   @override
@@ -161,6 +160,7 @@ class _CreateNoteState extends State<CreateNote> {
     _deleteNoteifTextIsEmpty();
     _textEditingController.dispose();
     _textEdtdescriptioncontroller.dispose();
+    _descriptionFocusNode.dispose(); // এটা add করো
     super.dispose();
   }
 
@@ -202,23 +202,27 @@ class _CreateNoteState extends State<CreateNote> {
 
         ],
       ),
-        bottomNavigationBar: AnimatedContainer(
+        bottomNavigationBar: _isDescriptionFocused
+            ?
+        AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          color: Colors.black,
+          color: Color(0xFF4692AC),
           child: SafeArea(
             top: false,
             child: Container(
-              height: 55,
+              height: 50,
               padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                borderRadius:BorderRadius.circular(10),
+
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Icon(Icons.text_fields, color: Colors.white),
-                  Icon(Icons.check_circle_outline, color: Colors.white),
-                  Icon(Icons.timer_outlined, color: Colors.white),
+
                   IconButton(onPressed: (){print('icon');}, icon: Icon(Icons.image)),
                   Icon(Icons.mic_none, color: Colors.white),
                   Icon(Icons.keyboard_alt_outlined, color: Colors.white),
@@ -226,7 +230,7 @@ class _CreateNoteState extends State<CreateNote> {
               ),
             ),
           ),
-        ),
+        ): null,
 
       body:_isLoading
           ? const Center(child: CircularProgressIndicator())
