@@ -214,11 +214,7 @@ class _CreateNoteState extends State<CreateNote> {
             top: false,
             child: Container(
               height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                borderRadius:BorderRadius.circular(10),
 
-              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
