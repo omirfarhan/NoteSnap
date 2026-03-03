@@ -1,9 +1,14 @@
 import 'dart:convert';
-
+import 'dart:io';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
+
+import 'imageembedbuilder.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key});
@@ -13,14 +18,16 @@ class CreateNote extends StatefulWidget {
 }
 
 class _CreateNoteState extends State<CreateNote> {
+
+  late final QuillController _quillController;
+
   bool _isDescriptionFocused = false;
   bool _isInitialized = false; // দুইবার call হওয়া ঠেকাতে
   bool _isLoading = true;
   DatabaseNote? _note;
   late final NotesService _notesService;
   late final TextEditingController _textEditingController;
-  late final TextEditingController _textEdtdescriptioncontroller;
-
+  //late final TextEditingController _textEdtdescriptioncontroller;
   late final FocusNode _descriptionFocusNode;
 
   Future<DatabaseNote> createNote(BuildContext context)async{
@@ -28,8 +35,21 @@ class _CreateNoteState extends State<CreateNote> {
     if(widgetNote != null){
       _note=widgetNote;
       _textEditingController.text=widgetNote.title;
-      _textEdtdescriptioncontroller.text=widgetNote.content;
-      //ekhane _textEdtdescriptioncontroller er kaj ase
+      // content restore করুন
+      if(widgetNote.content.isNotEmpty){
+        try{
+          final delta=Delta.fromJson(jsonDecode(widgetNote.content));
+          _quillController=QuillController(
+              document: Document.fromDelta(delta),
+              selection: const TextSelection.collapsed(offset: 0)
+          );
+        }catch (e){
+          _quillController=QuillController.basic();
+        }
+      }
+
+
+
       return widgetNote;
     }
 
@@ -57,7 +77,8 @@ class _CreateNoteState extends State<CreateNote> {
 
   void _deleteNoteifTextIsEmpty(){
     final note= _note;
-    if(_textEditingController.text.isEmpty &&_textEdtdescriptioncontroller.text.isEmpty && note != null){
+    final quillContent=_quillController.document.toPlainText().trim();
+    if(_textEditingController.text.isEmpty &&quillContent.isEmpty && note != null){
       _notesService.deleteNote(id: note.id);
     }
   }
@@ -65,13 +86,19 @@ class _CreateNoteState extends State<CreateNote> {
   void saveNoteifTextNoteEmpty()async{
     final note=_note;
     final text=_textEditingController.text;
-    final content=_textEdtdescriptioncontroller.text;
+
+    final content=jsonEncode(_quillController.document.toDelta().toJson());
+    final quillText=_quillController.document.toPlainText().trim();
 
 
-    if(note != null && (text.isNotEmpty || content.isNotEmpty)){
-      _notesService.noteContent=[];
-      _notesService.addText(content);
-      await _notesService.updateNote(note: note, text: text, content: content);
+    if(note != null && (text.isNotEmpty || quillText.isNotEmpty)){
+      // _notesService.noteContent=[];
+      // _notesService.addText(content);
+      await _notesService.updateNote(
+          note: note,
+          text: text,
+          content: content
+      );
     }
   }
 
@@ -81,34 +108,45 @@ class _CreateNoteState extends State<CreateNote> {
     if(note == null){
       return;
     }
+    final quilcontroldata=jsonEncode(_quillController.document.toDelta().toJson());
     await _notesService.updateNote(
       note: note,
       text: text,
-      content: jsonEncode(_notesService.noteContent)
+      content: quilcontroldata
     );
   }
 
-  void _descriptionControllerListener()async{
+  void _saveQuillContent()async{
     final note=_note;
-    final text=_textEdtdescriptioncontroller.text;
-
-    if(note == null) return;
-    _notesService.noteContent=[];
-    _notesService.addText(text);
+    if (note == null) return;
+    final content=jsonEncode(_quillController.document.toDelta().toJson());
     await _notesService.updateNote(
         note: note,
         text: _textEditingController.text,
-        content: jsonEncode(_notesService.noteContent)
+        content: content
     );
+
+  }
+
+
+  //add image to note
+
+  void addImageToNote(String imagePath)async{
+    final note= _note;
+    if (note == null) return;
+
+    final index=_quillController.selection.baseOffset;
+    _quillController.document.insert(index, BlockEmbed.image(imagePath));
+    _saveQuillContent();
+
   }
 
 
   void _setupTextControllerlistener(){
     _textEditingController.removeListener(_textControllerListener);
     _textEditingController.addListener(_textControllerListener);
-    _textEdtdescriptioncontroller.removeListener(_descriptionControllerListener);
-    _textEdtdescriptioncontroller.addListener(_descriptionControllerListener);
-
+    _quillController.removeListener(_saveQuillContent);
+    _quillController.addListener(_saveQuillContent);
   }
 
 
@@ -117,7 +155,8 @@ class _CreateNoteState extends State<CreateNote> {
     super.initState();
     _notesService = NotesService();
     _textEditingController = TextEditingController();
-    _textEdtdescriptioncontroller=TextEditingController();
+
+    _quillController=QuillController.basic();
 
     _descriptionFocusNode = FocusNode();
     _descriptionFocusNode.addListener(() {
@@ -159,7 +198,7 @@ class _CreateNoteState extends State<CreateNote> {
     saveNoteifTextNoteEmpty();
     _deleteNoteifTextIsEmpty();
     _textEditingController.dispose();
-    _textEdtdescriptioncontroller.dispose();
+    _quillController.dispose();
     _descriptionFocusNode.dispose(); // এটা add করো
     super.dispose();
   }
@@ -177,7 +216,6 @@ class _CreateNoteState extends State<CreateNote> {
             style: TextStyle(fontSize: 10,
                 color: Color(0xFF9EDDE4),
               fontFamily: 'Regular'
-
             ),),
         ),
 
@@ -204,25 +242,64 @@ class _CreateNoteState extends State<CreateNote> {
       ),
         bottomNavigationBar: _isDescriptionFocused
             ?
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          color: Color(0xFF4692AC),
-          child: SafeArea(
-            top: false,
-            child: Container(
-              height: 50,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(10,0,10,5),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: Color(0xFF4692AC),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
 
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
+                      IconButton(onPressed: ()async{
+                        final ImagePicker picker = ImagePicker();
+                        final List<XFile> images = await picker.pickMultiImage();
+                        int index = _quillController.selection.baseOffset;
+                        final plainText = _quillController.document.toPlainText().trim();
+                        if(plainText.isEmpty){
+                          _quillController.document.insert(0, '\n');
+                          index = 1;
+                        }
 
-                  IconButton(onPressed: (){print('icon');}, icon: Icon(Icons.image)),
-                  Icon(Icons.mic_none, color: Colors.white),
-                  Icon(Icons.keyboard_alt_outlined, color: Colors.white),
-                ],
+                        for (XFile image in images) {
+                          _quillController.document.insert(index, '\n');
+                          _quillController.document.insert(
+                              index,
+                              BlockEmbed.image(image.path)
+                          );
+                          index+=1;
+
+                          // 👇 cursor image এর পরে নিয়ে যাওয়া
+                          // 👇 image এর পরে newline add
+                          _quillController.document.insert(index, '\n');
+                          index += 1;
+                        }
+                        // 👇 cursor নিচে নিয়ে যাওয়া
+                        _quillController.updateSelection(
+                          TextSelection.collapsed(offset: index),
+                          ChangeSource.local,
+                        );
+                        _saveQuillContent();
+                        },
+                          icon: Icon(Icons.image_rounded,color: Colors.white,)
+                      ),
+                      Icon(Icons.crop_square, color: Colors.white),
+                      Icon(FontAwesomeIcons.tshirt, color: Colors.white),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -257,6 +334,39 @@ class _CreateNoteState extends State<CreateNote> {
                           ),
                         ),
                         Expanded(
+                            child: TextSelectionTheme(
+                        data: TextSelectionThemeData(
+                          cursorColor: Color(0xFFC8E1E4)
+                        ),
+                        child: QuillEditor.basic(
+
+                          controller: _quillController,
+                          focusNode: _descriptionFocusNode,
+                          config: QuillEditorConfig(
+                            embedBuilders: [
+                              ImageEmbedBuilder(),
+                            ],
+                              placeholder: 'description',
+                              customStyles: DefaultStyles(
+                                  paragraph: DefaultTextBlockStyle(
+                                      TextStyle(
+                                        color: Color(0xFFD2FEFF),
+                                        fontFamily: 'Regular',
+                                        fontSize: 14,
+                                      ),
+                                      HorizontalSpacing.zero,
+                                      VerticalSpacing.zero,
+                                      VerticalSpacing.zero,
+                                      null
+                                  )
+                              )
+                          ),
+                        )
+    )
+                        )
+
+                        /*
+                        Expanded(
                           child: TextField(
                             focusNode: _descriptionFocusNode,
                             cursorColor: Color(0xFFC8E1E4),
@@ -281,48 +391,11 @@ class _CreateNoteState extends State<CreateNote> {
                             ),
                           ),
                         ),
+
+                         */
                       ],
                     ),
                   ),
-                  // Padding(
-                  //   padding: EdgeInsets.only(
-                  //     bottom: MediaQuery.of(context).viewInsets.bottom,
-                  //   ),
-                  //   child: Container(
-                  //     color: Colors.black,
-                  //     child: Row(
-                  //       children: [
-                  //         IconButton(
-                  //           icon: Icon(Icons.image, color: Colors.white),
-                  //           onPressed: () {},
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // )
-                  // AnimatedPositioned(
-                  //   duration: const Duration(milliseconds: 200),
-                  //   left: 0,
-                  //   right: 0,
-                  //   bottom: keyboardOpen
-                  //       ? MediaQuery.of(context).viewInsets.bottom
-                  //       : -60,
-                  //   height: 60,
-                  //   child: Container(
-                  //     color: Colors.black,
-                  //     child: Row(
-                  //       children: [
-                  //         IconButton(
-                  //           icon: const Icon(Icons.image, color: Colors.white),
-                  //           onPressed: () {},
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
-
-
-
 
                 ],
               )
@@ -330,5 +403,3 @@ class _CreateNoteState extends State<CreateNote> {
     );
   }
 }
-
-//default: return const CircularProgressIndicator();
