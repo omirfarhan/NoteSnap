@@ -22,7 +22,6 @@ class CreateNote extends StatefulWidget {
 }
 
 class _CreateNoteState extends State<CreateNote> {
-
   bool _isDescriptionFocused = false;
   bool _isInitialized = false;
   bool _isLoading = true;
@@ -39,9 +38,9 @@ class _CreateNoteState extends State<CreateNote> {
 
   // bool _isEditing = false;
   // late final QuillController _quillController;
-
-
   late final FocusNode _descriptionFocusNode;
+
+  OverlayEntry? _toolbarOverlay;
 
   Future<DatabaseNote> createNote(BuildContext context)async{
 
@@ -283,16 +282,16 @@ class _CreateNoteState extends State<CreateNote> {
         _document.getNodeById(insertAfterNodeId)!,
       )!.id;
 
-      // // Image এর পরে empty paragraph দাও
-      // _editor.execute([
-      //   InsertNodeAfterNodeRequest(
-      //     existingNodeId: imageNodeId,
-      //     newNode: ParagraphNode(
-      //       id: Editor.createNodeId(),
-      //       text: AttributedText(''),
-      //     ),
-      //   )
-      // ]);
+      // Image এর পরে empty paragraph দাও
+      _editor.execute([
+        InsertNodeAfterNodeRequest(
+          existingNodeId: imageNodeId,
+          newNode: ParagraphNode(
+            id: Editor.createNodeId(),
+            text: AttributedText(''),
+          ),
+        )
+      ]);
 
       // পরের image টা এই paragraph এর পরে যাবে
       insertAfterNodeId = _document.getNodeAfter(
@@ -530,15 +529,21 @@ class _CreateNoteState extends State<CreateNote> {
                                 componentBuilders: [
                                   // Image — cursor আসবে না, keyboard আসবে না
                                   NoteImageComponentBuilder(
-                                    onImageTap: (imagepath)async{
+                                    onImageTap: (imagePath, imageKey) {
                                       _descriptionFocusNode.unfocus();
+                                      _toggleToolbar(context, imageKey);
+                                    },
+                                  ),
+
+                                  /*
                                       await Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                               builder: (context) => Fullscreenimagepage(imagepath: imagepath),
                                           ));
-                                    },
-                                  ),
+
+                                       */
+
                                   ...defaultComponentBuilders,
                                 ],
                                 stylesheet: defaultStylesheet.copyWith(
@@ -586,7 +591,7 @@ class _CreateNoteState extends State<CreateNote> {
                                 //     )
                                 // ),
                               ),
-                            )
+                            ),
 
 
                         /*
@@ -626,4 +631,75 @@ class _CreateNoteState extends State<CreateNote> {
 
     );
   }
+
+  void _toggleToolbar(BuildContext context, GlobalKey key) {
+    if (_toolbarOverlay != null) {
+      _toolbarOverlay!.remove();
+      _toolbarOverlay = null;
+      return;
+    }
+
+    final renderBox = key.currentContext!.findRenderObject() as RenderBox;
+    final position = renderBox.localToGlobal(Offset.zero);
+    final imageSize = renderBox.size;
+
+    // Screen এবং AppBar এর height বের করো
+    final screenHeight = MediaQuery.of(context).size.height;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final appBarHeight = kToolbarHeight + statusBarHeight;
+
+    const toolbarHeight = 50.0;
+    const toolbarWidth = 220.0;
+
+    // প্রথমে image এর উপরে দেখাও
+    double topPosition = position.dy - toolbarHeight - 8;
+
+    // যদি AppBar এর নিচে না হয়, তাহলে image এর নিচে দেখাও
+    if (topPosition < appBarHeight) {
+      topPosition = position.dy + imageSize.height + 8;
+    }
+
+    // Screen এর নিচে চলে গেলে clamp করো
+    if (topPosition + toolbarHeight > screenHeight) {
+      topPosition = screenHeight - toolbarHeight - 8;
+    }
+
+    // Horizontal position clamp
+    final screenWidth = MediaQuery.of(context).size.width;
+    double leftPosition = position.dx;
+    if (leftPosition + toolbarWidth > screenWidth) {
+      leftPosition = screenWidth - toolbarWidth - 8;
+    }
+
+    _toolbarOverlay = OverlayEntry(
+      builder: (context) => Positioned(
+        top: topPosition,
+        left: leftPosition,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            height: toolbarHeight,
+            width: toolbarWidth,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: const [
+                Icon(Icons.comment),
+                Icon(Icons.edit),
+                Icon(Icons.image),
+                Icon(Icons.delete),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_toolbarOverlay!);
+  }
+
 }

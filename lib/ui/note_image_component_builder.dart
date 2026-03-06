@@ -4,8 +4,7 @@ import 'package:super_editor/super_editor.dart';
 import 'note_image_component.dart';
 
 class NoteImageComponentBuilder implements ComponentBuilder {
-  final void Function(String imagePath) onImageTap;
-
+  final void Function(String imagePath, GlobalKey imageKey) onImageTap;
   const NoteImageComponentBuilder({required this.onImageTap});
 
   @override
@@ -27,10 +26,12 @@ class NoteImageComponentBuilder implements ComponentBuilder {
 
     final imagePath = componentViewModel.imageUrl;
 
+    final imageKey = GlobalKey();   // 👈 এখানে key তৈরি
     return NoteImageComponent(
       key: componentContext.componentKey,
       imagePath: imagePath,
-      onTap: () => onImageTap(imagePath),
+      imageKey: imageKey,
+      onTap: () => onImageTap(imagePath,imageKey),
     );
   }
 
