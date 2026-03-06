@@ -1,14 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter_quill/flutter_quill.dart';
-import 'package:flutter_quill/quill_delta.dart';
+import 'package:flutter/services.dart';
+// import 'package:flutter_quill/flutter_quill.dart';
+// import 'package:flutter_quill/quill_delta.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:notes/services/crud/notes_service.dart';
+import 'package:notes/ui/fullscreenimagepage.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
+//import 'package:path/path.dart';
+import 'package:super_editor/super_editor.dart';
 
-import 'imageembedbuilder.dart';
+import 'note_image_component_builder.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key});
@@ -19,37 +23,51 @@ class CreateNote extends StatefulWidget {
 
 class _CreateNoteState extends State<CreateNote> {
 
-  late final QuillController _quillController;
-
   bool _isDescriptionFocused = false;
-  bool _isInitialized = false; // দুইবার call হওয়া ঠেকাতে
+  bool _isInitialized = false;
   bool _isLoading = true;
+
   DatabaseNote? _note;
   late final NotesService _notesService;
   late final TextEditingController _textEditingController;
-  //late final TextEditingController _textEdtdescriptioncontroller;
+
+  // SuperEditor এর জন্য
+  late MutableDocument _document;
+  late Editor _editor;
+  late MutableDocumentComposer _composer;
+
+
+  // bool _isEditing = false;
+  // late final QuillController _quillController;
+
+
   late final FocusNode _descriptionFocusNode;
 
   Future<DatabaseNote> createNote(BuildContext context)async{
+
     final widgetNote=context.arguments<DatabaseNote>();
+
     if(widgetNote != null){
       _note=widgetNote;
       _textEditingController.text=widgetNote.title;
-      // content restore করুন
+
+
       if(widgetNote.content.isNotEmpty){
         try{
-          final delta=Delta.fromJson(jsonDecode(widgetNote.content));
-          _quillController=QuillController(
-              document: Document.fromDelta(delta),
-              selection: const TextSelection.collapsed(offset: 0)
-          );
+
+          _document=_documentFromJson(widgetNote.content);
+
+          // final delta=Delta.fromJson(jsonDecode(widgetNote.content));
+          // _quillController=QuillController(
+          //     document: Document.fromDelta(delta),
+          //     selection: const TextSelection.collapsed(offset: 0)
+          // );
         }catch (e){
-          _quillController=QuillController.basic();
+          //_quillController=QuillController.basic();
+          _document=_emptyDocument();
         }
       }
-
-
-
+      _rebuildEditor();
       return widgetNote;
     }
 
@@ -62,7 +80,7 @@ class _CreateNoteState extends State<CreateNote> {
     }
     print('Creating new note...');
     // sob note toiri hoise all folder er vitor
-    String foldername = "all";
+    const foldername = "all";
 
     //final mainfolder= await _notesService.getFolder(foldername: foldername);
     final mainfolder= await _notesService.getOrCreateFolder(foldername: foldername);
@@ -75,79 +93,223 @@ class _CreateNoteState extends State<CreateNote> {
     return newNote;
   }
 
+  MutableDocument _emptyDocument() {
+    return MutableDocument(nodes: [
+      ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(''),
+      ),
+    ]);
+  }
+
+  /// Format: [ {"type":"paragraph","text":"..."}, {"type":"image","url":"..."} ]
+  MutableDocument _documentFromJson(String jsonString) {
+    final list = jsonDecode(jsonString) as List<dynamic>;
+    final nodes = <DocumentNode>[];
+
+    for (final item in list) {
+      final type = item['type'] as String;
+      if (type == 'paragraph') {
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(item['text'] as String? ?? ''),
+        ));
+      } else if (type == 'image') {
+        nodes.add(ImageNode(
+          id: Editor.createNodeId(),
+          imageUrl: item['url'] as String,
+        ));
+      }
+    }
+
+    if (nodes.isEmpty) {
+      nodes.add(ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(''),
+      ));
+    }
+
+    return MutableDocument(nodes: nodes);
+  }
+
+  String _documentToJson() {
+    final list=<Map<String, dynamic>>[];
+    for (int i = 0; i < _document.nodeCount; i++) {
+      final node = _document.getNodeAt(i)!;
+      if (node is ImageNode) {
+        list.add({'type': 'image', 'url': node.imageUrl});
+      } else if (node is ParagraphNode) {
+        list.add({'type': 'paragraph', 'text': node.text.text});
+      }
+    }
+
+    return jsonEncode(list);
+  }
+
+
+  void _rebuildEditor(){
+    _composer=MutableDocumentComposer();
+    _editor=createDefaultDocumentEditor(
+      document: _document,
+      composer: _composer
+    );
+  }
+
+  Future<void> _saveNote()async{
+    final note=_note;
+    if(note == null)return;
+    if (!_isInitialized) return; // initialize হওয়ার আগে save করবে না
+    final title=_textEditingController.text;
+    final content=_documentToJson();
+
+    if (title.isNotEmpty || _hasAnyContent()) {
+      await _notesService.updateNote(
+        note: note,
+        text: title,
+        content: content,
+      );
+    }
+
+  }
+
+  bool _hasAnyContent() {
+    for (int i = 0; i < _document.nodeCount; i++) {
+      final node = _document.getNodeAt(i)!;
+      if (node is ImageNode) return true;
+      if (node is ParagraphNode && node.text.text.trim().isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
   void _deleteNoteifTextIsEmpty(){
     final note= _note;
-    final quillContent=_quillController.document.toPlainText().trim();
-    if(_textEditingController.text.isEmpty &&quillContent.isEmpty && note != null){
+    if (note == null) return;
+    //final quillContent=_quillController.document.toPlainText().trim();
+    if(_textEditingController.text.trim().isEmpty && !_hasAnyContent()){
       _notesService.deleteNote(id: note.id);
     }
   }
 
-  void saveNoteifTextNoteEmpty()async{
-    final note=_note;
-    final text=_textEditingController.text;
+  // void saveNoteifTextNoteEmpty()async{
+  //   final note=_note;
+  //   final text=_textEditingController.text;
+  //
+  //   final content=jsonEncode(_quillController.document.toDelta().toJson());
+  //   final quillText=_quillController.document.toPlainText().trim();
+  //
+  //
+  //   if(note != null && (text.isNotEmpty || quillText.isNotEmpty)){
+  //     // _notesService.noteContent=[];
+  //     // _notesService.addText(content);
+  //     await _notesService.updateNote(
+  //         note: note,
+  //         text: text,
+  //         content: content
+  //     );
+  //   }
+  // }
 
-    final content=jsonEncode(_quillController.document.toDelta().toJson());
-    final quillText=_quillController.document.toPlainText().trim();
+  // void _textControllerListener()async{
+  //   final note=_note;
+  //   final text=_textEditingController.text;
+  //   if(note == null){
+  //     return;
+  //   }
+  //   final quilcontroldata=jsonEncode(_quillController.document.toDelta().toJson());
+  //   await _notesService.updateNote(
+  //     note: note,
+  //     text: text,
+  //     content: quilcontroldata
+  //   );
+  // }
 
-
-    if(note != null && (text.isNotEmpty || quillText.isNotEmpty)){
-      // _notesService.noteContent=[];
-      // _notesService.addText(content);
-      await _notesService.updateNote(
-          note: note,
-          text: text,
-          content: content
-      );
-    }
-  }
-
-  void _textControllerListener()async{
-    final note=_note;
-    final text=_textEditingController.text;
-    if(note == null){
-      return;
-    }
-    final quilcontroldata=jsonEncode(_quillController.document.toDelta().toJson());
-    await _notesService.updateNote(
-      note: note,
-      text: text,
-      content: quilcontroldata
-    );
-  }
-
-  void _saveQuillContent()async{
-    final note=_note;
-    if (note == null) return;
-    final content=jsonEncode(_quillController.document.toDelta().toJson());
-    await _notesService.updateNote(
-        note: note,
-        text: _textEditingController.text,
-        content: content
-    );
-
-  }
+  // void _saveQuillContent()async{
+  //   final note=_note;
+  //   if (note == null) return;
+  //   final content=jsonEncode(_quillController.document.toDelta().toJson());
+  //   await _notesService.updateNote(
+  //       note: note,
+  //       text: _textEditingController.text,
+  //       content: content
+  //   );
+  //
+  // }
 
 
   //add image to note
 
-  void addImageToNote(String imagePath)async{
-    final note= _note;
-    if (note == null) return;
+  // void addImageToNote(String imagePath)async{
+  //   final note= _note;
+  //   if (note == null) return;
+  //
+  //   final index=_quillController.selection.baseOffset;
+  //   _quillController.document.insert(index, BlockEmbed.image(imagePath));
+  //   _saveQuillContent();
+  //
+  // }
 
-    final index=_quillController.selection.baseOffset;
-    _quillController.document.insert(index, BlockEmbed.image(imagePath));
-    _saveQuillContent();
+  void _insertImages(List<XFile> images) async {
+    // Cursor এর current position বের করো
+    final selection = _composer.selection;
 
+    String insertAfterNodeId;
+
+    if (selection != null) {
+      // Cursor যে node এ আছে, সেটার id নাও
+      insertAfterNodeId = selection.extent.nodeId;
+    } else {
+      // Selection না থাকলে last node এ
+      insertAfterNodeId = _document.getNodeAt(_document.nodeCount - 1)!.id;
+    }
+
+    for (final image in images) {
+      // Image insert করো cursor position এর পরে
+      _editor.execute([
+        InsertNodeAfterNodeRequest(
+          existingNodeId: insertAfterNodeId,
+          newNode: ImageNode(
+            id: Editor.createNodeId(),
+            imageUrl: image.path,
+          ),
+        )
+      ]);
+
+      // Image node এর id বের করো (এইমাত্র insert হওয়া)
+      // Image এর পরের node টাই এখন image
+      final imageNodeId = _document.getNodeAfter(
+        _document.getNodeById(insertAfterNodeId)!,
+      )!.id;
+
+      // // Image এর পরে empty paragraph দাও
+      // _editor.execute([
+      //   InsertNodeAfterNodeRequest(
+      //     existingNodeId: imageNodeId,
+      //     newNode: ParagraphNode(
+      //       id: Editor.createNodeId(),
+      //       text: AttributedText(''),
+      //     ),
+      //   )
+      // ]);
+
+      // পরের image টা এই paragraph এর পরে যাবে
+      insertAfterNodeId = _document.getNodeAfter(
+        _document.getNodeById(imageNodeId)!,
+      )!.id;
+    }
+
+    _saveNote();
   }
 
 
-  void _setupTextControllerlistener(){
-    _textEditingController.removeListener(_textControllerListener);
-    _textEditingController.addListener(_textControllerListener);
-    _quillController.removeListener(_saveQuillContent);
-    _quillController.addListener(_saveQuillContent);
-  }
+  // void _setupTextControllerlistener(){
+  //   _textEditingController.removeListener(_textControllerListener);
+  //   _textEditingController.addListener(_textControllerListener);
+  //   // _quillController.removeListener(_saveQuillContent);
+  //   // _quillController.addListener(_saveQuillContent);
+  // }
 
 
   @override
@@ -155,11 +317,15 @@ class _CreateNoteState extends State<CreateNote> {
     super.initState();
     _notesService = NotesService();
     _textEditingController = TextEditingController();
-
-    _quillController=QuillController.basic();
-
+    //_quillController=QuillController.basic();
     _descriptionFocusNode = FocusNode();
+    _document=_emptyDocument();
+    _rebuildEditor();
+
+    _textEditingController.addListener(_saveNote);
+
     _descriptionFocusNode.addListener(() {
+
       if (mounted) {
         setState(() {
           _isDescriptionFocused = _descriptionFocusNode.hasFocus;
@@ -179,7 +345,7 @@ class _CreateNoteState extends State<CreateNote> {
 
   Future<void> _initNote() async {
     await createNote(context);
-    _setupTextControllerlistener();
+    //_setupTextControllerlistener();
 
     if (mounted) {
       setState(() {
@@ -187,7 +353,7 @@ class _CreateNoteState extends State<CreateNote> {
       });
       // TextField ready হওয়ার পর focus দাও
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _descriptionFocusNode.requestFocus();
+        _descriptionFocusNode.requestFocus(); // শুধু প্রথমবার
       });
     }
   }
@@ -195,10 +361,12 @@ class _CreateNoteState extends State<CreateNote> {
 
   @override
   void dispose() {
-    saveNoteifTextNoteEmpty();
+    _saveNote();
+    //saveNoteifTextNoteEmpty();
     _deleteNoteifTextIsEmpty();
+    _textEditingController.removeListener(_saveNote);
     _textEditingController.dispose();
-    _quillController.dispose();
+    //_quillController.dispose();
     _descriptionFocusNode.dispose(); // এটা add করো
     super.dispose();
   }
@@ -264,34 +432,37 @@ class _CreateNoteState extends State<CreateNote> {
                     children: [
 
                       IconButton(onPressed: ()async{
-                        final ImagePicker picker = ImagePicker();
-                        final List<XFile> images = await picker.pickMultiImage();
-                        int index = _quillController.selection.baseOffset;
-                        final plainText = _quillController.document.toPlainText().trim();
-                        if(plainText.isEmpty){
-                          _quillController.document.insert(0, '\n');
-                          index = 1;
+                        final picker=ImagePicker();
+                        final images=await picker.pickMultiImage();
+                        if(images.isNotEmpty){
+                          _insertImages(images);
                         }
-
-                        for (XFile image in images) {
-                          _quillController.document.insert(index, '\n');
-                          _quillController.document.insert(
-                              index,
-                              BlockEmbed.image(image.path)
-                          );
-                          index+=1;
-
-                          // 👇 cursor image এর পরে নিয়ে যাওয়া
-                          // 👇 image এর পরে newline add
-                          _quillController.document.insert(index, '\n');
-                          index += 1;
-                        }
-                        // 👇 cursor নিচে নিয়ে যাওয়া
-                        _quillController.updateSelection(
-                          TextSelection.collapsed(offset: index),
-                          ChangeSource.local,
-                        );
-                        _saveQuillContent();
+                        // final ImagePicker picker = ImagePicker();
+                        // final List<XFile> images = await picker.pickMultiImage();
+                        // int index = _quillController.selection.baseOffset;
+                        // final plainText = _quillController.document.toPlainText().trim();
+                        // if(plainText.isEmpty){
+                        //   _quillController.document.insert(0, '\n');
+                        //   index = 1;
+                        // }
+                        //
+                        // for (XFile image in images) {
+                        //   _quillController.document.insert(index, '\n');
+                        //   _quillController.document.insert(
+                        //       index,
+                        //       BlockEmbed.image(image.path)
+                        //   );
+                        //   index+=1;
+                        //
+                        //   _quillController.document.insert(index, '\n');
+                        //   index += 1;
+                        // }
+                        // // 👇 cursor নিচে নিয়ে যাওয়া
+                        // _quillController.updateSelection(
+                        //   TextSelection.collapsed(offset: index),
+                        //   ChangeSource.local,
+                        // );
+                        // _saveQuillContent();
                         },
                           icon: Icon(Icons.image_rounded,color: Colors.white,)
                       ),
@@ -314,7 +485,7 @@ class _CreateNoteState extends State<CreateNote> {
                     child: Column(
                       children: [
                         TextField(
-                          cursorColor: Color(0xFFC8E1E4),
+                          //cursorColor: Color(0xFFC8E1E4),
                           autocorrect: false,
                           controller: _textEditingController,
                           keyboardType: TextInputType.multiline,
@@ -334,36 +505,89 @@ class _CreateNoteState extends State<CreateNote> {
                           ),
                         ),
                         Expanded(
-                            child: TextSelectionTheme(
-                        data: TextSelectionThemeData(
-                          cursorColor: Color(0xFFC8E1E4)
-                        ),
-                        child: QuillEditor.basic(
 
-                          controller: _quillController,
-                          focusNode: _descriptionFocusNode,
-                          config: QuillEditorConfig(
-                            embedBuilders: [
-                              ImageEmbedBuilder(),
-                            ],
-                              placeholder: 'description',
-                              customStyles: DefaultStyles(
-                                  paragraph: DefaultTextBlockStyle(
-                                      TextStyle(
-                                        color: Color(0xFFD2FEFF),
-                                        fontFamily: 'Regular',
-                                        fontSize: 14,
-                                      ),
-                                      HorizontalSpacing.zero,
-                                      VerticalSpacing.zero,
-                                      VerticalSpacing.zero,
-                                      null
-                                  )
-                              )
-                          ),
-                        )
-    )
-                        )
+                              child: SuperEditor(
+                                editor: _editor,
+                                document: _document,
+                                composer: _composer,
+                                //controller: _quillController,
+                                focusNode: _descriptionFocusNode,
+                                inputSource: TextInputSource.ime,
+
+                                imeConfiguration: const SuperEditorImeConfiguration(
+                                  enableAutocorrect: false,      // ← এটাই underline বন্ধ করবে
+                                  //enableSuggestions: false
+                                ),
+
+                                selectionStyle: const SelectionStyles(
+                                  selectionColor: Color(0x44C8E1E4),
+
+
+                                ),
+
+
+
+                                componentBuilders: [
+                                  // Image — cursor আসবে না, keyboard আসবে না
+                                  NoteImageComponentBuilder(
+                                    onImageTap: (imagepath)async{
+                                      _descriptionFocusNode.unfocus();
+                                      await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) => Fullscreenimagepage(imagepath: imagepath),
+                                          ));
+                                    },
+                                  ),
+                                  ...defaultComponentBuilders,
+                                ],
+                                stylesheet: defaultStylesheet.copyWith(
+                                  addRulesAfter: [
+                                    StyleRule(
+                                      BlockSelector.all,
+                                          (Document doc, DocumentNode node) => {
+                                        Styles.textStyle: const TextStyle(
+                                          color: Color(0xFFD2FEFF),
+                                          fontFamily: 'Regular',
+                                          fontSize: 16,
+                                          decoration: TextDecoration.none
+                                        ),
+
+                                        Styles.padding: const CascadingPadding.symmetric(
+                                          vertical: 0,
+                                          horizontal: 0
+                                        )
+
+                                      },
+                                    ),
+
+                                  ],
+                                ),
+
+
+                                // config: QuillEditorConfig(
+                                //
+                                //   embedBuilders: [
+                                //     ImageEmbedBuilder(),
+                                //   ],
+                                //     placeholder: 'description',
+                                //     customStyles: DefaultStyles(
+                                //         paragraph: DefaultTextBlockStyle(
+                                //             TextStyle(
+                                //               color: Color(0xFFD2FEFF),
+                                //               fontFamily: 'Regular',
+                                //               fontSize: 14,
+                                //             ),
+                                //             HorizontalSpacing.zero,
+                                //             VerticalSpacing.zero,
+                                //             VerticalSpacing.zero,
+                                //             null
+                                //         )
+                                //     )
+                                // ),
+                              ),
+                            )
+
 
                         /*
                         Expanded(

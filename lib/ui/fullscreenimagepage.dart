@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:flutter/material.dart';
 
+import 'imageinfo.dart';
+
 class Fullscreenimagepage extends StatelessWidget {
   
   final String imagepath;
@@ -26,11 +28,14 @@ class Fullscreenimagepage extends StatelessWidget {
 
             IconButton(onPressed: (){
               _saveImageToGallery(context);
-            }, icon: Icon(Icons.save_alt_sharp)),
+            }, icon: Icon(Icons.save_alt_sharp,color: Color(0xA5FFFFFF))),
 
             IconButton(onPressed: (){
-
-            }, icon: Icon(Icons.info)),
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Imageinfo(imagepath: imagepath,))
+              );
+            }, icon: Icon(Icons.info,color: Color(0xA5FFFFFF))),
 
           ],
         ),
@@ -39,6 +44,7 @@ class Fullscreenimagepage extends StatelessWidget {
       body: Center(
         child: InteractiveViewer(child: Image.file(
           File(imagepath),
+          width: double.infinity,
           fit: BoxFit.cover,
         )),
       ),

@@ -8,6 +8,7 @@ import 'package:notes/services/auth/auth_provider.dart';
 import 'package:notes/services/cloud/cloud_files.dart';
 import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/create_note.dart';
+import 'package:notes/ui/fullscreenimagepage.dart';
 import 'package:notes/ui/settings_page.dart';
 import 'package:provider/provider.dart';
 
@@ -38,7 +39,7 @@ class MyApp extends StatelessWidget {
       routes: {
         SettingspageRoute: (context) => const SettingsPage(),
         CloudFilesRoute: (context) => const CloudFiles(),
-        CreateNoteRoute: (context) => const CreateNote()
+        CreateNoteRoute: (context) => const CreateNote(),
       },
       //0xFF239AC4
       theme: ThemeData(
