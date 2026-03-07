@@ -41,15 +41,14 @@ class NotesService {
 
 
   Stream<List<DatabaseNote>> get allNotes =>
-  _noteStreamController.stream.filter((note){
-    final currentfolder=_folder;
-    if(currentfolder != null){
-      return note.userId==currentfolder.id;
-    }else{
-      throw UserShouldBeSetBeforeReadingAllNotes();
-    }
-
-  });
+      _noteStreamController.stream.filter((note){
+        final currentfolder=_folder;
+        if(currentfolder != null){
+          return note.userId==currentfolder.id;
+        }else{
+          throw UserShouldBeSetBeforeReadingAllNotes();
+        }
+      });
 
 
   Future<void> _ensureDbisOpen()async{
@@ -62,6 +61,7 @@ class NotesService {
   Future<void> _cacheNote()async{
     final allNotes=await getallNotes();
     _notes=allNotes.toList();
+
     _noteStreamController.add(_notes);
   }
 
@@ -118,7 +118,7 @@ class NotesService {
     }else{
       final updateNote=await getNote(id: note.id);
       _notes.removeWhere((note)=> note.id==updateNote.id);
-      _notes.add(updateNote);
+      _notes.insert(0, updateNote); // ← add এর বদলে insert(0)
       _noteStreamController.add(_notes);
       return updateNote;
     }
@@ -218,9 +218,9 @@ class NotesService {
         content: jsonEncode(noteContent)
     );
 
-    _notes.add(note);
+    //_notes.add(note);
+    _notes.insert(0, note);
     _noteStreamController.add(_notes);
-
     return note;
   }
 

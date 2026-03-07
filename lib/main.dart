@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:notes/constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
@@ -60,7 +64,10 @@ class MyApp extends StatelessWidget {
   }
 }
 
+//typedef NoteCallback=void Function(DatabaseNote note);
+
 class MainPage extends StatefulWidget {
+  //final NoteCallback onTap;
   const MainPage({super.key});
 
   @override
@@ -71,6 +78,37 @@ class _MainPageState extends State<MainPage> {
   late final NotesService _notesService;
 
 
+
+
+  String? _getFirstImageFromContent(String content) {
+    if (content.isEmpty) return null;
+    try {
+      final list = jsonDecode(content) as List<dynamic>;
+      for (final item in list) {
+        if (item['type'] == 'image') {
+          return item['url'] as String?;
+        }
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
+  }
+
+
+  String _getPlainTextFromContent(String content) {
+    if (content.isEmpty) return '';
+    try {
+      final list = jsonDecode(content) as List<dynamic>;
+      return list
+          .where((item) => item['type'] == 'paragraph')
+          .map((item) => item['text'] as String? ?? '')
+          .where((text) => text.trim().isNotEmpty)
+          .join('\n');
+    } catch (e) {
+      return content;
+    }
+  }
 
   @override
   void initState() {
@@ -85,7 +123,7 @@ class _MainPageState extends State<MainPage> {
     super.dispose();
   }
 
-  final imageUrl='https://thumb.photo-ac.com/98/98328339ce5727d17948b5722e2d804b_w.jpeg';
+
 
 
   @override
@@ -175,89 +213,84 @@ class _MainPageState extends State<MainPage> {
                               case ConnectionState.active:
                                 if(snapshot.hasData){
                                   final notes=snapshot.data!;
-                                  return GridView.builder(
+
+                                   return MasonryGridView.builder(
+
                                     itemCount: notes.length,
-                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        mainAxisSpacing: 5,
-                                        crossAxisSpacing: 10,
-                                        childAspectRatio: imageUrl.isNotEmpty
-                                            ? 0.9
-                                            :1.4
+                                    gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
                                     ),
+                                    mainAxisSpacing: 8,
+                                    crossAxisSpacing: 20,
                                     itemBuilder: (context, index) {
-                                      final note=notes[index];
-                                      return Padding(
-                                        padding: const EdgeInsets.fromLTRB(5, 0, 5, 5),
+                                      final note = notes[index];
+                                      final firstimage = _getFirstImageFromContent(note.content);
+                                      final plainText = _getPlainTextFromContent(note.content);
+
+                                      return InkWell(
+                                        onTap: () {
+                                          Navigator.of(context).pushNamed(CreateNoteRoute,arguments: note);
+                                        },
                                         child: Container(
                                           decoration: BoxDecoration(
-
-                                              color: Color(0xFF58B4D3),
-                                              borderRadius: BorderRadius.circular(5)
+                                            color: Color(0xFF58B4D3),
+                                            borderRadius: BorderRadius.circular(5),
                                           ),
                                           clipBehavior: Clip.hardEdge,
                                           child: Column(
-                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisSize: MainAxisSize.min, // ← এটাই magic, content অনুযায়ী height নেয়
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              if(imageUrl.isNotEmpty)
-                                                Padding(
-                                                  padding: const EdgeInsets.fromLTRB(5, 8, 5, 3),
-                                                  child: Container(
-                                                    width: double.infinity,
-                                                    height: 70,
-                                                    decoration:  BoxDecoration(
-                                                        image: DecorationImage(image: NetworkImage(imageUrl),
-                                                          fit: BoxFit.cover,)
+                                              if (firstimage != null)
+                                                Container(
+                                                  width: double.infinity,
+                                                  height: 75,
+                                                  decoration: BoxDecoration(
+                                                    image: DecorationImage(
+                                                      image: FileImage(File(firstimage)),
+                                                      fit: BoxFit.cover,
                                                     ),
                                                   ),
                                                 ),
+                                              Padding(
+                                                padding: const EdgeInsets.fromLTRB(5, 2, 5, 5),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(note.title,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                        fontFamily: 'Regular',
+                                                        fontWeight: FontWeight.w600,
+                                                        fontSize: 13,
+                                                        color: Color(0xFFDBF5FB),
+                                                      ),
+                                                    ),
 
-
-                                              Expanded(
-                                                child: Padding(
-                                                  padding: const EdgeInsets.fromLTRB(5, 0, 5, 0),
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(note.title,
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow.ellipsis,
+                                                      Text(plainText,
                                                         style: TextStyle(
-                                                            fontFamily: 'Regular',
-                                                            fontWeight: FontWeight.w600,
-                                                            fontSize: 13,
-                                                            color: Color(0xFFDBF5FB)
+                                                          color: Color(0xFFDBF5FB),
+                                                          fontFamily: 'Regular',
+                                                          fontWeight: FontWeight.w400,
+                                                          fontSize: 12,
+                                                          height: 1.2,
                                                         ),
+                                                        maxLines: 4,
+                                                        overflow: TextOverflow.ellipsis,
                                                       ),
-                                                      Expanded(
-                                                        child: Text(note.content,
-                                                          style: TextStyle(
-                                                            color:Color(0xFFDBF5FB),
-                                                            fontFamily: 'Regular',
-                                                            fontWeight: FontWeight.w400,
-                                                            fontSize: 12,
-                                                            height: 1.2,
-
-                                                          ),
-                                                          maxLines: 4,
-                                                          overflow: TextOverflow.ellipsis,
-                                                        ),
+                                                    SizedBox(
+                                                      height: 5,
+                                                    ),
+                                                    Text('22 Feb, 2026',
+                                                      style: TextStyle(
+                                                        color: Color(0xFFDBF5FB),
+                                                        fontSize: 10,
+                                                        fontFamily: 'Fredoka',
+                                                        fontWeight: FontWeight.w600,
                                                       ),
-                                                      Row(
-                                                        children: [
-                                                          Text('22 Feb, 2026', style: TextStyle(
-                                                              color: Color(0xFFDBF5FB),
-                                                              fontSize: 10,
-                                                              fontFamily: 'Fredoka',
-                                                              fontWeight: FontWeight.w600
-                                                          ),)
-                                                        ],
-                                                      )
-
-
-                                                    ],
-                                                  ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ],

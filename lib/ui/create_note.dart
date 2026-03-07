@@ -1,7 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
-// import 'package:flutter_quill/flutter_quill.dart';
-// import 'package:flutter_quill/quill_delta.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -9,9 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/fullscreenimagepage.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
-//import 'package:path/path.dart';
 import 'package:super_editor/super_editor.dart';
-
 import 'note_image_component_builder.dart';
 
 class CreateNote extends StatefulWidget {
@@ -303,6 +299,7 @@ class _CreateNoteState extends State<CreateNote> {
     _textEditingController.dispose();
     _descriptionFocusNode.dispose(); // এটা add করো
     _titleFocusNode.dispose();
+    _hideToolbar();
     super.dispose();
   }
 //'January 19, 10:23 PM'
@@ -603,14 +600,12 @@ class _CreateNoteState extends State<CreateNote> {
       _toolbarOverlay = null;
     }
   }
-
   void _timeinfo()async{
     DateTime now=DateTime.now();
     setState(() {
       _currentTime=DateFormat('MMMM dd, hh:mm a').format(now);
     });
   }
-
   void _deleteImage(String imagePath){
     for(int i =0; i<_document.nodeCount; i++){
       final node=_document.getNodeAt(i);
