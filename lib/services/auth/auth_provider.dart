@@ -159,7 +159,7 @@ class AuthProvider extends ChangeNotifier{
   static Future<void> _sendAuthtoBackend(final authCode)async{
     try{
       final response =await http.post(
-        Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/exchangeToken'),
+        Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/exchangeToken'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'code': authCode}),
       );
@@ -181,7 +181,7 @@ class AuthProvider extends ChangeNotifier{
 
     try{
      final response= await http.post(
-          Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/signOut'),
+          Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/signOut'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({ 'uid':_googleUserId})
       ).timeout(const Duration(seconds: 5));
@@ -219,7 +219,7 @@ class AuthProvider extends ChangeNotifier{
    Future<String?> getAccessTokenFromServer() async {
      try{
        final response =await http.post(
-           Uri.parse('http://192.168.1.25:5001/notes-moinul-flutter-project/us-central1/getRefreshToken'),
+           Uri.parse('https://us-central1-notes-moinul-flutter-project.cloudfunctions.net/getRefreshToken'),
            headers: {'Content-Type': 'application/json'},
            body: jsonEncode({'userId': googleuserId})
        );

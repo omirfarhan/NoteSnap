@@ -1,14 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:googleapis/shared.dart';
 import 'package:notes/constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
-
 import 'package:notes/services/cloud/cloud_files.dart';
 import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/create_note.dart';
-import 'package:notes/ui/fullscreenimagepage.dart';
 import 'package:notes/ui/settings_page.dart';
 import 'package:provider/provider.dart';
 
@@ -79,17 +76,9 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _notesService=NotesService();
-    //_notesService.open();
-    //_openDb();
   }
 
-  Future<void> _openDb() async {
-    await _notesService.open();
-    await _notesService.getOrCreateFolder(foldername: 'all');
-    // setState(() {
-    //   _isready = true;
-    // });
-  }
+
   @override
   void dispose() {
     _notesService.close();
@@ -98,7 +87,7 @@ class _MainPageState extends State<MainPage> {
 
   final imageUrl='https://thumb.photo-ac.com/98/98328339ce5727d17948b5722e2d804b_w.jpeg';
 
-  //https://thumb.photo-ac.com/98/98328339ce5727d17948b5722e2d804b_w.jpeg
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -304,7 +293,6 @@ class _MainPageState extends State<MainPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.of(context).pushNamed(CreateNoteRoute);
-          print('Floating action button');
         },
         backgroundColor: Color(0xFF219BCB),
         splashColor: Colors.transparent,
@@ -326,11 +314,7 @@ class _MainPageState extends State<MainPage> {
 
           ),
         ),
-
-
       ),
-
-
     );
   }
 }

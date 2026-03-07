@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_quill/flutter_quill.dart';
 import 'package:notes/extensions/list.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
@@ -103,7 +102,7 @@ class NotesService {
   })async{
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
-    print('Updating note ${note.id} with text: $text'); // এখানে
+
     await getNote(id: note.id);
 
     final updateCount=await db.update(noteTable, {
@@ -113,7 +112,7 @@ class NotesService {
       where: 'id = ?',
       whereArgs: [note.id],
     );
-    print('Update count: $updateCount'); // এখানে
+
     if(updateCount == 0){
       throw CouldNotUpdateNote();
     }else{
@@ -200,12 +199,10 @@ class NotesService {
     final db=_getDatabaseorThrow();
 
     final dbFolder=await getFolder(foldername: owner.foldername);
-    print('Found folder: ${dbFolder.id} - ${dbFolder.foldername}');
 
     if(dbFolder != owner){
       throw CouldNotFindFolder();
     }
-
     const text='';
     final noteid=await db.insert(
       noteTable,{
@@ -214,7 +211,6 @@ class NotesService {
       contentColumn:jsonEncode(noteContent)
     });
 
-    print('Inserted note with id: $noteid');
     final note=DatabaseNote(
         id: noteid,
         userId: owner.id,

@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/services.dart';
 // import 'package:flutter_quill/flutter_quill.dart';
 // import 'package:flutter_quill/quill_delta.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/fullscreenimagepage.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
@@ -26,6 +26,14 @@ class _CreateNoteState extends State<CreateNote> {
   bool _isInitialized = false;
   bool _isLoading = true;
 
+  bool _isSaved = false;
+  bool _ignoreNextChange = false;
+
+
+  String? _imagepath;
+  String _currentTime="";
+
+
   DatabaseNote? _note;
   late final NotesService _notesService;
   late final TextEditingController _textEditingController;
@@ -36,58 +44,34 @@ class _CreateNoteState extends State<CreateNote> {
   late MutableDocumentComposer _composer;
 
 
-  // bool _isEditing = false;
-  // late final QuillController _quillController;
+
   late final FocusNode _descriptionFocusNode;
+  late final FocusNode _titleFocusNode;
 
   OverlayEntry? _toolbarOverlay;
 
   Future<DatabaseNote> createNote(BuildContext context)async{
-
     final widgetNote=context.arguments<DatabaseNote>();
-
     if(widgetNote != null){
       _note=widgetNote;
       _textEditingController.text=widgetNote.title;
-
-
       if(widgetNote.content.isNotEmpty){
         try{
-
           _document=_documentFromJson(widgetNote.content);
-
-          // final delta=Delta.fromJson(jsonDecode(widgetNote.content));
-          // _quillController=QuillController(
-          //     document: Document.fromDelta(delta),
-          //     selection: const TextSelection.collapsed(offset: 0)
-          // );
         }catch (e){
-          //_quillController=QuillController.basic();
           _document=_emptyDocument();
         }
       }
       _rebuildEditor();
       return widgetNote;
     }
-
     final existingNote=_note;
-
     if(existingNote != null){
-      print('Returning existing note: ${existingNote.id}'); // এখানে
-
       return existingNote;
     }
-    print('Creating new note...');
-    // sob note toiri hoise all folder er vitor
     const foldername = "all";
-
-    //final mainfolder= await _notesService.getFolder(foldername: foldername);
     final mainfolder= await _notesService.getOrCreateFolder(foldername: foldername);
-    print('Got folder: ${mainfolder.id} - ${mainfolder.foldername}'); // এখানে
-
     final newNote=await _notesService.createNote(owner: mainfolder);
-    await _notesService.debugPrintAllNotes();
-    print('Created note ID: ${newNote.id}');
     _note=newNote;
     return newNote;
   }
@@ -152,6 +136,13 @@ class _CreateNoteState extends State<CreateNote> {
       document: _document,
       composer: _composer
     );
+    // Document change listener
+    _document.addListener((DocumentChangeLog changeLog) {
+      if (_isSaved && mounted) {
+        setState(() => _isSaved = false);
+      }
+    });
+
   }
 
   Future<void> _saveNote()async{
@@ -162,14 +153,18 @@ class _CreateNoteState extends State<CreateNote> {
     final content=_documentToJson();
 
     if (title.isNotEmpty || _hasAnyContent()) {
+
       await _notesService.updateNote(
         note: note,
         text: title,
         content: content,
       );
+
     }
 
   }
+
+
 
   bool _hasAnyContent() {
     for (int i = 0; i < _document.nodeCount; i++) {
@@ -182,73 +177,13 @@ class _CreateNoteState extends State<CreateNote> {
     return false;
   }
 
-
   void _deleteNoteifTextIsEmpty(){
     final note= _note;
     if (note == null) return;
-    //final quillContent=_quillController.document.toPlainText().trim();
     if(_textEditingController.text.trim().isEmpty && !_hasAnyContent()){
       _notesService.deleteNote(id: note.id);
     }
   }
-
-  // void saveNoteifTextNoteEmpty()async{
-  //   final note=_note;
-  //   final text=_textEditingController.text;
-  //
-  //   final content=jsonEncode(_quillController.document.toDelta().toJson());
-  //   final quillText=_quillController.document.toPlainText().trim();
-  //
-  //
-  //   if(note != null && (text.isNotEmpty || quillText.isNotEmpty)){
-  //     // _notesService.noteContent=[];
-  //     // _notesService.addText(content);
-  //     await _notesService.updateNote(
-  //         note: note,
-  //         text: text,
-  //         content: content
-  //     );
-  //   }
-  // }
-
-  // void _textControllerListener()async{
-  //   final note=_note;
-  //   final text=_textEditingController.text;
-  //   if(note == null){
-  //     return;
-  //   }
-  //   final quilcontroldata=jsonEncode(_quillController.document.toDelta().toJson());
-  //   await _notesService.updateNote(
-  //     note: note,
-  //     text: text,
-  //     content: quilcontroldata
-  //   );
-  // }
-
-  // void _saveQuillContent()async{
-  //   final note=_note;
-  //   if (note == null) return;
-  //   final content=jsonEncode(_quillController.document.toDelta().toJson());
-  //   await _notesService.updateNote(
-  //       note: note,
-  //       text: _textEditingController.text,
-  //       content: content
-  //   );
-  //
-  // }
-
-
-  //add image to note
-
-  // void addImageToNote(String imagePath)async{
-  //   final note= _note;
-  //   if (note == null) return;
-  //
-  //   final index=_quillController.selection.baseOffset;
-  //   _quillController.document.insert(index, BlockEmbed.image(imagePath));
-  //   _saveQuillContent();
-  //
-  // }
 
   void _insertImages(List<XFile> images) async {
     // Cursor এর current position বের করো
@@ -303,28 +238,30 @@ class _CreateNoteState extends State<CreateNote> {
   }
 
 
-  // void _setupTextControllerlistener(){
-  //   _textEditingController.removeListener(_textControllerListener);
-  //   _textEditingController.addListener(_textControllerListener);
-  //   // _quillController.removeListener(_saveQuillContent);
-  //   // _quillController.addListener(_saveQuillContent);
-  // }
-
-
   @override
   void initState() {
     super.initState();
     _notesService = NotesService();
     _textEditingController = TextEditingController();
-    //_quillController=QuillController.basic();
+    _timeinfo();
     _descriptionFocusNode = FocusNode();
+    _titleFocusNode=FocusNode();
     _document=_emptyDocument();
     _rebuildEditor();
 
-    _textEditingController.addListener(_saveNote);
+
+    _textEditingController.addListener(() {
+      if (_ignoreNextChange) {
+        _ignoreNextChange = false; // একবার ignore করে reset
+        return; // _saveNote() ও call হবে না
+      }
+      if (_isSaved) {
+        setState(() => _isSaved = false);
+      }
+      _saveNote();
+    });
 
     _descriptionFocusNode.addListener(() {
-
       if (mounted) {
         setState(() {
           _isDescriptionFocused = _descriptionFocusNode.hasFocus;
@@ -344,7 +281,7 @@ class _CreateNoteState extends State<CreateNote> {
 
   Future<void> _initNote() async {
     await createNote(context);
-    //_setupTextControllerlistener();
+
 
     if (mounted) {
       setState(() {
@@ -361,15 +298,14 @@ class _CreateNoteState extends State<CreateNote> {
   @override
   void dispose() {
     _saveNote();
-    //saveNoteifTextNoteEmpty();
     _deleteNoteifTextIsEmpty();
     _textEditingController.removeListener(_saveNote);
     _textEditingController.dispose();
-    //_quillController.dispose();
     _descriptionFocusNode.dispose(); // এটা add করো
+    _titleFocusNode.dispose();
     super.dispose();
   }
-
+//'January 19, 10:23 PM'
   @override
   Widget build(BuildContext context) {
 
@@ -379,7 +315,7 @@ class _CreateNoteState extends State<CreateNote> {
       appBar: AppBar(
         title: Padding(
           padding: const EdgeInsets.fromLTRB(0, 0, 0, 15),
-            child: const Text('January 19, 10:23 PM',
+            child: Text(_currentTime,
             style: TextStyle(fontSize: 10,
                 color: Color(0xFF9EDDE4),
               fontFamily: 'Regular'
@@ -389,21 +325,47 @@ class _CreateNoteState extends State<CreateNote> {
 
         actions: [
 
-          IconButton(onPressed: (){
-            _notesService.debugPrintAllNotes();
-          },
-          icon: Icon(Icons.chevron_left),
-            padding: EdgeInsets.zero,
-              iconSize: 30
-          ),
-          IconButton(onPressed: (){
-            _notesService.debugPrintAllNotes();
-          }, icon: Icon(Icons.chevron_right),iconSize: 30,),
-          SizedBox(width: 20), // gap control এখানে
+          if(!_isSaved) ...[
+            IconButton(onPressed: (){
+              _notesService.debugPrintAllNotes();
+            },
+                icon: Icon(Icons.chevron_left),
+                padding: EdgeInsets.zero,
+                iconSize: 30
+            ),
+            IconButton(onPressed: (){
+              _notesService.debugPrintAllNotes();
+            }, icon: Icon(Icons.chevron_right),iconSize: 30,),
+            SizedBox(width: 20), // gap control এখানে
+            IconButton(onPressed: ()async{
+              _ignoreNextChange = true; // এই লাইনটা যোগ করুন
+              await _saveNote();
+              if(mounted){
+                setState(() {
+                  _isSaved=true;
+                });
+                _descriptionFocusNode.unfocus();
+                _titleFocusNode.unfocus();
 
-          IconButton(onPressed: (){
-             _notesService.debugPrintAllNotes();
-          }, icon: Icon(Icons.check_circle_outline_rounded)),
+              }
+            }, icon: Icon(Icons.check_circle_outline_rounded))
+          ] else
+            Padding(
+                padding:const EdgeInsetsGeometry.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+
+                 SizedBox(width: 4),
+                 Text(
+                  "save"
+                 )
+                ],
+              ),
+            )
+
+          // IconButton(onPressed: (){
+          //    _notesService.debugPrintAllNotes();
+          // }, icon: Icon(Icons.check_circle_outline_rounded)),
 
         ],
       ),
@@ -436,32 +398,7 @@ class _CreateNoteState extends State<CreateNote> {
                         if(images.isNotEmpty){
                           _insertImages(images);
                         }
-                        // final ImagePicker picker = ImagePicker();
-                        // final List<XFile> images = await picker.pickMultiImage();
-                        // int index = _quillController.selection.baseOffset;
-                        // final plainText = _quillController.document.toPlainText().trim();
-                        // if(plainText.isEmpty){
-                        //   _quillController.document.insert(0, '\n');
-                        //   index = 1;
-                        // }
-                        //
-                        // for (XFile image in images) {
-                        //   _quillController.document.insert(index, '\n');
-                        //   _quillController.document.insert(
-                        //       index,
-                        //       BlockEmbed.image(image.path)
-                        //   );
-                        //   index+=1;
-                        //
-                        //   _quillController.document.insert(index, '\n');
-                        //   index += 1;
-                        // }
-                        // // 👇 cursor নিচে নিয়ে যাওয়া
-                        // _quillController.updateSelection(
-                        //   TextSelection.collapsed(offset: index),
-                        //   ChangeSource.local,
-                        // );
-                        // _saveQuillContent();
+
                         },
                           icon: Icon(Icons.image_rounded,color: Colors.white,)
                       ),
@@ -489,6 +426,7 @@ class _CreateNoteState extends State<CreateNote> {
                           controller: _textEditingController,
                           keyboardType: TextInputType.multiline,
                           maxLines: null,
+                          focusNode: _titleFocusNode,
                           decoration: InputDecoration(
                               hintText: 'Title',
                               hintStyle: TextStyle(
@@ -509,13 +447,13 @@ class _CreateNoteState extends State<CreateNote> {
                                 editor: _editor,
                                 document: _document,
                                 composer: _composer,
-                                //controller: _quillController,
+
                                 focusNode: _descriptionFocusNode,
                                 inputSource: TextInputSource.ime,
 
                                 imeConfiguration: const SuperEditorImeConfiguration(
                                   enableAutocorrect: false,      // ← এটাই underline বন্ধ করবে
-                                  //enableSuggestions: false
+
                                 ),
 
                                 selectionStyle: const SelectionStyles(
@@ -527,23 +465,16 @@ class _CreateNoteState extends State<CreateNote> {
 
 
                                 componentBuilders: [
-                                  // Image — cursor আসবে না, keyboard আসবে না
+
                                   NoteImageComponentBuilder(
                                     onImageTap: (imagePath, imageKey) {
                                       _descriptionFocusNode.unfocus();
+                                      setState(() {
+                                        _imagepath=imagePath;
+                                      });
                                       _toggleToolbar(context, imageKey);
                                     },
                                   ),
-
-                                  /*
-                                      await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) => Fullscreenimagepage(imagepath: imagepath),
-                                          ));
-
-                                       */
-
                                   ...defaultComponentBuilders,
                                 ],
                                 stylesheet: defaultStylesheet.copyWith(
@@ -569,59 +500,9 @@ class _CreateNoteState extends State<CreateNote> {
                                   ],
                                 ),
 
-
-                                // config: QuillEditorConfig(
-                                //
-                                //   embedBuilders: [
-                                //     ImageEmbedBuilder(),
-                                //   ],
-                                //     placeholder: 'description',
-                                //     customStyles: DefaultStyles(
-                                //         paragraph: DefaultTextBlockStyle(
-                                //             TextStyle(
-                                //               color: Color(0xFFD2FEFF),
-                                //               fontFamily: 'Regular',
-                                //               fontSize: 14,
-                                //             ),
-                                //             HorizontalSpacing.zero,
-                                //             VerticalSpacing.zero,
-                                //             VerticalSpacing.zero,
-                                //             null
-                                //         )
-                                //     )
-                                // ),
                               ),
                             ),
 
-
-                        /*
-                        Expanded(
-                          child: TextField(
-                            focusNode: _descriptionFocusNode,
-                            cursorColor: Color(0xFFC8E1E4),
-                            autocorrect: false,
-                            // enableSuggestions: false,
-                            controller: _textEdtdescriptioncontroller,
-                            keyboardType: TextInputType.multiline,
-                            expands: true,
-                            maxLines: null,
-                            decoration: InputDecoration(
-                                hintText: 'description',
-                                hintStyle: TextStyle(
-                                    color: Color(0xFFD2FEFF),
-                                    fontFamily: 'Regular'
-                                ),
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none
-                            ),
-                            style: TextStyle(
-                              color: Color(0xFFD2FEFF),
-                              fontFamily: 'Regular',
-                            ),
-                          ),
-                        ),
-
-                         */
                       ],
                     ),
                   ),
@@ -648,8 +529,8 @@ class _CreateNoteState extends State<CreateNote> {
     final statusBarHeight = MediaQuery.of(context).padding.top;
     final appBarHeight = kToolbarHeight + statusBarHeight;
 
-    const toolbarHeight = 50.0;
-    const toolbarWidth = 220.0;
+    const toolbarHeight = 38.0;
+    const toolbarWidth = 150.0;
 
     // প্রথমে image এর উপরে দেখাও
     double topPosition = position.dy - toolbarHeight - 8;
@@ -681,17 +562,32 @@ class _CreateNoteState extends State<CreateNote> {
             height: toolbarHeight,
             width: toolbarWidth,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
+              color: Color(0xFF58B4D3),
+              borderRadius: BorderRadius.circular(10),
               boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: const [
-                Icon(Icons.comment),
-                Icon(Icons.edit),
-                Icon(Icons.image),
-                Icon(Icons.delete),
+              children: [
+                //const Icon(Icons.comment),
+                //resize image
+                //const Icon(Icons.edit),
+                IconButton(onPressed: (){
+                  _hideToolbar();
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Fullscreenimagepage(imagepath: _imagepath!),
+                      ));
+                }, icon: Icon(Icons.image)),
+
+                 IconButton(onPressed: (){
+                   _hideToolbar();
+                   _deleteImage(_imagepath!);
+                   setState(() {
+                     _imagepath;
+                   });
+                 }, icon: Icon(Icons.delete))
               ],
             ),
           ),
@@ -700,6 +596,34 @@ class _CreateNoteState extends State<CreateNote> {
     );
 
     Overlay.of(context).insert(_toolbarOverlay!);
+  }
+  void _hideToolbar() {
+    if (_toolbarOverlay != null) {
+      _toolbarOverlay!.remove();
+      _toolbarOverlay = null;
+    }
+  }
+
+  void _timeinfo()async{
+    DateTime now=DateTime.now();
+    setState(() {
+      _currentTime=DateFormat('MMMM dd, hh:mm a').format(now);
+    });
+  }
+
+  void _deleteImage(String imagePath){
+    for(int i =0; i<_document.nodeCount; i++){
+      final node=_document.getNodeAt(i);
+
+      if(node is ImageNode && node.imageUrl == imagePath){
+        _editor.execute([
+          DeleteNodeRequest(nodeId: node.id)
+
+        ]);
+        break;
+      }
+    }
+    _saveNote();
   }
 
 }

@@ -27,11 +27,12 @@ class _NoteImageComponentState extends State<NoteImageComponent> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: AspectRatio(
-            aspectRatio: 16/9,
+            aspectRatio: 16 / 9,   // screenshot এর মতো
             child: Image.file(
               File(widget.imagePath),
               key: widget.imageKey,
-              fit: BoxFit.fill,
+              fit: BoxFit.cover,   // image crop করে container fill করবে
+              width: double.infinity,
             ),
           ),
         ),
