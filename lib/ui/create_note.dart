@@ -182,52 +182,64 @@ class _CreateNoteState extends State<CreateNote> {
   }
 
   void _insertImages(List<XFile> images) async {
-    // Cursor এর current position বের করো
     final selection = _composer.selection;
-
     String insertAfterNodeId;
 
     if (selection != null) {
-      // Cursor যে node এ আছে, সেটার id নাও
+      final node = _document.getNodeById(selection.extent.nodeId);
+
+      if (node is ParagraphNode) {
+        final position = selection.extent.nodePosition;
+
+        if (position is TextNodePosition) {
+          final offset = position.offset;
+
+          if (offset != 0 && offset != node.text.text.length) {
+            final newParagraphId = Editor.createNodeId();
+
+            _editor.execute([
+              SplitParagraphRequest(
+                nodeId: node.id,
+                splitPosition: TextPosition(offset: offset),
+                newNodeId: newParagraphId,
+                replicateExistingMetadata: true,
+              )
+            ]);
+          }
+        }
+      }
+
       insertAfterNodeId = selection.extent.nodeId;
     } else {
-      // Selection না থাকলে last node এ
       insertAfterNodeId = _document.getNodeAt(_document.nodeCount - 1)!.id;
     }
 
     for (final image in images) {
-      // Image insert করো cursor position এর পরে
+      final imageId = Editor.createNodeId();
+
       _editor.execute([
         InsertNodeAfterNodeRequest(
           existingNodeId: insertAfterNodeId,
           newNode: ImageNode(
-            id: Editor.createNodeId(),
+            id: imageId,
             imageUrl: image.path,
           ),
         )
       ]);
 
-      // Image node এর id বের করো (এইমাত্র insert হওয়া)
-      // Image এর পরের node টাই এখন image
-      final imageNodeId = _document.getNodeAfter(
-        _document.getNodeById(insertAfterNodeId)!,
-      )!.id;
+      final paragraphId = Editor.createNodeId();
 
-      // Image এর পরে empty paragraph দাও
       _editor.execute([
         InsertNodeAfterNodeRequest(
-          existingNodeId: imageNodeId,
+          existingNodeId: imageId,
           newNode: ParagraphNode(
-            id: Editor.createNodeId(),
+            id: paragraphId,
             text: AttributedText(''),
           ),
         )
       ]);
 
-      // পরের image টা এই paragraph এর পরে যাবে
-      insertAfterNodeId = _document.getNodeAfter(
-        _document.getNodeById(imageNodeId)!,
-      )!.id;
+      insertAfterNodeId = paragraphId;
     }
 
     _saveNote();
