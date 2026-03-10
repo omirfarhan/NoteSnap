@@ -26,30 +26,22 @@ class _NoteImageComponentState extends State<NoteImageComponent>
   @override
   DocumentNode get node => widget.node;
 
-  RenderBox? get _renderBox =>
-      context.findRenderObject() as RenderBox?;
-
-  Rect? getRectForPossition(DocumentPosition position){
-    final box=_renderBox;
-    if(box == null) return null;
-
-    final offset=box.localToGlobal(Offset.zero);
-    return offset & box.size;
-  }
-
 
   @override
-  Offset getOffsetPossition(DocumentPosition position){
-    return Offset.zero;
+  Rect getRectForPosition(NodePosition nodePosition) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return Rect.zero;
+    return Offset.zero & box.size;
   }
 
   @override
-  DocumentPosition getDocumentAtOffset(Offset localOffset){
-    return DocumentPosition(
-        nodeId: widget.node.id,
-        nodePosition: const UpstreamDownstreamNodePosition.upstream()
-    );
+  Rect getEdgeForPosition(NodePosition nodePosition) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return Rect.zero;
+    return Offset.zero & box.size;
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -75,109 +67,93 @@ class _NoteImageComponentState extends State<NoteImageComponent>
 
   @override
   NodePosition getBeginningPosition() {
-    // TODO: implement getBeginningPosition
-    throw UnimplementedError();
+    return const UpstreamDownstreamNodePosition.upstream();
   }
 
   @override
   NodePosition getBeginningPositionNearX(double x) {
-    // TODO: implement getBeginningPositionNearX
-    throw UnimplementedError();
+    return const UpstreamDownstreamNodePosition.upstream();
   }
 
+//eta ektu change hoise
   @override
   NodeSelection getCollapsedSelectionAt(NodePosition nodePosition) {
-    // TODO: implement getCollapsedSelectionAt
-    throw UnimplementedError();
+    return const UpstreamDownstreamNodeSelection.collapsedUpstream();
   }
 
-  @override
-  MouseCursor? getDesiredCursorAtOffset(Offset localOffset) {
-    // TODO: implement getDesiredCursorAtOffset
-    throw UnimplementedError();
-  }
-
-  @override
-  Rect getEdgeForPosition(NodePosition nodePosition) {
-    // TODO: implement getEdgeForPosition
-    throw UnimplementedError();
-  }
 
   @override
   NodePosition getEndPosition() {
-    // TODO: implement getEndPosition
-    throw UnimplementedError();
+    return const UpstreamDownstreamNodePosition.downstream();
   }
 
   @override
   NodePosition getEndPositionNearX(double x) {
-    // TODO: implement getEndPositionNearX
-    throw UnimplementedError();
+    return const UpstreamDownstreamNodePosition.downstream();
   }
+
+
+
 
   @override
   Offset getOffsetForPosition(NodePosition nodePosition) {
-    // TODO: implement getOffsetForPosition
-    throw UnimplementedError();
+    return Offset.zero;
   }
+
 
   @override
   NodePosition? getPositionAtOffset(Offset localOffset) {
-    // TODO: implement getPositionAtOffset
-    throw UnimplementedError();
+    return const UpstreamDownstreamNodePosition.upstream();
   }
 
-  @override
-  Rect getRectForPosition(NodePosition nodePosition) {
-    // TODO: implement getRectForPosition
-    throw UnimplementedError();
-  }
 
   @override
   Rect getRectForSelection(NodePosition baseNodePosition, NodePosition extentNodePosition) {
-    // TODO: implement getRectForSelection
-    throw UnimplementedError();
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return Rect.zero;
+    return Offset.zero & box.size;
   }
 
   @override
-  NodeSelection getSelectionBetween({required NodePosition basePosition, required NodePosition extentPosition}) {
-    // TODO: implement getSelectionBetween
-    throw UnimplementedError();
+  NodeSelection getSelectionBetween({
+    required NodePosition basePosition,
+    required NodePosition extentPosition,
+  }) {
+    return UpstreamDownstreamNodeSelection(
+      base: UpstreamDownstreamNodePosition.upstream(),
+      extent: UpstreamDownstreamNodePosition.downstream(),
+    );
   }
 
   @override
   NodeSelection? getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset) {
-    // TODO: implement getSelectionInRange
-    throw UnimplementedError();
+    return UpstreamDownstreamNodeSelection(
+      base: UpstreamDownstreamNodePosition.upstream(),
+      extent: UpstreamDownstreamNodePosition.downstream(),
+    );
   }
 
   @override
   NodeSelection getSelectionOfEverything() {
-    // TODO: implement getSelectionOfEverything
-    throw UnimplementedError();
+    return UpstreamDownstreamNodeSelection(
+      base: UpstreamDownstreamNodePosition.upstream(),
+      extent: UpstreamDownstreamNodePosition.downstream(),
+    );
   }
 
   @override
-  NodePosition? movePositionDown(NodePosition currentPosition) {
-    // TODO: implement movePositionDown
-    throw UnimplementedError();
-  }
+  MouseCursor? getDesiredCursorAtOffset(Offset localOffset) => MouseCursor.defer;
 
   @override
-  NodePosition? movePositionLeft(NodePosition currentPosition, [MovementModifier? movementModifier]) {
-    // TODO: implement movePositionLeft
-    throw UnimplementedError();
-  }
+  NodePosition? movePositionDown(NodePosition currentPosition) => null;
 
   @override
-  NodePosition? movePositionRight(NodePosition currentPosition, [MovementModifier? movementModifier]) {
-    // TODO: implement movePositionRight
-    throw UnimplementedError();
-  }
+  NodePosition? movePositionLeft(NodePosition currentPosition, [MovementModifier? movementModifier]) => null;
+
 
   @override
-  NodePosition? movePositionUp(NodePosition currentPosition) {
-    // TODO: implement movePositionUp
-    throw UnimplementedError();
-  }
+  NodePosition? movePositionRight(NodePosition currentPosition, [MovementModifier? movementModifier]) => null;
+
+  @override
+  NodePosition? movePositionUp(NodePosition currentPosition) => null;
 }

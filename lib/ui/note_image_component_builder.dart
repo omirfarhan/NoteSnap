@@ -25,12 +25,16 @@ class NoteImageComponentBuilder implements ComponentBuilder {
     if (componentViewModel is! ImageComponentViewModel) return null;
 
     final imagePath = componentViewModel.imageUrl;
-
     final imageKey = GlobalKey();   // 👈 এখানে key তৈরি
+
     return NoteImageComponent(
       key: componentContext.componentKey,
       imagePath: imagePath,
       imageKey: imageKey,
+      node: ImageNode(
+          id: componentViewModel.nodeId,
+          imageUrl: componentViewModel.imageUrl,
+      ),
       onTap: () => onImageTap(imagePath,imageKey),
     );
   }

@@ -423,100 +423,108 @@ class _CreateNoteState extends State<CreateNote> {
 
       body:_isLoading
           ? const Center(child: CircularProgressIndicator())
-              : Stack(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Column(
-                      children: [
-                        TextField(
-                          //cursorColor: Color(0xFFC8E1E4),
-                          autocorrect: false,
-                          controller: _textEditingController,
-                          keyboardType: TextInputType.multiline,
-                          maxLines: null,
-                          focusNode: _titleFocusNode,
-                          decoration: InputDecoration(
-                              hintText: 'Title',
-                              hintStyle: TextStyle(
-                                  color: Color(0xFFD2FEFF),
-                                  fontFamily: 'Regular'
-                              ),
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none
-                          ),
-                          style: TextStyle(
-                            color: Color(0xFFD2FEFF),
-                            fontFamily: 'Regular',
-                          ),
-                        ),
-                        Expanded(
+              : Listener(
+                  onPointerDown: (event) {
+                    _hideToolbar();
+                  },
+                child: Stack(
 
-                              child: SuperEditor(
-                                editor: _editor,
-                                document: _document,
-                                composer: _composer,
-
-                                focusNode: _descriptionFocusNode,
-                                inputSource: TextInputSource.ime,
-
-                                imeConfiguration: const SuperEditorImeConfiguration(
-                                  enableAutocorrect: false,      // ← এটাই underline বন্ধ করবে
-
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Column(
+                        children: [
+                          TextField(
+                
+                            //cursorColor: Color(0xFFC8E1E4),
+                            autocorrect: false,
+                            controller: _textEditingController,
+                            keyboardType: TextInputType.multiline,
+                            maxLines: null,
+                            focusNode: _titleFocusNode,
+                            decoration: InputDecoration(
+                                hintText: 'Title',
+                                hintStyle: TextStyle(
+                                    color: Color(0xFFD2FEFF),
+                                    fontFamily: 'Regular'
                                 ),
-
-                                selectionStyle: const SelectionStyles(
-                                  selectionColor: Color(0x44C8E1E4),
-
-
-                                ),
-
-
-
-                                componentBuilders: [
-
-                                  NoteImageComponentBuilder(
-                                    onImageTap: (imagePath, imageKey) {
-                                      _descriptionFocusNode.unfocus();
-                                      setState(() {
-                                        _imagepath=imagePath;
-                                      });
-                                      _toggleToolbar(context, imageKey);
-                                    },
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none
+                            ),
+                            style: TextStyle(
+                              color: Color(0xFFD2FEFF),
+                              fontFamily: 'Regular',
+                            ),
+                          ),
+                          Expanded(
+                
+                                child: SuperEditor(
+                                  editor: _editor,
+                                  document: _document,
+                                  composer: _composer,
+                
+                                  focusNode: _descriptionFocusNode,
+                                  inputSource: TextInputSource.ime,
+                
+                                  imeConfiguration: const SuperEditorImeConfiguration(
+                                    enableAutocorrect: false,      // ← এটাই underline বন্ধ করবে
+                
                                   ),
-                                  ...defaultComponentBuilders,
-                                ],
-                                stylesheet: defaultStylesheet.copyWith(
-                                  addRulesAfter: [
-                                    StyleRule(
-                                      BlockSelector.all,
-                                          (Document doc, DocumentNode node) => {
-                                        Styles.textStyle: const TextStyle(
-                                          color: Color(0xFFD2FEFF),
-                                          fontFamily: 'Regular',
-                                          fontSize: 16,
-                                          decoration: TextDecoration.none
-                                        ),
-
-                                        Styles.padding: const CascadingPadding.symmetric(
-                                          vertical: 0,
-                                          horizontal: 0
-                                        )
-
+                
+                                  selectionStyle: const SelectionStyles(
+                                    selectionColor: Color(0x44C8E1E4),
+                
+                
+                                  ),
+                
+                
+                
+                                  componentBuilders: [
+                
+                                    NoteImageComponentBuilder(
+                                      onImageTap: (imagePath, imageKey) {
+                                        //_hideToolbar(); // ← আগে hide করো
+                                        _descriptionFocusNode.unfocus();
+                                        setState(() {
+                                          _imagepath=imagePath;
+                                        });
+                                        _toggleToolbar(context, imageKey);
                                       },
                                     ),
-
+                                    ...defaultComponentBuilders,
                                   ],
+                                  stylesheet: defaultStylesheet.copyWith(
+                                    addRulesAfter: [
+                                      StyleRule(
+                                        BlockSelector.all,
+                                            (Document doc, DocumentNode node) => {
+                                          Styles.textStyle: const TextStyle(
+                                            color: Color(0xFFD2FEFF),
+                                            fontFamily: 'Regular',
+                                            fontSize: 16,
+                                            decoration: TextDecoration.none
+                                          ),
+                
+                                          Styles.padding: const CascadingPadding.symmetric(
+                                            vertical: 0,
+                                            horizontal: 0
+                                          )
+                
+                                        },
+                                      ),
+                
+                                    ],
+                                  ),
+                
                                 ),
-
                               ),
-                            ),
-
-                      ],
+                
+                        ],
+                      ),
                     ),
-                  ),
-
-                ],
+                
+                  ],
+                ),
               )
 
     );
@@ -578,9 +586,7 @@ class _CreateNoteState extends State<CreateNote> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                //const Icon(Icons.comment),
-                //resize image
-                //const Icon(Icons.edit),
+
                 IconButton(onPressed: (){
                   _hideToolbar();
                   Navigator.push(
