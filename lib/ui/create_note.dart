@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'package:googleapis/gmail/v1.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:notes/services/crud/notes_service.dart';
-import 'package:notes/ui/fullscreenimagepage.dart';
+import 'package:notes/ui/notebottomcomponent/fullscreenimagepage.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
 import 'package:super_editor/super_editor.dart';
-import 'note_image_component_builder.dart';
+import 'notebottomcomponent/note_image_component_builder.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key});
@@ -24,7 +25,11 @@ class _CreateNoteState extends State<CreateNote> {
 
   bool _isSaved = false;
   bool _ignoreNextChange = false;
+  bool _isUndoRedu=false;
 
+  final List<String> _history=[];
+  int _historyIndex=-1;
+  int characterCount=0;
 
   String? _imagepath;
   String _currentTime="";
@@ -39,10 +44,10 @@ class _CreateNoteState extends State<CreateNote> {
   late Editor _editor;
   late MutableDocumentComposer _composer;
 
-
-
   late final FocusNode _descriptionFocusNode;
   late final FocusNode _titleFocusNode;
+  // late final UndoHistoryController _undoHistoryController;
+
 
   OverlayEntry? _toolbarOverlay;
 
@@ -81,7 +86,7 @@ class _CreateNoteState extends State<CreateNote> {
     ]);
   }
 
-  /// Format: [ {"type":"paragraph","text":"..."}, {"type":"image","url":"..."} ]
+
   MutableDocument _documentFromJson(String jsonString) {
     final list = jsonDecode(jsonString) as List<dynamic>;
     final nodes = <DocumentNode>[];
@@ -137,7 +142,21 @@ class _CreateNoteState extends State<CreateNote> {
       if (_isSaved && mounted) {
         setState(() => _isSaved = false);
       }
+
+      if(_isUndoRedu) return;
+
+      final currentJson=_documentToJson();
+
+      if(_historyIndex < _history.length-1){
+        _history.removeRange(_historyIndex+1, _history.length);
+      }
+      _history.add(currentJson);
+      _historyIndex = _history.length - 1;
+      if (mounted) setState(() {});
     });
+
+
+
 
   }
 
@@ -249,6 +268,7 @@ class _CreateNoteState extends State<CreateNote> {
   @override
   void initState() {
     super.initState();
+
     _notesService = NotesService();
     _textEditingController = TextEditingController();
     _timeinfo();
@@ -257,14 +277,20 @@ class _CreateNoteState extends State<CreateNote> {
     _document=_emptyDocument();
     _rebuildEditor();
 
+    _titleFocusNode.addListener(() {
+      if (mounted) setState(() {});
+    });
 
     _textEditingController.addListener(() {
       if (_ignoreNextChange) {
-        _ignoreNextChange = false; // একবার ignore করে reset
-        return; // _saveNote() ও call হবে না
+        _ignoreNextChange = false;
+        return;
       }
       if (_isSaved) {
-        setState(() => _isSaved = false);
+        setState(() {
+          _isSaved = false;
+        });
+
       }
       _saveNote();
     });
@@ -292,13 +318,14 @@ class _CreateNoteState extends State<CreateNote> {
 
 
     if (mounted) {
+      final initialJson = _documentToJson();
+      _history.add(initialJson);
+      _historyIndex = 0;
+
       setState(() {
         _isLoading = false;
       });
-      // TextField ready হওয়ার পর focus দাও
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _descriptionFocusNode.requestFocus(); // শুধু প্রথমবার
-      });
+
     }
   }
 
@@ -307,14 +334,13 @@ class _CreateNoteState extends State<CreateNote> {
   void dispose() {
     _saveNote();
     _deleteNoteifTextIsEmpty();
-    _textEditingController.removeListener(_saveNote);
     _textEditingController.dispose();
-    _descriptionFocusNode.dispose(); // এটা add করো
+    _descriptionFocusNode.dispose();
     _titleFocusNode.dispose();
     _hideToolbar();
     super.dispose();
   }
-//'January 19, 10:23 PM'
+
   @override
   Widget build(BuildContext context) {
 
@@ -324,27 +350,49 @@ class _CreateNoteState extends State<CreateNote> {
       appBar: AppBar(
         title: Padding(
           padding: const EdgeInsets.fromLTRB(0, 0, 0, 15),
-            child: Text(_currentTime,
-            style: TextStyle(fontSize: 10,
-                color: Color(0xFF9EDDE4),
-              fontFamily: 'Regular'
-            ),),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+               spacing: 5,
+              children: [
+                Text(_currentTime,
+                  style: TextStyle(fontSize: 10,
+                      color: Color(0xFF9EDDE4),
+                      fontFamily: 'Regular'
+                  ),
+                ),
+
+
+                Text(
+                 "${_getCharacterCount()} character",
+                  style: TextStyle(fontSize: 10,
+                      color: Color(0xFF9EDDE4),
+                      fontFamily: 'Regular'
+                  ),
+                )
+
+
+              ],
+            )
+
         ),
 
 
         actions: [
 
           if(!_isSaved) ...[
-            IconButton(onPressed: (){
-              _notesService.debugPrintAllNotes();
-            },
-                icon: Icon(Icons.chevron_left),
-                padding: EdgeInsets.zero,
-                iconSize: 30
+         if (_descriptionFocusNode.hasFocus)
+            IconButton(
+              onPressed: _historyIndex > 0 ? _undo : null,
+              icon: Icon(Icons.undo),
+              iconSize: 30,
+              padding: EdgeInsets.zero,
             ),
-            IconButton(onPressed: (){
-              _notesService.debugPrintAllNotes();
-            }, icon: Icon(Icons.chevron_right),iconSize: 30,),
+            if (_descriptionFocusNode.hasFocus)
+            IconButton(
+              onPressed: _historyIndex < _history.length - 1 ? _redo : null,
+              icon: Icon(Icons.redo),
+              iconSize: 30,
+            ),
             SizedBox(width: 20), // gap control এখানে
             IconButton(onPressed: ()async{
               _ignoreNextChange = true; // এই লাইনটা যোগ করুন
@@ -372,9 +420,6 @@ class _CreateNoteState extends State<CreateNote> {
               ),
             )
 
-          // IconButton(onPressed: (){
-          //    _notesService.debugPrintAllNotes();
-          // }, icon: Icon(Icons.check_circle_outline_rounded)),
 
         ],
       ),
@@ -407,11 +452,16 @@ class _CreateNoteState extends State<CreateNote> {
                         if(images.isNotEmpty){
                           _insertImages(images);
                         }
-
                         },
                           icon: Icon(Icons.image_rounded,color: Colors.white,)
                       ),
-                      Icon(Icons.crop_square, color: Colors.white),
+
+                      IconButton(onPressed: ()async{
+                       print('this is print');
+                      },
+                          icon: Icon(Icons.crop_square,color: Colors.white,)
+                      ),
+
                       Icon(FontAwesomeIcons.tshirt, color: Colors.white),
                     ],
                   ),
@@ -435,8 +485,7 @@ class _CreateNoteState extends State<CreateNote> {
                       child: Column(
                         children: [
                           TextField(
-                
-                            //cursorColor: Color(0xFFC8E1E4),
+
                             autocorrect: false,
                             controller: _textEditingController,
                             keyboardType: TextInputType.multiline,
@@ -476,8 +525,7 @@ class _CreateNoteState extends State<CreateNote> {
                 
                 
                                   ),
-                
-                
+
                 
                                   componentBuilders: [
                 
@@ -517,8 +565,9 @@ class _CreateNoteState extends State<CreateNote> {
                                   ),
                 
                                 ),
+
                               ),
-                
+
                         ],
                       ),
                     ),
@@ -637,6 +686,63 @@ class _CreateNoteState extends State<CreateNote> {
       }
     }
     _saveNote();
+  }
+
+  void _undo() {
+    if (_historyIndex <= 0) return;
+    _historyIndex--;
+    _isUndoRedu = true;
+    _document = _documentFromJson(_history[_historyIndex]);
+    _rebuildEditor();
+    setState(() {});
+    _isUndoRedu = false;
+    // TextField ready হওয়ার পর focus দাও
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _descriptionFocusNode.requestFocus(); // শুধু প্রথমবার
+    });
+    _saveNote();
+  }
+
+  void _redo() {
+    if (_historyIndex >= _history.length - 1) return;
+    _historyIndex++;
+    _isUndoRedu = true;
+    _document = _documentFromJson(_history[_historyIndex]);
+    _rebuildEditor();
+    setState(() {});
+    _isUndoRedu = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _descriptionFocusNode.requestFocus();
+    });
+    _saveNote();
+  }
+
+  // bool _isDocumentEmpty() {
+  //   if (_document.nodeCount == 0) return true;
+  //
+  //   for (int i = 0; i < _document.nodeCount; i++) {
+  //     final node = _document.getNodeAt(i);
+  //
+  //     if (node is ParagraphNode && node.text.text.trim().isNotEmpty) {
+  //       return false;
+  //     }
+  //     if (node is ImageNode) {
+  //       return false;
+  //     }
+  //   }
+  //
+  //   return true;
+  // }
+
+  int _getCharacterCount() {
+    int count = _textEditingController.text.length;
+    for (int i = 0; i < _document.nodeCount; i++) {
+      final node = _document.getNodeAt(i)!;
+      if (node is ParagraphNode) {
+        count += node.text.text.length;
+      }
+    }
+    return count;
   }
 
 }
