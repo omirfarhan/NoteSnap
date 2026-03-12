@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:notes/services/crud/notes_service.dart';
+import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_component_builder.dart';
+import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_node.dart';
 import 'package:notes/ui/notebottomcomponent/fullscreenimagepage.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
 import 'package:super_editor/super_editor.dart';
@@ -17,6 +19,8 @@ class CreateNote extends StatefulWidget {
   @override
   State<CreateNote> createState() => _CreateNoteState();
 }
+
+
 
 class _CreateNoteState extends State<CreateNote> {
   bool _isDescriptionFocused = false;
@@ -103,6 +107,12 @@ class _CreateNoteState extends State<CreateNote> {
           id: Editor.createNodeId(),
           imageUrl: item['url'] as String,
         ));
+      }else if (type == 'checkbox') {
+        nodes.add(CheckboxNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(item['text'] as String? ?? ''),
+          isChecked: item['checked'] as bool? ?? false,
+        ));
       }
     }
 
@@ -122,7 +132,14 @@ class _CreateNoteState extends State<CreateNote> {
       final node = _document.getNodeAt(i)!;
       if (node is ImageNode) {
         list.add({'type': 'image', 'url': node.imageUrl});
-      } else if (node is ParagraphNode) {
+      } else if(node is CheckboxNode){
+        list.add({
+          'type': 'checkbox',
+          'node': node.text.text,
+          'checked': node.isChecked
+        });
+      }
+      else if (node is ParagraphNode) {
         list.add({'type': 'paragraph', 'text': node.text.text});
       }
     }
@@ -457,7 +474,22 @@ class _CreateNoteState extends State<CreateNote> {
                       ),
 
                       IconButton(onPressed: ()async{
-                       print('this is print');
+                        final selection=_composer.selection;
+                        String insertAfterNodeId=
+                            selection != null
+                           ? selection.extent.nodeId
+                           : _document.getNodeAt(_document.nodeCount -1)!.id;
+                        
+                        _editor.execute([
+                          InsertNodeAfterNodeRequest(
+                              existingNodeId: insertAfterNodeId,
+                              newNode: CheckboxNode(
+                                  id: Editor.createNodeId(),
+                                  text: AttributedText('')
+                              )
+                          )
+                        ]);
+
                       },
                           icon: Icon(Icons.crop_square,color: Colors.white,)
                       ),
@@ -531,13 +563,23 @@ class _CreateNoteState extends State<CreateNote> {
                 
                                     NoteImageComponentBuilder(
                                       onImageTap: (imagePath, imageKey) {
-                                        //_hideToolbar(); // ← আগে hide করো
                                         _descriptionFocusNode.unfocus();
                                         setState(() {
                                           _imagepath=imagePath;
                                         });
                                         _toggleToolbar(context, imageKey);
                                       },
+                                    ),
+                                    CheckboxComponentBuilder(
+                                        onCheckChanged: (nodeId, isChecked) {
+                                          final node=_document.getNodeById(nodeId);
+                                          if(node is CheckboxNode){
+                                            node.isChecked=isChecked;
+                                            setState(() {});
+                                            _saveNote();
+                                          }
+
+                                        },
                                     ),
                                     ...defaultComponentBuilders,
                                   ],
@@ -733,6 +775,7 @@ class _CreateNoteState extends State<CreateNote> {
   //
   //   return true;
   // }
+
 
   int _getCharacterCount() {
     int count = _textEditingController.text.length;
