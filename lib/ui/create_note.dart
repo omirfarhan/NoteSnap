@@ -11,6 +11,8 @@ import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_node.dart';
 import 'package:notes/ui/notebottomcomponent/fullscreenimagepage.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
 import 'package:super_editor/super_editor.dart';
+
+import 'notebottomcomponent/checkbox/CheckboxTapDelegate.dart';
 import 'notebottomcomponent/note_image_component_builder.dart';
 
 class CreateNote extends StatefulWidget {
@@ -132,15 +134,15 @@ class _CreateNoteState extends State<CreateNote> {
       final node = _document.getNodeAt(i)!;
       if (node is ImageNode) {
         list.add({'type': 'image', 'url': node.imageUrl});
-      } else if(node is CheckboxNode){
-        list.add({
-          'type': 'checkbox',
-          'node': node.text.text,
-          'checked': node.isChecked
-        });
       }
       else if (node is ParagraphNode) {
         list.add({'type': 'paragraph', 'text': node.text.text});
+      }else if (node is CheckboxNode) {
+        list.add({
+          'type': 'checkbox',
+          'text': node.text.text,
+          'checked': node.isChecked,
+        });
       }
     }
 
@@ -148,33 +150,35 @@ class _CreateNoteState extends State<CreateNote> {
   }
 
 
-  void _rebuildEditor(){
-    _composer=MutableDocumentComposer();
-    _editor=createDefaultDocumentEditor(
+  void _rebuildEditor() {
+    _composer = MutableDocumentComposer();
+
+    _editor = createDefaultDocumentEditor(
       document: _document,
-      composer: _composer
+      composer: _composer,
     );
-    // Document change listener
+
+    // Cursor guard for checkbox
+    _composer.selectionNotifier.addListener(_enforceCheckboxCursor);
+
     _document.addListener((DocumentChangeLog changeLog) {
       if (_isSaved && mounted) {
         setState(() => _isSaved = false);
       }
 
-      if(_isUndoRedu) return;
+      if (_isUndoRedu) return;
 
-      final currentJson=_documentToJson();
+      final currentJson = _documentToJson();
 
-      if(_historyIndex < _history.length-1){
-        _history.removeRange(_historyIndex+1, _history.length);
+      if (_historyIndex < _history.length - 1) {
+        _history.removeRange(_historyIndex + 1, _history.length);
       }
+
       _history.add(currentJson);
       _historyIndex = _history.length - 1;
+
       if (mounted) setState(() {});
     });
-
-
-
-
   }
 
   Future<void> _saveNote()async{
@@ -349,6 +353,7 @@ class _CreateNoteState extends State<CreateNote> {
 
   @override
   void dispose() {
+    _composer.selectionNotifier.removeListener(_enforceCheckboxCursor);
     _saveNote();
     _deleteNoteifTextIsEmpty();
     _textEditingController.dispose();
@@ -473,23 +478,23 @@ class _CreateNoteState extends State<CreateNote> {
                           icon: Icon(Icons.image_rounded,color: Colors.white,)
                       ),
 
-                      IconButton(onPressed: ()async{
-                        final selection=_composer.selection;
-                        String insertAfterNodeId=
-                            selection != null
-                           ? selection.extent.nodeId
-                           : _document.getNodeAt(_document.nodeCount -1)!.id;
-                        
-                        _editor.execute([
-                          InsertNodeAfterNodeRequest(
-                              existingNodeId: insertAfterNodeId,
-                              newNode: CheckboxNode(
-                                  id: Editor.createNodeId(),
-                                  text: AttributedText('')
-                              )
-                          )
-                        ]);
-
+                      IconButton(onPressed:(){
+                        _insertCheckbox();
+                        //
+                        // final selection = _composer.selection;
+                        // String insertAfterNodeId = selection != null
+                        //     ? selection.extent.nodeId
+                        //     : _document.getNodeAt(_document.nodeCount - 1)!.id;
+                        //
+                        // _editor.execute([
+                        //   InsertNodeAfterNodeRequest(
+                        //     existingNodeId: insertAfterNodeId,
+                        //     newNode: CheckboxNode(
+                        //       id: Editor.createNodeId(),
+                        //       text: AttributedText(''),
+                        //     ),
+                        //   )
+                        // ]);
                       },
                           icon: Icon(Icons.crop_square,color: Colors.white,)
                       ),
@@ -554,10 +559,16 @@ class _CreateNoteState extends State<CreateNote> {
                 
                                   selectionStyle: const SelectionStyles(
                                     selectionColor: Color(0x44C8E1E4),
-                
-                
-                                  ),
 
+                                  ),
+                                  contentTapDelegateFactories: [
+                                    (_) => CheckboxTapDelegate(
+                                        document: _document,
+                                        editor: _editor,
+                                        onSave: _saveNote
+
+                                    )
+                                  ],
                 
                                   componentBuilders: [
                 
@@ -570,17 +581,16 @@ class _CreateNoteState extends State<CreateNote> {
                                         _toggleToolbar(context, imageKey);
                                       },
                                     ),
-                                    CheckboxComponentBuilder(
-                                        onCheckChanged: (nodeId, isChecked) {
-                                          final node=_document.getNodeById(nodeId);
-                                          if(node is CheckboxNode){
-                                            node.isChecked=isChecked;
-                                            setState(() {});
-                                            _saveNote();
-                                          }
-
-                                        },
-                                    ),
+                                    // CheckboxComponentBuilder(
+                                    //   onCheckChanged: (nodeId, isChecked) {
+                                    //     final node = _document.getNodeById(nodeId);
+                                    //     if (node is CheckboxNode) {
+                                    //       node.isChecked = isChecked;
+                                    //       setState(() {});
+                                    //       _saveNote();
+                                    //     }
+                                    //   },
+                                    // ),
                                     ...defaultComponentBuilders,
                                   ],
                                   stylesheet: defaultStylesheet.copyWith(
@@ -776,6 +786,34 @@ class _CreateNoteState extends State<CreateNote> {
   //   return true;
   // }
 
+  void _insertCheckbox() {
+    final selection = _composer.selection;
+
+    if (selection == null) return;
+
+    final position = selection.extent;
+
+    final node = _document.getNodeById(position.nodeId);
+
+    if (node is! ParagraphNode) return;
+
+    final nodePosition = position.nodePosition;
+
+    if (nodePosition is! TextNodePosition) return;
+
+    _editor.execute([
+      InsertTextRequest(
+        documentPosition: DocumentPosition(
+          nodeId: node.id,
+          nodePosition: TextNodePosition(offset: nodePosition.offset),
+        ),
+        textToInsert: '☐ ',
+        attributions: {},
+      ),
+    ]);
+
+    _saveNote();
+  }
 
   int _getCharacterCount() {
     int count = _textEditingController.text.length;
@@ -786,6 +824,43 @@ class _CreateNoteState extends State<CreateNote> {
       }
     }
     return count;
+  }
+
+  void _enforceCheckboxCursor() {
+    final selection = _composer.selection;
+    if (selection == null) return;
+
+    final position = selection.extent;
+    final node = _document.getNodeById(position.nodeId);
+
+    if (node is! ParagraphNode) return;
+
+    final text = node.text.text;
+
+    if (!text.startsWith('☐ ')) return;
+
+    final nodePosition = position.nodePosition;
+
+    if (nodePosition is! TextNodePosition) return;
+
+    if (nodePosition.offset < 2) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        _editor.execute([
+          ChangeSelectionRequest(
+            DocumentSelection.collapsed(
+              position: DocumentPosition(
+                nodeId: node.id,
+                nodePosition: const TextNodePosition(offset: 2),
+              ),
+            ),
+            SelectionChangeType.placeCaret,
+            SelectionReason.userInteraction,
+          )
+        ]);
+      });
+    }
   }
 
 }

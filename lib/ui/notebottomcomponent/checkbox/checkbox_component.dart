@@ -18,17 +18,22 @@ class CheckboxComponent extends StatefulWidget {
 }
 
 class _CheckboxComponentState extends State<CheckboxComponent>
-    with DocumentComponent, ProxyDocumentComponent<CheckboxComponent>,
-        ProxyTextComposable{
+    with DocumentComponent<CheckboxComponent>{
 
-  final _textKey = GlobalKey();
+  //final _textKey = GlobalKey();
+
+  // @override
+  // GlobalKey get childDocumentComponentKey => _textKey;
 
   @override
-  GlobalKey get childDocumentComponentKey => _textKey;
-
-  @override
-  TextComposable get childTextComposable =>
-      _textKey.currentState as TextComposable;
+  TextComposable get childTextComposable {
+    // null check যোগ করুন
+    final state = _textKey.currentState;
+    if (state == null) {
+      throw Exception('TextComponent state is null');
+    }
+    return state as TextComposable;
+  }
 
 
   @override
@@ -39,8 +44,8 @@ class _CheckboxComponentState extends State<CheckboxComponent>
         GestureDetector(
           onTap: () => widget.onCheckChange(!widget.isChecked),
           child: Container(
-            width: 20,
-            height: 20,
+            width: 15,
+            height: 15,
             margin: const EdgeInsets.only(right: 8, top: 2),
             decoration: BoxDecoration(
               border: Border.all(color: Color(0xFFD2FEFF), width: 1.5),
@@ -50,7 +55,7 @@ class _CheckboxComponentState extends State<CheckboxComponent>
                   : Colors.transparent,
             ),
             child: widget.isChecked
-                ? Icon(Icons.check, size: 14, color: Color(0xFFD2FEFF))
+                ? Icon(Icons.check, size: 10, color: Color(0xFFD2FEFF))
                 : null,
           ),
         ),
@@ -72,6 +77,107 @@ class _CheckboxComponentState extends State<CheckboxComponent>
         ),
       ],
     );
+  }
+
+
+  final GlobalKey<TextComponentState> _textKey = GlobalKey();
+
+  TextComponentState get _text => _textKey.currentState!;
+
+  @override
+  NodePosition getBeginningPosition() {
+    return _text.getBeginningPosition();
+  }
+
+  @override
+  NodePosition getBeginningPositionNearX(double x) {
+    return _text.getBeginningPositionNearX(x);
+  }
+
+  @override
+  NodeSelection getCollapsedSelectionAt(NodePosition nodePosition) {
+    return _text.getCollapsedSelectionAt(nodePosition);
+  }
+
+  @override
+  MouseCursor? getDesiredCursorAtOffset(Offset localOffset) {
+    return _text.getDesiredCursorAtOffset(localOffset);
+  }
+
+  @override
+  Rect getEdgeForPosition(NodePosition nodePosition) {
+    return _text.getEdgeForPosition(nodePosition);
+  }
+
+  @override
+  NodePosition getEndPosition() {
+    return _text.getEndPosition();
+  }
+
+  @override
+  NodePosition getEndPositionNearX(double x) {
+    return _text.getEndPositionNearX(x);
+  }
+
+  @override
+  Offset getOffsetForPosition(NodePosition nodePosition) {
+    return _text.getOffsetForPosition(nodePosition);
+  }
+
+  @override
+  NodePosition? getPositionAtOffset(Offset localOffset) {
+    return _text.getPositionAtOffset(localOffset);
+  }
+
+  @override
+  Rect getRectForPosition(NodePosition nodePosition) {
+    return _text.getRectForPosition(nodePosition);
+  }
+
+  @override
+  Rect getRectForSelection(NodePosition baseNodePosition, NodePosition extentNodePosition) {
+    return _text.getRectForSelection(baseNodePosition, extentNodePosition);
+  }
+
+  @override
+  NodeSelection getSelectionBetween({
+    required NodePosition basePosition,
+    required NodePosition extentPosition,
+  }) {
+    return _text.getSelectionBetween(
+      basePosition: basePosition,
+      extentPosition: extentPosition,
+    );
+  }
+
+  @override
+  NodeSelection? getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset) {
+    return _text.getSelectionInRange(localBaseOffset, localExtentOffset);
+  }
+
+  @override
+  NodeSelection getSelectionOfEverything() {
+    return _text.getSelectionOfEverything();
+  }
+
+  @override
+  NodePosition? movePositionDown(NodePosition currentPosition) {
+    return _text.movePositionDown(currentPosition);
+  }
+
+  @override
+  NodePosition? movePositionLeft(NodePosition currentPosition, [MovementModifier? movementModifier]) {
+    return _text.movePositionLeft(currentPosition, movementModifier);
+  }
+
+  @override
+  NodePosition? movePositionRight(NodePosition currentPosition, [MovementModifier? movementModifier]) {
+    return _text.movePositionRight(currentPosition, movementModifier);
+  }
+
+  @override
+  NodePosition? movePositionUp(NodePosition currentPosition) {
+    return _text.movePositionUp(currentPosition);
   }
 
 
