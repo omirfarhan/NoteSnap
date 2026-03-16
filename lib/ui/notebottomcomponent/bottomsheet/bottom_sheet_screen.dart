@@ -12,9 +12,9 @@ class BottomSheetScreen extends StatelessWidget {
   static const Map<String?, Color> backgrounds = {
     null: Color(0xFF137FA5),
     'assets/pic_1.jpg': Color(0xFF1A2320),
-    'assets/pic_2.png': Color(0xFF091822),
-    'assets/pic_3.png': Color(0xFF65857E),
-    'assets/pic_4.png': Color(0xFF242934),
+    'assets/pic_2.jpg': Color(0xFF091822),
+    'assets/pic_3.jpg': Color(0xFF65857E),
+    'assets/pic_4.jpg': Color(0xFF242934),
   };
   @override
   Widget build(BuildContext context) {
