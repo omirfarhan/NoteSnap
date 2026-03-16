@@ -6,12 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:notes/services/crud/notes_service.dart';
+import 'package:notes/ui/notebottomcomponent/bottomsheet/bottom_sheet_screen.dart';
 import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_component_builder.dart';
 import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_node.dart';
 import 'package:notes/ui/notebottomcomponent/fullscreenimagepage.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
 import 'package:super_editor/super_editor.dart';
-
+//import 'package:palette_generator_master/palette_generator_master.dart';
 import 'notebottomcomponent/checkbox/CheckboxTapDelegate.dart';
 import 'notebottomcomponent/note_image_component_builder.dart';
 
@@ -39,6 +40,7 @@ class _CreateNoteState extends State<CreateNote> {
 
   String? _imagepath;
   String _currentTime="";
+  String? _backgroundImage;
 
 
   DatabaseNote? _note;
@@ -54,6 +56,7 @@ class _CreateNoteState extends State<CreateNote> {
   late final FocusNode _titleFocusNode;
   // late final UndoHistoryController _undoHistoryController;
 
+  Color _bottomBarColor = const Color(0xFF4692AC); // default color
 
   OverlayEntry? _toolbarOverlay;
 
@@ -62,6 +65,12 @@ class _CreateNoteState extends State<CreateNote> {
     if(widgetNote != null){
       _note=widgetNote;
       _textEditingController.text=widgetNote.title;
+      _backgroundImage=widgetNote.background;
+
+
+      _bottomBarColor = BottomSheetScreen.backgrounds[_backgroundImage]
+          ?? const Color(0xFF4692AC);
+
       if(widgetNote.content.isNotEmpty){
         try{
           _document=_documentFromJson(widgetNote.content);
@@ -194,6 +203,7 @@ class _CreateNoteState extends State<CreateNote> {
         note: note,
         text: title,
         content: content,
+        background: _backgroundImage
       );
 
     }
@@ -367,9 +377,12 @@ class _CreateNoteState extends State<CreateNote> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      backgroundColor: Color(0xFF137FA5),
+      extendBodyBehindAppBar: true, // ✅ এটা যোগ করুন
+      backgroundColor: _bottomBarColor,
         resizeToAvoidBottomInset: true,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: Padding(
           padding: const EdgeInsets.fromLTRB(0, 0, 0, 15),
             child: Column(
@@ -462,7 +475,7 @@ class _CreateNoteState extends State<CreateNote> {
                   height: 40,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: Color(0xFF4692AC),
+                    color: _bottomBarColor,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -499,7 +512,13 @@ class _CreateNoteState extends State<CreateNote> {
                           icon: Icon(Icons.crop_square,color: Colors.white,)
                       ),
 
-                      Icon(FontAwesomeIcons.tshirt, color: Colors.white),
+                      IconButton(
+                          onPressed: (){
+                            _openbottomSheet();
+                          }, icon: Icon(FontAwesomeIcons.tshirt),
+                          color: Colors.white
+                      )
+
                     ],
                   ),
                 ),
@@ -510,125 +529,138 @@ class _CreateNoteState extends State<CreateNote> {
 
       body:_isLoading
           ? const Center(child: CircularProgressIndicator())
-              : Listener(
-                  onPointerDown: (event) {
-                    _hideToolbar();
-                  },
-                child: Stack(
+              : Container(
+        decoration: _backgroundImage != null
+            ? BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(_backgroundImage!),
+            fit: BoxFit.cover,
+          ),
+        )
+            : null,
+        child: Listener(
+          onPointerDown: (event) {
+            _hideToolbar();
+          },
+          child: Stack(
 
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Column(
-                        children: [
-                          TextField(
+                    SizedBox(height: MediaQuery.of(context).padding.top + kToolbarHeight),
+                    TextField(
 
-                            autocorrect: false,
-                            controller: _textEditingController,
-                            keyboardType: TextInputType.multiline,
-                            maxLines: null,
-                            focusNode: _titleFocusNode,
-                            decoration: InputDecoration(
-                                hintText: 'Title',
-                                hintStyle: TextStyle(
-                                    color: Color(0xFFD2FEFF),
-                                    fontFamily: 'Regular'
-                                ),
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none
-                            ),
-                            style: TextStyle(
+                      autocorrect: false,
+                      controller: _textEditingController,
+                      keyboardType: TextInputType.multiline,
+                      maxLines: null,
+                      focusNode: _titleFocusNode,
+                      decoration: InputDecoration(
+                          hintText: 'Title',
+                          hintStyle: TextStyle(
                               color: Color(0xFFD2FEFF),
-                              fontFamily: 'Regular',
-                            ),
+                              fontFamily: 'Regular'
                           ),
-                          Expanded(
-                
-                                child: SuperEditor(
-                                  editor: _editor,
-                                  document: _document,
-                                  composer: _composer,
-                
-                                  focusNode: _descriptionFocusNode,
-                                  inputSource: TextInputSource.ime,
-                
-                                  imeConfiguration: const SuperEditorImeConfiguration(
-                                    enableAutocorrect: false,      // ← এটাই underline বন্ধ করবে
-                
-                                  ),
-                
-                                  selectionStyle: const SelectionStyles(
-                                    selectionColor: Color(0x44C8E1E4),
-
-                                  ),
-                                  contentTapDelegateFactories: [
-                                    (_) => CheckboxTapDelegate(
-                                        document: _document,
-                                        editor: _editor,
-                                        onSave: _saveNote
-
-                                    )
-                                  ],
-                
-                                  componentBuilders: [
-                
-                                    NoteImageComponentBuilder(
-                                      onImageTap: (imagePath, imageKey) {
-                                        _descriptionFocusNode.unfocus();
-                                        setState(() {
-                                          _imagepath=imagePath;
-                                        });
-                                        _toggleToolbar(context, imageKey);
-                                      },
-                                    ),
-                                    // CheckboxComponentBuilder(
-                                    //   onCheckChanged: (nodeId, isChecked) {
-                                    //     final node = _document.getNodeById(nodeId);
-                                    //     if (node is CheckboxNode) {
-                                    //       node.isChecked = isChecked;
-                                    //       setState(() {});
-                                    //       _saveNote();
-                                    //     }
-                                    //   },
-                                    // ),
-                                    ...defaultComponentBuilders,
-                                  ],
-                                  stylesheet: defaultStylesheet.copyWith(
-                                    addRulesAfter: [
-                                      StyleRule(
-                                        BlockSelector.all,
-                                            (Document doc, DocumentNode node) => {
-                                          Styles.textStyle: const TextStyle(
-                                            color: Color(0xFFD2FEFF),
-                                            fontFamily: 'Regular',
-                                            fontSize: 16,
-                                            decoration: TextDecoration.none
-                                          ),
-                
-                                          Styles.padding: const CascadingPadding.symmetric(
-                                            vertical: 0,
-                                            horizontal: 0
-                                          )
-                
-                                        },
-                                      ),
-                
-                                    ],
-                                  ),
-                
-                                ),
-
-                              ),
-
-                        ],
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none
+                      ),
+                      style: TextStyle(
+                        color: Color(0xFFD2FEFF),
+                        fontFamily: 'Regular',
                       ),
                     ),
-                
+                    Expanded(
+
+                      child: SuperEditor(
+                        editor: _editor,
+                        document: _document,
+                        composer: _composer,
+
+                        focusNode: _descriptionFocusNode,
+                        inputSource: TextInputSource.ime,
+
+                        imeConfiguration: const SuperEditorImeConfiguration(
+                          enableAutocorrect: false,      // ← এটাই underline বন্ধ করবে
+
+                        ),
+
+                        selectionStyle: const SelectionStyles(
+                          selectionColor: Color(0x44C8E1E4),
+
+                        ),
+                        contentTapDelegateFactories: [
+                              (_) => CheckboxTapDelegate(
+                              document: _document,
+                              editor: _editor,
+                              onSave: _saveNote
+
+                          )
+                        ],
+
+                        componentBuilders: [
+
+                          NoteImageComponentBuilder(
+                            onImageTap: (imagePath, imageKey) {
+                              _descriptionFocusNode.unfocus();
+                              setState(() {
+                                _imagepath=imagePath;
+                              });
+                              _toggleToolbar(context, imageKey);
+                            },
+                          ),
+                          // CheckboxComponentBuilder(
+                          //   onCheckChanged: (nodeId, isChecked) {
+                          //     final node = _document.getNodeById(nodeId);
+                          //     if (node is CheckboxNode) {
+                          //       node.isChecked = isChecked;
+                          //       setState(() {});
+                          //       _saveNote();
+                          //     }
+                          //   },
+                          // ),
+                          ...defaultComponentBuilders,
+                        ],
+                        stylesheet: defaultStylesheet.copyWith(
+                          addRulesAfter: [
+                            StyleRule(
+                              BlockSelector.all,
+                                  (Document doc, DocumentNode node) => {
+                                Styles.textStyle: const TextStyle(
+                                    color: Color(0xFFD2FEFF),
+                                    fontFamily: 'Regular',
+                                    fontSize: 16,
+                                    decoration: TextDecoration.none
+                                ),
+
+                                Styles.padding: const CascadingPadding.symmetric(
+                                    vertical: 0,
+                                    horizontal: 0
+                                )
+
+                              },
+                            ),
+
+                          ],
+                        ),
+
+                      ),
+
+                    ),
+
                   ],
                 ),
-              )
+              ),
 
-    );
+            ],
+          ),
+        )
+
+      ),
+      );
+
+
   }
 
   void _toggleToolbar(BuildContext context, GlobalKey key) {
@@ -861,6 +893,38 @@ class _CreateNoteState extends State<CreateNote> {
         ]);
       });
     }
+  }
+
+  void _openbottomSheet() {
+    final hadFocus = _descriptionFocusNode.hasFocus;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white54,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      builder: (context) {
+        return BottomSheetScreen(
+          onThemeSelected: _applyTheme,
+          currentBackground: _backgroundImage,
+        );
+      },
+    ).then((_) {
+      if (hadFocus && mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _descriptionFocusNode.requestFocus();
+        });
+      }
+    });
+  }
+
+  void _applyTheme(String? imagePath)async{
+    setState(() {
+      _backgroundImage=imagePath;
+      _bottomBarColor = BottomSheetScreen.backgrounds[imagePath]
+          ?? const Color(0xFF4692AC);
+    });
+
+    _saveNote();
   }
 
 }

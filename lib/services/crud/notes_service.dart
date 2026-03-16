@@ -98,7 +98,8 @@ class NotesService {
   Future<DatabaseNote> updateNote({
     required DatabaseNote note,
     required String text,
-    required String content
+    required String content,
+    String? background,
   })async{
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
@@ -107,7 +108,8 @@ class NotesService {
 
     final updateCount=await db.update(noteTable, {
       titleColumn: text,
-      contentColumn: content
+      contentColumn: content,
+      backgroundColumn:background
     },
       where: 'id = ?',
       whereArgs: [note.id],
@@ -208,14 +210,16 @@ class NotesService {
       noteTable,{
       folderIdColumn: owner.id,
       titleColumn: text,
-      contentColumn:jsonEncode(noteContent)
+      contentColumn:jsonEncode(noteContent),
+      backgroundColumn:null
     });
 
     final note=DatabaseNote(
         id: noteid,
         userId: owner.id,
         title: text,
-        content: jsonEncode(noteContent)
+        content: jsonEncode(noteContent),
+      background: null
     );
 
     //_notes.add(note);
@@ -298,6 +302,14 @@ class NotesService {
 
       await db.execute(CreateFolderTable);
       await db.execute(createNoteTable);
+
+      // ✅ Migration — background column না থাকলে add করো
+      final columns = await db.rawQuery('PRAGMA table_info(note)');
+      final columnNames = columns.map((c) => c['name'] as String).toList();
+      if (!columnNames.contains('background')) {
+        await db.execute('ALTER TABLE note ADD COLUMN background TEXT');
+      }
+
       await _cacheNote();
     }on MissingPlatformDirectoryException{
       throw UnabletoGetDocuments();
@@ -314,20 +326,23 @@ class DatabaseNote{
   final int userId;
   final String title;
   final String content;
+  final String? background;
   //is_synced_with_cloud ei option ta pore add korbo jodi lge
 
   DatabaseNote({
     required this.id,
     required this.userId,
     required this.title,
-    required this.content
+    required this.content,
+    this.background
   });
 
   DatabaseNote.fromRow(Map<String, Object?> map):
   id=map[idColumn] as int,
   userId=map[folderIdColumn] as int,
   title=map[titleColumn] as String,
-  content=map[contentColumn] as String;
+  content=map[contentColumn] as String,
+  background=map[backgroundColumn] as String?;
 
   @override
   String toString() => 'Note, ID=$id, user_id=$userId, title=$title,';
@@ -376,6 +391,7 @@ const createNoteTable='''CREATE TABLE IF NOT EXISTS "note" (
 	        "user_id"	INTEGER NOT NULL,
 	        "title"	TEXT,
 	        "content" TEXT,
+	        "background" TEXT,
 	         FOREIGN KEY("user_id") REFERENCES "user"("id"),
 	         PRIMARY KEY("id" AUTOINCREMENT)
 );''';
@@ -390,3 +406,4 @@ const contentColumn='content';
 const dbname='note.db';
 const folderTable='user';
 const noteTable='note';
+const backgroundColumn = 'background';
