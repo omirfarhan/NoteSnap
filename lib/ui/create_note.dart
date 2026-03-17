@@ -447,10 +447,34 @@ class _CreateNoteState extends State<CreateNote> {
               child: Row(
                 children: [
 
-                 SizedBox(width: 4),
-                 Text(
-                  "save"
+                 SizedBox(width: 1),
+                 InkWell(onTap: () {
+                   _exportbottomsheet();
+                 },
+                   customBorder: const CircleBorder(),
+                   child: Container(
+                     height: 28,
+                     width: 28,
+                     alignment: Alignment.center,
+                     decoration: BoxDecoration(
+                       //color: Colors.white,
+                       shape: BoxShape.circle,
+                       border: BoxBorder.all(
+                         color: Colors.white,
+                         width: 2
+                       )
+                     ),
+                     child: const Text(
+                       "save",
+                       style: TextStyle(
+                         color: Colors.white,
+                         fontSize: 8.5,
+                         fontWeight: FontWeight.bold
+                       ),
+                     ),
+                   ),
                  )
+
                 ],
               ),
             )
@@ -928,6 +952,96 @@ class _CreateNoteState extends State<CreateNote> {
     });
 
     _saveNote();
+  }
+
+  void _exportbottomsheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent, // 🔥 must
+      barrierColor: Colors.black54,        // background dim
+
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(12), // 👈 চারপাশে gap
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Expanded(
+              child: Container(
+
+                decoration: BoxDecoration(
+                  color: Color(0xFF2398C4),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+
+                  children: [
+
+                    ListTile(
+                      title: Center(
+                        child: const Text("Save as text",
+                          style:TextStyle(
+                            color: Color(0xFFD9FFFF),
+                              fontWeight: FontWeight.bold
+                          ),),
+                      ),
+
+                      onTap: () {
+                        Navigator.pop(context);
+
+                      },
+                    ),
+                    Divider(),
+                    ListTile(
+                      title: Center(
+                        child: const Text("Save as PDF", style:TextStyle(
+                            color: Color(0xFFD9FFFF),
+                            fontWeight: FontWeight.bold
+                        ),),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+
+                      },
+                    ),
+                    Divider(),
+
+                    ListTile(
+                      title: Center(
+                        child: const Text("Save as image", style:TextStyle(
+                            color: Color(0xFFD9FFFF),
+                          fontWeight: FontWeight.bold
+                        ),),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+
+                      },
+                    ),
+
+                    Divider(),
+
+                    ListTile(
+                      title: Center(
+                        child: const Text("Share", style:TextStyle(
+                            color: Color(0xFFD9FFFF),
+                            fontWeight: FontWeight.bold
+                        ),),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+
+                      },
+                    ),
+
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
 }
