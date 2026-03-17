@@ -56,7 +56,7 @@ class _CreateNoteState extends State<CreateNote> {
   late final FocusNode _titleFocusNode;
   // late final UndoHistoryController _undoHistoryController;
 
-  Color _bottomBarColor = const Color(0xFF4692AC); // default color
+  Color _bottomBarColor = const Color(0xFF137FA5); // default color
 
   OverlayEntry? _toolbarOverlay;
 
@@ -69,7 +69,7 @@ class _CreateNoteState extends State<CreateNote> {
 
 
       _bottomBarColor = BottomSheetScreen.backgrounds[_backgroundImage]
-          ?? const Color(0xFF4692AC);
+          ?? const Color(0xFF076687);
 
       if(widgetNote.content.isNotEmpty){
         try{
@@ -475,7 +475,10 @@ class _CreateNoteState extends State<CreateNote> {
                   height: 40,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: _bottomBarColor,
+                    color: _backgroundImage!=null
+                    ? _bottomBarColor
+                    :const Color(0xff67bfdc),
+
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -921,7 +924,7 @@ class _CreateNoteState extends State<CreateNote> {
     setState(() {
       _backgroundImage=imagePath;
       _bottomBarColor = BottomSheetScreen.backgrounds[imagePath]
-          ?? const Color(0xFF4692AC);
+          ?? const Color(0xFF076687);
     });
 
     _saveNote();
