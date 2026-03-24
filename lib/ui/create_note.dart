@@ -1,5 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:ui';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:googleapis/androidenterprise/v1.dart';
 import 'package:googleapis/gmail/v1.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
@@ -7,14 +12,20 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/notebottomcomponent/bottomsheet/bottom_sheet_screen.dart';
+import 'package:notes/ui/notebottomcomponent/bottomsheet/saveimageoption.dart';
 import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_component_builder.dart';
 import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_node.dart';
 import 'package:notes/ui/notebottomcomponent/fullscreenimagepage.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:super_editor/super_editor.dart';
 //import 'package:palette_generator_master/palette_generator_master.dart';
 import 'notebottomcomponent/checkbox/CheckboxTapDelegate.dart';
 import 'notebottomcomponent/note_image_component_builder.dart';
+
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key});
@@ -57,8 +68,11 @@ class _CreateNoteState extends State<CreateNote> {
   // late final UndoHistoryController _undoHistoryController;
 
   Color _bottomBarColor = const Color(0xFF137FA5); // default color
+  Color get bottomBarColor => _bottomBarColor;
 
   OverlayEntry? _toolbarOverlay;
+
+  final GlobalKey _globalKey=GlobalKey();
 
   Future<DatabaseNote> createNote(BuildContext context)async{
     final widgetNote=context.arguments<DatabaseNote>();
@@ -556,135 +570,138 @@ class _CreateNoteState extends State<CreateNote> {
 
       body:_isLoading
           ? const Center(child: CircularProgressIndicator())
-              : Container(
-        decoration: _backgroundImage != null
-            ? BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(_backgroundImage!),
-            fit: BoxFit.cover,
-          ),
-        )
-            : null,
-        child: Listener(
-          onPointerDown: (event) {
-            _hideToolbar();
-          },
-          child: Stack(
-
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Column(
-                  children: [
-                    SizedBox(height: MediaQuery.of(context).padding.top + kToolbarHeight),
-                    TextField(
-
-                      autocorrect: false,
-                      controller: _textEditingController,
-                      keyboardType: TextInputType.multiline,
-                      maxLines: null,
-                      focusNode: _titleFocusNode,
-                      decoration: InputDecoration(
-                          hintText: 'Title',
-                          hintStyle: TextStyle(
-                              color: Color(0xFFD2FEFF),
-                              fontFamily: 'Regular'
+              : RepaintBoundary(
+                key: _globalKey,
+                child: Container(
+                        decoration: _backgroundImage != null
+                            ? BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage(_backgroundImage!),
+                            fit: BoxFit.cover,
                           ),
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none
-                      ),
-                      style: TextStyle(
-                        color: Color(0xFFD2FEFF),
-                        fontFamily: 'Regular',
-                      ),
-                    ),
-                    Expanded(
-
-                      child: SuperEditor(
-                        editor: _editor,
-                        document: _document,
-                        composer: _composer,
-
-                        focusNode: _descriptionFocusNode,
-                        inputSource: TextInputSource.ime,
-
-                        imeConfiguration: const SuperEditorImeConfiguration(
-                          enableAutocorrect: false,      // ← এটাই underline বন্ধ করবে
-
+                        )
+                            : null,
+                        child: Listener(
+                          onPointerDown: (event) {
+                            _hideToolbar();
+                          },
+                          child: Stack(
+                
+                            children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Column(
+                    children: [
+                      SizedBox(height: MediaQuery.of(context).padding.top + kToolbarHeight),
+                      TextField(
+                
+                        autocorrect: false,
+                        controller: _textEditingController,
+                        keyboardType: TextInputType.multiline,
+                        maxLines: null,
+                        focusNode: _titleFocusNode,
+                        decoration: InputDecoration(
+                            hintText: 'Title',
+                            hintStyle: TextStyle(
+                                color: Color(0xFFD2FEFF),
+                                fontFamily: 'Regular'
+                            ),
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none
                         ),
-
-                        selectionStyle: const SelectionStyles(
-                          selectionColor: Color(0x44C8E1E4),
-
+                        style: TextStyle(
+                          color: Color(0xFFD2FEFF),
+                          fontFamily: 'Regular',
                         ),
-                        contentTapDelegateFactories: [
-                              (_) => CheckboxTapDelegate(
-                              document: _document,
-                              editor: _editor,
-                              onSave: _saveNote
-
-                          )
-                        ],
-
-                        componentBuilders: [
-
-                          NoteImageComponentBuilder(
-                            onImageTap: (imagePath, imageKey) {
-                              _descriptionFocusNode.unfocus();
-                              setState(() {
-                                _imagepath=imagePath;
-                              });
-                              _toggleToolbar(context, imageKey);
-                            },
+                      ),
+                      Expanded(
+                
+                        child: SuperEditor(
+                          editor: _editor,
+                          document: _document,
+                          composer: _composer,
+                
+                          focusNode: _descriptionFocusNode,
+                          inputSource: TextInputSource.ime,
+                
+                          imeConfiguration: const SuperEditorImeConfiguration(
+                            enableAutocorrect: false,      // ← এটাই underline বন্ধ করবে
+                
                           ),
-                          // CheckboxComponentBuilder(
-                          //   onCheckChanged: (nodeId, isChecked) {
-                          //     final node = _document.getNodeById(nodeId);
-                          //     if (node is CheckboxNode) {
-                          //       node.isChecked = isChecked;
-                          //       setState(() {});
-                          //       _saveNote();
-                          //     }
-                          //   },
-                          // ),
-                          ...defaultComponentBuilders,
-                        ],
-                        stylesheet: defaultStylesheet.copyWith(
-                          addRulesAfter: [
-                            StyleRule(
-                              BlockSelector.all,
-                                  (Document doc, DocumentNode node) => {
-                                Styles.textStyle: const TextStyle(
-                                    color: Color(0xFFD2FEFF),
-                                    fontFamily: 'Regular',
-                                    fontSize: 16,
-                                    decoration: TextDecoration.none
-                                ),
-
-                                Styles.padding: const CascadingPadding.symmetric(
-                                    vertical: 0,
-                                    horizontal: 0
-                                )
-
+                
+                          selectionStyle: const SelectionStyles(
+                            selectionColor: Color(0x44C8E1E4),
+                
+                          ),
+                          contentTapDelegateFactories: [
+                                (_) => CheckboxTapDelegate(
+                                document: _document,
+                                editor: _editor,
+                                onSave: _saveNote
+                
+                            )
+                          ],
+                
+                          componentBuilders: [
+                
+                            NoteImageComponentBuilder(
+                              onImageTap: (imagePath, imageKey) {
+                                _descriptionFocusNode.unfocus();
+                                setState(() {
+                                  _imagepath=imagePath;
+                                });
+                                _toggleToolbar(context, imageKey);
                               },
                             ),
-
+                            // CheckboxComponentBuilder(
+                            //   onCheckChanged: (nodeId, isChecked) {
+                            //     final node = _document.getNodeById(nodeId);
+                            //     if (node is CheckboxNode) {
+                            //       node.isChecked = isChecked;
+                            //       setState(() {});
+                            //       _saveNote();
+                            //     }
+                            //   },
+                            // ),
+                            ...defaultComponentBuilders,
                           ],
+                          stylesheet: defaultStylesheet.copyWith(
+                            addRulesAfter: [
+                              StyleRule(
+                                BlockSelector.all,
+                                    (Document doc, DocumentNode node) => {
+                                  Styles.textStyle: const TextStyle(
+                                      color: Color(0xFFD2FEFF),
+                                      fontFamily: 'Regular',
+                                      fontSize: 16,
+                                      decoration: TextDecoration.none
+                                  ),
+                
+                                  Styles.padding: const CascadingPadding.symmetric(
+                                      vertical: 0,
+                                      horizontal: 0
+                                  )
+                
+                                },
+                              ),
+                
+                            ],
+                          ),
+                
                         ),
-
+                
                       ),
-
-                    ),
-
-                  ],
+                
+                    ],
+                  ),
                 ),
+                
+                            ],
+                          ),
+                        )
+                
+                      ),
               ),
-
-            ],
-          ),
-        )
-
-      ),
       );
 
 
@@ -965,77 +982,75 @@ class _CreateNoteState extends State<CreateNote> {
           padding: const EdgeInsets.all(12), // 👈 চারপাশে gap
           child: Align(
             alignment: Alignment.bottomCenter,
-            child: Expanded(
-              child: Container(
+            child: Container(
 
-                decoration: BoxDecoration(
-                  color: Color(0xFF2398C4),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+              decoration: BoxDecoration(
+                color: Color(0xFF2398C4),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
 
-                  children: [
+                children: [
 
-                    ListTile(
-                      title: Center(
-                        child: const Text("Save as text",
-                          style:TextStyle(
-                            color: Color(0xFFD9FFFF),
-                              fontWeight: FontWeight.bold
-                          ),),
-                      ),
-
-                      onTap: () {
-                        Navigator.pop(context);
-
-                      },
-                    ),
-                    Divider(),
-                    ListTile(
-                      title: Center(
-                        child: const Text("Save as PDF", style:TextStyle(
-                            color: Color(0xFFD9FFFF),
+                  ListTile(
+                    title: Center(
+                      child: const Text("Save as text",
+                        style:TextStyle(
+                          color: Color(0xFFD9FFFF),
                             fontWeight: FontWeight.bold
                         ),),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-
-                      },
                     ),
-                    Divider(),
 
-                    ListTile(
-                      title: Center(
-                        child: const Text("Save as image", style:TextStyle(
-                            color: Color(0xFFD9FFFF),
+                    onTap: () async{
+                      Navigator.pop(context);
+                      await _saveAsText();
+                    },
+                  ),
+                  Divider(),
+                  ListTile(
+                    title: Center(
+                      child: const Text("Save as PDF", style:TextStyle(
+                          color: Color(0xFFD9FFFF),
                           fontWeight: FontWeight.bold
-                        ),),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-
-                      },
+                      ),),
                     ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _saveAsPDF();
+                    },
+                  ),
+                  Divider(),
 
-                    Divider(),
-
-                    ListTile(
-                      title: Center(
-                        child: const Text("Share", style:TextStyle(
-                            color: Color(0xFFD9FFFF),
-                            fontWeight: FontWeight.bold
-                        ),),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-
-                      },
+                  ListTile(
+                    title: Center(
+                      child: const Text("Save as image", style:TextStyle(
+                          color: Color(0xFFD9FFFF),
+                        fontWeight: FontWeight.bold
+                      ),),
                     ),
+                    onTap: () async{
+                      Navigator.pop(context);
+                      await _saveAsImage();
+                    },
+                  ),
 
-                  ],
-                ),
+                  Divider(),
+
+                  ListTile(
+                    title: Center(
+                      child: const Text("Share", style:TextStyle(
+                          color: Color(0xFFD9FFFF),
+                          fontWeight: FontWeight.bold
+                      ),),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+
+                    },
+                  ),
+
+                ],
               ),
             ),
           ),
@@ -1044,4 +1059,207 @@ class _CreateNoteState extends State<CreateNote> {
     );
   }
 
+  Future<void> _saveAsText()async{
+
+    final buffer=StringBuffer();
+    final currentTime = DateFormat('MMMM dd, hh:mm a').format(DateTime.now());
+    buffer.writeln(currentTime);
+    final title=_textEditingController.text.trim();
+    if(title.isNotEmpty){
+      buffer.writeln(title);
+      buffer.writeln();
+    }
+
+    for(int i=0; i <_document.nodeCount; i++){
+      final node = _document.getNodeAt(i)!;
+      if(node is ParagraphNode){
+        buffer.writeln(node.text.text);
+      }else if(node is ImageNode){
+        buffer.writeln('[Image]');
+      }
+    }
+
+    final content=buffer.toString().trim();
+    if(content.isEmpty) return;
+
+    final baseDir=Directory('/storage/emulated/0/Documents');
+    final folder = Directory('${baseDir.path}/MyNotes');
+
+    if (!await folder.exists()) {
+      await folder.create(recursive: true);
+    }
+
+
+    final fileName = title.isNotEmpty
+        ? '${title.replaceAll(RegExp(r'[^\w\s]'), '_')}.txt'
+        : 'note_${DateTime.now().millisecondsSinceEpoch}.txt';
+    final file=File('${baseDir.path}/$fileName');
+
+    await file.writeAsString(content);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Saved: ${file.path}')),
+      );
+    }
+  }
+
+  Future<void> _saveAsPDF()async{
+    final title=_textEditingController.text.trim();
+    final pdf=pw.Document();
+
+    pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(12),
+          build: (pw.Context context){
+            final widgets=<pw.Widget>[];
+
+            if(title.isNotEmpty){
+              widgets.add(
+                pw.Text(
+                    title,
+                    style: pw.TextStyle(
+                        fontSize: 18,
+                        fontWeight: pw.FontWeight.bold
+                    )
+                ),
+              );
+              widgets.add(pw.SizedBox(height: 8));
+            }
+
+            for(int i=0; i<_document.nodeCount; i++){
+              final node=_document.getNodeAt(i);
+
+              if(node is ParagraphNode && node.text.text.isNotEmpty){
+                widgets.add(
+                    pw.Text(
+                        node.text.text,
+                        style: pw.TextStyle(
+                            fontSize: 14
+                        )
+                    )
+                );
+                widgets.add(pw.SizedBox(height: 6));
+              }
+          }
+            return widgets;
+          },
+        )
+    );
+
+    final baseDir=Directory('/storage/emulated/0/Documents');
+    final folder=Directory('${baseDir.path}/MyNotes');
+    if (!await folder.exists()) {
+      await folder.create(recursive: true);
+    }
+
+    final fileName = title.isNotEmpty
+        ? '${title.replaceAll(RegExp(r'[^\w\s]'), '_')}.pdf'
+        : 'note_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final file=File('${baseDir.path}/$fileName');
+    await file.writeAsBytes(await pdf.save());
+
+    if(mounted){
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Saved: ${file.path}'))
+      );
+    }
+  }
+
+  Future<void> _saveAsImage()async{
+    final fileName = 'note_${DateTime.now().millisecondsSinceEpoch}.png';
+    final path=await SaveAsImage.saveNoteAsImage(widget: _buildExportNote(), filename: fileName);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Saved: $path')),
+      );
+    }
+
+  }
+
+  Widget _buildExportNote(){
+
+    return IntrinsicHeight(
+      child: Container(
+        width: 668,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: _bottomBarColor,
+          image: _backgroundImage != null
+            ? DecorationImage(
+              image: AssetImage(_backgroundImage!),
+            fit: BoxFit.cover
+          ):null,
+        ),
+      
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+      
+          children: [
+            Text(
+             _textEditingController.text,
+              style: const TextStyle(
+                fontSize: 32,
+                color: Color(0xFFD2FEFF),
+                fontFamily: 'Regular'
+              ),
+            ),
+            const SizedBox(height: 15),
+            //----------
+            ..._buildExportContent()
+          ],
+        ),
+      
+      ),
+    );
+
+
+  }
+
+
+  List<Widget> _buildExportContent() {
+
+    final widgets = <Widget>[];
+
+    for (int i = 0; i < _document.nodeCount; i++) {
+      final node = _document.getNodeAt(i)!;
+
+      if (node is ParagraphNode) {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              node.text.text,
+              style: const TextStyle(color: Colors.white, fontSize: 22),
+            ),
+          ),
+        );
+      }
+
+      if (node is ImageNode) {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child:AspectRatio(
+              aspectRatio: 16/9,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(
+                    File(node.imageUrl),
+                    fit: BoxFit.cover,   // image crop করে container fill করবে
+              ),
+            )
+
+          ),
+         )
+        );
+      }
+    }
+
+    return widgets;
+  }
+
 }
+
