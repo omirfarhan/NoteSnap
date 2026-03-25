@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:notes/constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 import 'package:notes/services/cloud/cloud_files.dart';
@@ -108,6 +109,11 @@ class _MainPageState extends State<MainPage> {
     } catch (e) {
       return content;
     }
+  }
+
+  String _formatTime(int timestamp) {
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    return DateFormat('MMM dd, hh:mm a').format(date);
   }
 
   @override
@@ -282,7 +288,7 @@ class _MainPageState extends State<MainPage> {
                                                     SizedBox(
                                                       height: 5,
                                                     ),
-                                                    Text('22 Feb, 2026',
+                                                    Text(_formatTime(note.lastEdited),
                                                       style: TextStyle(
                                                         color: Color(0xFFDBF5FB),
                                                         fontSize: 10,

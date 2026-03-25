@@ -4,8 +4,6 @@ import 'dart:ui';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:googleapis/androidenterprise/v1.dart';
-import 'package:googleapis/gmail/v1.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -13,19 +11,17 @@ import 'package:intl/intl.dart';
 import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/notebottomcomponent/bottomsheet/bottom_sheet_screen.dart';
 import 'package:notes/ui/notebottomcomponent/bottomsheet/saveimageoption.dart';
-import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_component_builder.dart';
 import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_node.dart';
 import 'package:notes/ui/notebottomcomponent/fullscreenimagepage.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:super_editor/super_editor.dart';
-//import 'package:palette_generator_master/palette_generator_master.dart';
+import 'notebottomcomponent/bottomsheet/image_preview_page.dart';
 import 'notebottomcomponent/checkbox/CheckboxTapDelegate.dart';
 import 'notebottomcomponent/note_image_component_builder.dart';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
+
 
 class CreateNote extends StatefulWidget {
   const CreateNote({super.key});
@@ -51,6 +47,7 @@ class _CreateNoteState extends State<CreateNote> {
 
   String? _imagepath;
   String _currentTime="";
+  String get currentTime=> _currentTime;
   String? _backgroundImage;
 
 
@@ -1044,10 +1041,18 @@ class _CreateNoteState extends State<CreateNote> {
                           fontWeight: FontWeight.bold
                       ),),
                     ),
-                    onTap: () {
-                      Navigator.pop(context);
-
-                    },
+                      onTap: () async {
+                        final rootContext = this.context;
+                        Navigator.pop(context);
+                        final bytes = await SaveAsImage.captureWidget(_buildExportNote());
+                        if (!mounted) return;
+                        Navigator.push(
+                          rootContext,
+                          MaterialPageRoute(
+                            builder: (_) => ImagePreviewPage(uint8list: bytes),
+                          ),
+                        );
+                      }
                   ),
 
                 ],

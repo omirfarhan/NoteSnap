@@ -103,13 +103,14 @@ class NotesService {
   })async{
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
-
+    final now = DateTime.now().millisecondsSinceEpoch; // 👈 ADD
     await getNote(id: note.id);
 
     final updateCount=await db.update(noteTable, {
       titleColumn: text,
       contentColumn: content,
-      backgroundColumn:background
+      backgroundColumn:background,
+      lastEditedColumn:now
     },
       where: 'id = ?',
       whereArgs: [note.id],
@@ -201,6 +202,7 @@ class NotesService {
     final db=_getDatabaseorThrow();
 
     final dbFolder=await getFolder(foldername: owner.foldername);
+    final now = DateTime.now().millisecondsSinceEpoch;
 
     if(dbFolder != owner){
       throw CouldNotFindFolder();
@@ -211,7 +213,8 @@ class NotesService {
       folderIdColumn: owner.id,
       titleColumn: text,
       contentColumn:jsonEncode(noteContent),
-      backgroundColumn:null
+      backgroundColumn:null,
+      lastEditedColumn:now
     });
 
     final note=DatabaseNote(
@@ -219,7 +222,8 @@ class NotesService {
         userId: owner.id,
         title: text,
         content: jsonEncode(noteContent),
-      background: null
+        background: null,
+       lastEdited: now
     );
 
     //_notes.add(note);
@@ -310,6 +314,11 @@ class NotesService {
         await db.execute('ALTER TABLE note ADD COLUMN background TEXT');
       }
 
+      // 👇 ADD THIS
+      if (!columnNames.contains('last_edited')) {
+        await db.execute('ALTER TABLE note ADD COLUMN last_edited INTEGER');
+      }
+
       await _cacheNote();
     }on MissingPlatformDirectoryException{
       throw UnabletoGetDocuments();
@@ -327,6 +336,7 @@ class DatabaseNote{
   final String title;
   final String content;
   final String? background;
+  final int lastEdited; // 👈 ADD
   //is_synced_with_cloud ei option ta pore add korbo jodi lge
 
   DatabaseNote({
@@ -334,7 +344,8 @@ class DatabaseNote{
     required this.userId,
     required this.title,
     required this.content,
-    this.background
+    this.background,
+    required this.lastEdited,
   });
 
   DatabaseNote.fromRow(Map<String, Object?> map):
@@ -342,7 +353,8 @@ class DatabaseNote{
   userId=map[folderIdColumn] as int,
   title=map[titleColumn] as String,
   content=map[contentColumn] as String,
-  background=map[backgroundColumn] as String?;
+  background=map[backgroundColumn] as String?,
+  lastEdited = map[lastEditedColumn] as int? ?? 0; // 👈 ADD
 
   @override
   String toString() => 'Note, ID=$id, user_id=$userId, title=$title,';
@@ -392,6 +404,7 @@ const createNoteTable='''CREATE TABLE IF NOT EXISTS "note" (
 	        "title"	TEXT,
 	        "content" TEXT,
 	        "background" TEXT,
+	        "last_edited" TEXT,
 	         FOREIGN KEY("user_id") REFERENCES "user"("id"),
 	         PRIMARY KEY("id" AUTOINCREMENT)
 );''';
@@ -407,3 +420,4 @@ const dbname='note.db';
 const folderTable='user';
 const noteTable='note';
 const backgroundColumn = 'background';
+const lastEditedColumn= 'last_edited';

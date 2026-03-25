@@ -1,11 +1,12 @@
 
 import 'dart:io';
-import 'dart:typed_data' as td;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SaveAsImage {
   static const double targetwidth=668;
@@ -14,7 +15,7 @@ class SaveAsImage {
     required Widget widget,
     required String filename,
   })async{
-    final bytes=await _captureWidget(widget);
+    final bytes=await captureWidget(widget);
 
     final dir = Directory('/storage/emulated/0/Documents/MyNotes');
     if (!await dir.exists()) {
@@ -71,7 +72,7 @@ class SaveAsImage {
 
 
   // 🔥 CORE RENDER LOGIC (private)
-  static Future<Uint8List> _captureWidget(Widget widget) async {
+  static Future<Uint8List> captureWidget(Widget widget) async {
     final repaintBoundary = RenderRepaintBoundary();
 
     final renderView = RenderView(
@@ -111,12 +112,20 @@ class SaveAsImage {
     final image = await repaintBoundary.toImage(pixelRatio: 1.0);
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
-    // 🔥 IMPORTANT FIX
     if (byteData == null) {
       throw Exception("Failed to convert image to bytes");
     }
-
     return byteData.buffer.asUint8List();
+  }
+
+  static Future<void> shareImage(Uint8List bytes)async{
+    final tempDir=await getTemporaryDirectory();
+    final file = File('${tempDir.path}/note.png');
+    await file.writeAsBytes(bytes);
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      text: 'My Note',
+    );
   }
 
 }
