@@ -11,6 +11,7 @@ import 'package:notes/services/auth/auth_provider.dart';
 import 'package:notes/services/cloud/cloud_files.dart';
 import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/create_note.dart';
+import 'package:notes/ui/folder_list.dart';
 import 'package:notes/ui/settings_page.dart';
 import 'package:provider/provider.dart';
 
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         SettingspageRoute: (context) => const SettingsPage(),
         CloudFilesRoute: (context) => const CloudFiles(),
         CreateNoteRoute: (context) => const CreateNote(),
+        FolderListRoute: (context) => const FolderList(),
       },
       //0xFF239AC4
       theme: ThemeData(
@@ -77,7 +79,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   late final NotesService _notesService;
-
+  String _searchQuery='';
 
 
 
@@ -143,7 +145,9 @@ class _MainPageState extends State<MainPage> {
         actions: [
 
           IconButton(onPressed: (){
-            _notesService.debugPrintAllNotes();
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => FolderList(),)
+            );
           }, icon: Icon(Icons.folder_copy_outlined)),
 
 
@@ -161,6 +165,11 @@ class _MainPageState extends State<MainPage> {
         child: Column(
           children: [
             TextField(
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery=value.toLowerCase();
+                });
+              },
               autocorrect: false,
               enableSuggestions: false,
               spellCheckConfiguration: SpellCheckConfiguration.disabled(),
@@ -168,8 +177,6 @@ class _MainPageState extends State<MainPage> {
               style: TextStyle(
                 color: Color(0xFFC8E1E4),
                 fontSize: 14,
-
-
               ),
               decoration: InputDecoration(
                 prefixIcon: Icon(FontAwesomeIcons.magnifyingGlass,
@@ -218,7 +225,14 @@ class _MainPageState extends State<MainPage> {
                               case ConnectionState.waiting:
                               case ConnectionState.active:
                                 if(snapshot.hasData){
-                                  final notes=snapshot.data!;
+
+                                  final allnote=snapshot.data!;
+                                  final notes=allnote.where((note){
+                                    final title=note.title.toLowerCase();
+                                    final plaintext=_getPlainTextFromContent(note.content).toLowerCase();
+                                    return title.contains(_searchQuery) ||
+                                        plaintext.contains(_searchQuery);
+                                  }).toList();
 
                                    return MasonryGridView.builder(
 

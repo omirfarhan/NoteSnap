@@ -122,6 +122,7 @@ class NotesService {
       final updateNote=await getNote(id: note.id);
       _notes.removeWhere((note)=> note.id==updateNote.id);
       _notes.insert(0, updateNote); // ← add এর বদলে insert(0)
+      _notes.sort((a,b) => b.lastEdited.compareTo(a.lastEdited));
       _noteStreamController.add(_notes);
       return updateNote;
     }
@@ -146,7 +147,7 @@ class NotesService {
     }else{
       final note=DatabaseNote.fromRow(notes.first);
       _notes.removeWhere((note) => note.id ==id);
-      _notes.add(note);
+      _notes.insert(0,note);
       _noteStreamController.add(_notes);
       return note;
     }
