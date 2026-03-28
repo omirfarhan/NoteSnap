@@ -24,7 +24,10 @@ class NotesService {
   Database? _db;
   Folder? _folder;
   List<DatabaseNote> _notes= [];
+  List<Folder> _folders = [];
   List<Map<String, dynamic>>noteContent=[];
+  late final StreamController<List<Folder>> _folderStreamController;
+
 
   late final StreamController<List<DatabaseNote>> _noteStreamController;
 
@@ -35,10 +38,18 @@ class NotesService {
           _noteStreamController.sink.add(_notes);
         },
     );
+
+    _folderStreamController = StreamController<List<Folder>>.broadcast(
+      onListen: () {
+        _folderStreamController.sink.add(_folders);
+      },
+    );
+
   }
 
   factory NotesService() => _shared;
 
+  Stream<List<Folder>> get allFolders => _folderStreamController.stream;
 
   Stream<List<DatabaseNote>> get allNotes =>
       _noteStreamController.stream.filter((note){
@@ -58,11 +69,32 @@ class NotesService {
     }
   }
 
+  Future<void> _cacheFolders() async {
+    final db = _getDatabaseorThrow();
+    final result = await db.query(folderTable);
+    _folders = result.map((row) => Folder.fromRow(row)).toList();
+    _folderStreamController.add(_folders);
+  }
+
   Future<void> _cacheNote()async{
     final allNotes=await getallNotes();
     _notes=allNotes.toList();
 
     _noteStreamController.add(_notes);
+  }
+
+  int getNoteCountForFolder({required String foldername}){
+
+    return _notes.where((note) {
+      // folder id match করাতে হবে
+      // _notes এ userId আছে, folder এ id আছে
+      final folder = _folders.firstWhere(
+            (f) => f.foldername == foldername.toLowerCase(),
+        orElse: () => Folder(id: -1, foldername: ''),
+      );
+      return note.userId == folder.id;
+    }).length;
+
   }
 
 
@@ -126,8 +158,6 @@ class NotesService {
       _noteStreamController.add(_notes);
       return updateNote;
     }
-
-
   }
 
   Future<Iterable<DatabaseNote>> getallNotes()async{
@@ -263,7 +293,11 @@ class NotesService {
     final folderId=await db.insert(folderTable,{
       nameColumn: foldername.toLowerCase()
     });
-    return Folder(id: folderId, foldername: foldername);
+
+    final folder = Folder(id: folderId, foldername: foldername);
+    _folders.add(folder);          // এটা যোগ করো
+    _folderStreamController.add(_folders); // এটা যোগ করো
+    return folder;
   }
 
   Future<void> deleteFolder({required String foldername})async{
@@ -276,7 +310,13 @@ class NotesService {
     if(deleteAccount!= 1){
       throw CouldNotDeleteUser();
     }
+
+    _folders.removeWhere((f) => f.foldername == foldername.toLowerCase());
+    _folderStreamController.add(_folders); // এটা যোগ করো
+
   }
+
+
   Database _getDatabaseorThrow(){
     final db=_db;
     if(db== null){
@@ -291,6 +331,7 @@ class NotesService {
     if(db == null){
       throw DatabaseIsNotOpen();
     }else{
+      await _folderStreamController.close();
       await db.close();
       _db=null;
     }
@@ -321,6 +362,7 @@ class NotesService {
       }
 
       await _cacheNote();
+      await _cacheFolders();
     }on MissingPlatformDirectoryException{
       throw UnabletoGetDocuments();
     }
