@@ -12,6 +12,7 @@ class _FolderListState extends State<FolderList> {
 
   late final NotesService _notesService;
   final Set<String> _selectedFoldernames = {};
+  bool _isSelecting = false;
 
 
   @override
@@ -27,6 +28,52 @@ class _FolderListState extends State<FolderList> {
     super.dispose();
   }
 
+  Future<void> _deleteSelectedFolders()async{
+
+    final confirm=await showDialog<bool>(
+        context: context,
+        builder:(context) => AlertDialog(
+          backgroundColor: const Color(0xFF0D6186),
+          title: const Text(
+            'Delete folders?',
+            style: TextStyle(color: Color(0xFFD9FFFF)),
+          ),
+
+          content:  Text(
+            '${_selectedFoldernames.length} folder(s) will be deleted.',
+            style: const TextStyle(color: Color(0xFF9EDDE4)),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel', style: TextStyle(color: Color(0xFF9EDDE4))),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete', style: TextStyle(color: Color(0xFFD9FFFF))),
+            ),
+          ],
+        ),
+    );
+
+
+    if(confirm == true){
+      
+      for(final name in _selectedFoldernames){
+        await _notesService.deleteFolder(foldername: name);
+      }
+
+      setState(() {
+        _selectedFoldernames.clear();
+        _isSelecting = false;
+      });
+    }
+
+    }
+
+
+  }
 
   Future<void> _createFolderDialog() async{
 
@@ -93,7 +140,6 @@ class _FolderListState extends State<FolderList> {
 
 
   }
-
 
   int _getNoteCount(String foldername) {
     return _notesService.getNoteCountForFolder(foldername: foldername);
