@@ -11,6 +11,7 @@ class FolderList extends StatefulWidget {
 class _FolderListState extends State<FolderList> {
 
   late final NotesService _notesService;
+  final Set<String> _selectedFoldernames = {};
 
 
   @override
@@ -25,6 +26,74 @@ class _FolderListState extends State<FolderList> {
     _notesService.close();
     super.dispose();
   }
+
+
+  Future<void> _createFolderDialog() async{
+
+    final controller=TextEditingController();
+    await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Color(0xFF0D6186),
+          title: const Text(
+            'Create new note folder',
+            style: TextStyle(color: Color(0xFFE8F8FD),fontSize: 15),
+          ),
+
+          content: TextField(
+            controller: controller,
+            //autofocus: true,
+            style: const TextStyle(color: Color(0xFFD9FFFF)),
+            cursorColor: const Color(0xFFD9FFFF),
+            decoration: const InputDecoration(
+              hintText: 'Folder name',
+              hintStyle: TextStyle(color: Color(0xFF9EDDE4)),
+
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF4592AC)),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF9EDDE4)),
+              ),
+            ),
+          ),
+
+          shape: BoxBorder.all(style: BorderStyle.none),
+
+          actions: [
+            TextButton(
+                onPressed: (){
+                  Navigator.pop(context);
+            }, child: const Text(
+                'Cancel',
+                style: TextStyle(color: Color(0xFF9EDDE4)))
+            ),
+
+            TextButton(
+                onPressed: ()async{
+                  final name =controller.text.trim();
+
+                  if(name.isNotEmpty){
+                    Navigator.pop(context);
+                    await _notesService.getOrCreateFolder(
+                        foldername: name,
+                        setCurrentFolder: false
+                    );
+                  }
+
+                },
+                child: const Text('Create', style: TextStyle(color: Color(0xFFD9FFFF))),
+            )
+
+
+          ],
+
+        ),
+    );
+
+
+  }
+
 
   int _getNoteCount(String foldername) {
     return _notesService.getNoteCountForFolder(foldername: foldername);
@@ -51,20 +120,25 @@ class _FolderListState extends State<FolderList> {
       ),
       bottomNavigationBar: Padding(
         padding: EdgeInsets.symmetric(horizontal: 20,vertical: 5),
-        child: Container(
-          height: 40,
-          color: Color(0xFF4592AC),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add_circle_outline_rounded, color: Color(0xFFE9FEFF),),
-                SizedBox(width: 5),
-                Text('Create New Folder',style: TextStyle(
-                  color: Color(0xFFE8F8FD)
-                ),)
-              ],
+        child: InkWell(
+          onTap: _createFolderDialog,
+          borderRadius: BorderRadius.circular(8),
+          
+          child: Container(
+            height: 40,
+            color: Color(0xFF4592AC),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_circle_outline_rounded, color: Color(0xFFE9FEFF),),
+                  SizedBox(width: 5),
+                  Text('Create New Folder',style: TextStyle(
+                    color: Color(0xFFE8F8FD)
+                  ),)
+                ],
+              ),
             ),
           ),
         )
@@ -87,31 +161,55 @@ class _FolderListState extends State<FolderList> {
             final folders=snapshot.data!;
 
             return ListView.separated(
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                separatorBuilder: (context, index) => const SizedBox(height: 0),
                 itemCount: folders.length,
 
                 itemBuilder: (context, index) {
                   final folder=folders[index];
-                  //final isSelected = _selectedFoldernames.contains(folder.foldername);
+                  final isSelected = _selectedFoldernames.contains(folder.foldername);
                   final noteCount=_getNoteCount(folder.foldername);
 
                   return GestureDetector(
 
                     //ekhane aro kisu baki ase
 
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-
-                      //ekhane aro kisu baki
-
-                      child: ListTile(
-                        //ekhane kisu baki
-
-                        title: Text(
-                          folder.foldername,
-
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5,vertical: 5),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFF1A7EA8)
+                              :const Color(0xFF4592AC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: BoxBorder.all(
+                            color: isSelected
+                                ? const Color(0xFF9EDDE4)
+                                : const Color(0xFF1A7EA8),
+                            width: 0.5
+                          )
                         ),
 
+                        child: ListTile(
+                          //ekhane kisu baki
+
+                          title: Text(
+                            folder.foldername,
+                            style: const TextStyle(
+                              color: Color(0xFFE8F8FD),
+                              fontSize: 18,
+                              fontFamily: 'Regular',
+                            ),
+                          ),
+                          trailing: Text(
+                            '$noteCount',
+                            style: const TextStyle(
+                              color: Color(0xFFE8F8FD),
+                              fontSize: 12,
+                              fontFamily: 'Regular',
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   );
