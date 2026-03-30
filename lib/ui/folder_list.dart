@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:notes/services/crud/notes_service.dart';
 
+
 class FolderList extends StatefulWidget {
   const FolderList({super.key});
 
@@ -69,11 +70,8 @@ class _FolderListState extends State<FolderList> {
         _isSelecting = false;
       });
     }
-
-    }
-
-
   }
+
 
   Future<void> _createFolderDialog() async{
 
