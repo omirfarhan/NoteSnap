@@ -73,7 +73,10 @@ class NotesService {
     final db = _getDatabaseorThrow();
     final result = await db.query(folderTable);
     _folders = result.map((row) => Folder.fromRow(row)).toList();
-    _folderStreamController.add(_folders);
+    if (!_folderStreamController.isClosed) {
+      _folderStreamController.add(_folders);
+    }
+   // _folderStreamController.add(_folders);
   }
 
   Future<void> _cacheNote()async{
@@ -85,15 +88,22 @@ class NotesService {
 
   int getNoteCountForFolder({required String foldername}){
 
-    return _notes.where((note) {
-      // folder id match করাতে হবে
-      // _notes এ userId আছে, folder এ id আছে
-      final folder = _folders.firstWhere(
-            (f) => f.foldername == foldername.toLowerCase(),
-        orElse: () => Folder(id: -1, foldername: ''),
-      );
-      return note.userId == folder.id;
-    }).length;
+    // return _notes.where((note) {
+    //   // folder id match করাতে হবে
+    //   // _notes এ userId আছে, folder এ id আছে
+    //   final folder = _folders.firstWhere(
+    //         (f) => f.foldername == foldername.toLowerCase(),
+    //     orElse: () => Folder(id: -1, foldername: ''),
+    //   );
+    //   return note.userId == folder.id;
+    // }).length;
+
+    final folder = _folders.firstWhere(
+          (f) => f.foldername == foldername.toLowerCase(),
+      orElse: () => Folder(id: -1, foldername: ''),
+    );
+    if (folder.id == -1) return 0;
+    return _notes.where((note) => note.userId == folder.id).length;
 
   }
 
@@ -156,6 +166,8 @@ class NotesService {
       _notes.insert(0, updateNote); // ← add এর বদলে insert(0)
       _notes.sort((a,b) => b.lastEdited.compareTo(a.lastEdited));
       _noteStreamController.add(_notes);
+      // ←←← এই লাইন যোগ করুন
+      await _cacheFolders();
       return updateNote;
     }
   }
@@ -209,6 +221,8 @@ class NotesService {
     }else{
       _notes.removeWhere((note)=> note.id ==id);
       _noteStreamController.add(_notes);
+      // ←←← এই লাইন যোগ করুন
+      await _cacheFolders();
     }
 
   }
@@ -260,6 +274,7 @@ class NotesService {
     //_notes.add(note);
     _notes.insert(0, note);
     _noteStreamController.add(_notes);
+    _folderStreamController.add(_folders);
     return note;
   }
 
@@ -303,6 +318,16 @@ class NotesService {
   Future<void> deleteFolder({required String foldername})async{
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
+
+    // final existing=await db.query(
+    //   folderTable,
+    //    where: 'foldername = ?',
+    //   whereArgs: [foldername.toLowerCase()]
+    // );
+    //
+    // print('Trying to delete: "${foldername.toLowerCase()}"');
+    // print('Found in DB: $existing');
+
     final deleteAccount= await db.delete(
         folderTable,where: 'foldername = ?',
         whereArgs: [foldername.toLowerCase()]
@@ -331,7 +356,7 @@ class NotesService {
     if(db == null){
       throw DatabaseIsNotOpen();
     }else{
-      await _folderStreamController.close();
+      //await _folderStreamController.close();
       await db.close();
       _db=null;
     }
@@ -397,7 +422,12 @@ class DatabaseNote{
   title=map[titleColumn] as String,
   content=map[contentColumn] as String,
   background=map[backgroundColumn] as String?,
-  lastEdited = map[lastEditedColumn] as int? ?? 0; // 👈 ADD
+
+  lastEdited = map[lastEditedColumn] == null
+            ? 0
+            : map[lastEditedColumn] is int
+            ? map[lastEditedColumn] as int
+            : int.tryParse(map[lastEditedColumn].toString()) ?? 0;
 
   @override
   String toString() => 'Note, ID=$id, user_id=$userId, title=$title,';

@@ -127,7 +127,7 @@ class _MainPageState extends State<MainPage> {
 
   @override
   void dispose() {
-    _notesService.close();
+    //_notesService.close();
     super.dispose();
   }
 
@@ -214,7 +214,7 @@ class _MainPageState extends State<MainPage> {
             ),
             Expanded(
               child:FutureBuilder(
-                  future: _notesService.getOrCreateFolder(foldername: 'all'),
+                  future: _notesService.getOrCreateFolder(foldername: 'All Folder'),
                   builder: (context, snapshot) {
                     switch(snapshot.connectionState){
                       case ConnectionState.done:

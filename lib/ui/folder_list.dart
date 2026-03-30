@@ -25,7 +25,7 @@ class _FolderListState extends State<FolderList> {
 
   @override
   void dispose() {
-    _notesService.close();
+    //_notesService.close();
     super.dispose();
   }
 
@@ -62,6 +62,7 @@ class _FolderListState extends State<FolderList> {
     if(confirm == true){
       
       for(final name in _selectedFoldernames){
+        print('Deleting folder: $name'); // debug
         await _notesService.deleteFolder(foldername: name);
       }
 
@@ -149,14 +150,26 @@ class _FolderListState extends State<FolderList> {
       appBar: AppBar(
         backgroundColor: Color(0xFF0D6186),
         centerTitle: true,
-        title: const Text(
-          'Folder list',
+        title: Text(
+          _isSelecting
+          ? '${_selectedFoldernames.length} Selected'
+          : 'Folder list',
         ),
 
         actions: [
-          IconButton(
-              onPressed: (){
 
+          if(_isSelecting)
+            IconButton(
+              onPressed: _selectedFoldernames.isEmpty
+                  ? null
+                  : _deleteSelectedFolders,
+              icon: const Icon(Icons.delete_outline),
+            )else
+             IconButton(
+              onPressed: (){
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Please select your folder'))
+                );
               },
               icon: Icon(Icons.delete_outline))
         ],
@@ -188,81 +201,123 @@ class _FolderListState extends State<FolderList> {
         )
       ),
 
-      body: StreamBuilder(
+      body: StreamBuilder<List<Folder>>(
           stream: _notesService.allFolders,
           builder: (context, snapshot) {
-            if(snapshot.connectionState == ConnectionState.waiting){
-              return const Center(child: CircularProgressIndicator());
-            }
+            return StreamBuilder<List<DatabaseNote>>( // ← এটা add করো
+              stream: _notesService.allNotes,
+              builder: (context, noteSnapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-            if(!snapshot.hasData || snapshot.data!.isEmpty){
-              return const Center(
-                child: Text('No folders yet',
-                    style: TextStyle(color: Color(0xFF9EDDE4))),
-              );
-            }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                    child: Text('No folders yet',
+                        style: TextStyle(color: Color(0xFF9EDDE4))),
+                  );
+                }
 
-            final folders=snapshot.data!;
+                final folders = snapshot.data!;
 
-            return ListView.separated(
-                separatorBuilder: (context, index) => const SizedBox(height: 0),
-                itemCount: folders.length,
+                return ListView.separated(
+                  separatorBuilder: (context, index) =>
+                  const SizedBox(height: 0),
+                  itemCount: folders.length,
 
-                itemBuilder: (context, index) {
-                  final folder=folders[index];
-                  final isSelected = _selectedFoldernames.contains(folder.foldername);
-                  final noteCount=_getNoteCount(folder.foldername);
+                  itemBuilder: (context, index) {
+                    final folder = folders[index];
+                    final isSelected = _selectedFoldernames.contains(
+                        folder.foldername);
+                    final noteCount = _getNoteCount(
+                        folder.foldername); // এটা ঠিকই আছে
+                    return GestureDetector(
 
-                  return GestureDetector(
+                      onLongPress: () {
+                        setState(() {
+                          _isSelecting = true;
+                          _selectedFoldernames.add(
+                              folder.foldername.toLowerCase());
+                        });
+                      },
 
-                    //ekhane aro kisu baki ase
-
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 5,vertical: 5),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFF1A7EA8)
-                              :const Color(0xFF4592AC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: BoxBorder.all(
-                            color: isSelected
-                                ? const Color(0xFF9EDDE4)
-                                : const Color(0xFF1A7EA8),
-                            width: 0.5
+                      onTap: () {
+                        if (_isSelecting) {
+                          setState(() {
+                            if (_selectedFoldernames.contains(
+                                folder.foldername)) {
+                              _selectedFoldernames.remove(folder.foldername);
+                              if (_selectedFoldernames.isEmpty)
+                                _isSelecting = false;
+                            } else {
+                              _selectedFoldernames.add(folder.foldername);
+                            }
+                          });
+                        }
+                        //ekhane hocche folder e click korle note page e jabe
+                        //mane sob note dekha jabe
+                        /*
+                      else{
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder:(context) => ,
                           )
-                        ),
+                        )
+                      }
 
-                        child: ListTile(
-                          //ekhane kisu baki
+                       */
 
-                          title: Text(
-                            folder.foldername,
-                            style: const TextStyle(
-                              color: Color(0xFFE8F8FD),
-                              fontSize: 18,
-                              fontFamily: 'Regular',
-                            ),
+                      },
+
+
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 5),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          decoration: BoxDecoration(
+                              color: isSelected
+                                  ? const Color(0xFF1A7EA8)
+                                  : const Color(0xFF4592AC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: BoxBorder.all(
+                                  color: isSelected
+                                      ? const Color(0xFF9EDDE4)
+                                      : const Color(0xFF1A7EA8),
+                                  width: 0.5
+                              )
                           ),
-                          trailing: Text(
-                            '$noteCount',
-                            style: const TextStyle(
-                              color: Color(0xFFE8F8FD),
-                              fontSize: 12,
-                              fontFamily: 'Regular',
+
+                          child: ListTile(
+                            //ekhane kisu baki
+
+                            title: Text(
+                              folder.foldername,
+                              style: const TextStyle(
+                                color: Color(0xFFE8F8FD),
+                                fontSize: 18,
+                                fontFamily: 'Regular',
+                              ),
+                            ),
+                            trailing: Text(
+                              '$noteCount',
+                              style: const TextStyle(
+                                color: Color(0xFFE8F8FD),
+                                fontSize: 12,
+                                fontFamily: 'Regular',
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
 
 
+                );
+              },
             );
-          },
-      ),
+          })
     );
   }
 }

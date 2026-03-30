@@ -96,7 +96,7 @@ class _CreateNoteState extends State<CreateNote> {
     if(existingNote != null){
       return existingNote;
     }
-    const foldername = "all";
+    const foldername = "All Folder";
     final mainfolder= await _notesService.getOrCreateFolder(foldername: foldername);
     final newNote=await _notesService.createNote(owner: mainfolder);
     _note=newNote;
