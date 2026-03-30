@@ -99,12 +99,12 @@ class NotesService {
     // }).length;
 
     final folder = _folders.firstWhere(
-          (f) => f.foldername == foldername.toLowerCase(),
+          (f) => f.foldername.toLowerCase() == foldername.toLowerCase(),
       orElse: () => Folder(id: -1, foldername: ''),
     );
+
     if (folder.id == -1) return 0;
     return _notes.where((note) => note.userId == folder.id).length;
-
   }
 
 
@@ -123,6 +123,7 @@ class NotesService {
       final folder=await getFolder(foldername: foldername);
       if(setCurrentFolder){
         _folder=folder;
+
       }
       return folder;
 
@@ -297,6 +298,7 @@ class NotesService {
   Future<Folder> createFolder({required String foldername})async{
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
+
     final results=await db.query(
         folderTable,limit: 1,
         where: 'foldername = ? ',
@@ -319,15 +321,6 @@ class NotesService {
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
 
-    // final existing=await db.query(
-    //   folderTable,
-    //    where: 'foldername = ?',
-    //   whereArgs: [foldername.toLowerCase()]
-    // );
-    //
-    // print('Trying to delete: "${foldername.toLowerCase()}"');
-    // print('Found in DB: $existing');
-
     final deleteAccount= await db.delete(
         folderTable,where: 'foldername = ?',
         whereArgs: [foldername.toLowerCase()]
@@ -335,10 +328,9 @@ class NotesService {
     if(deleteAccount!= 1){
       throw CouldNotDeleteUser();
     }
-
-    _folders.removeWhere((f) => f.foldername == foldername.toLowerCase());
-    _folderStreamController.add(_folders); // এটা যোগ করো
-
+    _folders.removeWhere(
+            (f) => f.foldername.toLowerCase() == foldername.toLowerCase());
+    _folderStreamController.add(_folders);
   }
 
 

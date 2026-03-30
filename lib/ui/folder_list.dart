@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:notes/main.dart';
 import 'package:notes/services/crud/notes_service.dart';
 
 
@@ -30,6 +31,14 @@ class _FolderListState extends State<FolderList> {
   }
 
   Future<void> _deleteSelectedFolders()async{
+
+    // All Folder যদি কোনোভাবে সিলেক্ট হয়ে থাকে তাহলে সরিয়ে দাও
+    _selectedFoldernames.removeWhere((name) => name == 'all folder');
+
+    if (_selectedFoldernames.isEmpty) {
+      setState(() => _isSelecting = false);
+      return;
+    }
 
     final confirm=await showDialog<bool>(
         context: context,
@@ -140,6 +149,9 @@ class _FolderListState extends State<FolderList> {
 
   }
 
+  bool _isAllFolder(String folderName){
+    return folderName.toLowerCase() == 'all folder';
+  }
   int _getNoteCount(String foldername) {
     return _notesService.getNoteCountForFolder(foldername: foldername);
   }
@@ -227,13 +239,18 @@ class _FolderListState extends State<FolderList> {
 
                   itemBuilder: (context, index) {
                     final folder = folders[index];
-                    final isSelected = _selectedFoldernames.contains(
-                        folder.foldername);
-                    final noteCount = _getNoteCount(
-                        folder.foldername); // এটা ঠিকই আছে
+                    final folderLower = folder.foldername.toLowerCase();
+                    final isAllFolder = _isAllFolder(folder.foldername);
+
+                    final isSelected =
+                        _selectedFoldernames.contains(folderLower) && !isAllFolder;
+                    final noteCount = _getNoteCount(folder.foldername);
+
                     return GestureDetector(
 
                       onLongPress: () {
+                        if (isAllFolder) return;
+
                         setState(() {
                           _isSelecting = true;
                           _selectedFoldernames.add(
@@ -242,30 +259,34 @@ class _FolderListState extends State<FolderList> {
                       },
 
                       onTap: () {
+
                         if (_isSelecting) {
+
+                          if (isAllFolder) return;
+
                           setState(() {
-                            if (_selectedFoldernames.contains(
-                                folder.foldername)) {
-                              _selectedFoldernames.remove(folder.foldername);
+                            final name = folder.foldername.toLowerCase(); // ✅ এটা যোগ করুন
+                            if (_selectedFoldernames.contains(name)) {
+                              _selectedFoldernames.remove(name);
                               if (_selectedFoldernames.isEmpty)
                                 _isSelecting = false;
                             } else {
-                              _selectedFoldernames.add(folder.foldername);
+                              _selectedFoldernames.add(name);
                             }
                           });
                         }
                         //ekhane hocche folder e click korle note page e jabe
                         //mane sob note dekha jabe
-                        /*
+
                       else{
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder:(context) => ,
-                          )
-                        )
+
+                        if(isAllFolder){
+                          Navigator.of(context).pop(folder);
+                        }
+
                       }
 
-                       */
+
 
                       },
 

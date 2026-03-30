@@ -80,6 +80,9 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   late final NotesService _notesService;
   String _searchQuery='';
+  Folder? _selectedFolder;
+
+
 
 
 
@@ -144,10 +147,27 @@ class _MainPageState extends State<MainPage> {
 
         actions: [
 
-          IconButton(onPressed: (){
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => FolderList(),)
+          IconButton(onPressed: ()async{
+
+           final selected=await Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => FolderList())
             );
+
+
+           if(selected!= null && selected is Folder){
+
+             await _notesService.getOrCreateFolder(
+               foldername: selected.foldername,
+               setCurrentFolder: true,
+             );
+
+             setState(() {
+               _selectedFolder = selected;
+             });
+           }
+
+
+
           }, icon: Icon(Icons.folder_copy_outlined)),
 
 
@@ -250,6 +270,10 @@ class _MainPageState extends State<MainPage> {
                                       return InkWell(
                                         onTap: () {
                                           Navigator.of(context).pushNamed(CreateNoteRoute,arguments: note);
+                                         //  Navigator.of(context).pushNamed(
+                                         //    CreateNoteRoute,
+                                         //    arguments: {'folder': _selectedFolder?.foldername ?? 'All Folder'},
+                                         //  );
                                         },
                                         child: Container(
                                           decoration: BoxDecoration(
@@ -345,7 +369,12 @@ class _MainPageState extends State<MainPage> {
 
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.of(context).pushNamed(CreateNoteRoute);
+          //Navigator.of(context).pushNamed(CreateNoteRoute);
+          Navigator.of(context).pushNamed(
+            CreateNoteRoute,
+            // ✅ এখন folder নামও পাঠাচ্ছি
+            arguments: _selectedFolder?.foldername ?? 'all folder',
+          );
         },
         backgroundColor: Color(0xFF219BCB),
         splashColor: Colors.transparent,
