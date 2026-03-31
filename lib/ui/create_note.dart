@@ -24,7 +24,14 @@ import 'package:pdf/widgets.dart' as pw;
 
 
 class CreateNote extends StatefulWidget {
-  const CreateNote({super.key});
+  final DatabaseNote? note;
+  final String? folderName;
+
+  const CreateNote({
+    super.key,
+    this.note,
+    this.folderName,
+  });
 
   @override
   State<CreateNote> createState() => _CreateNoteState();
@@ -71,6 +78,7 @@ class _CreateNoteState extends State<CreateNote> {
 
   final GlobalKey _globalKey=GlobalKey();
 
+  /*
   Future<DatabaseNote> createNote(BuildContext context)async{
     final widgetNote=context.arguments<DatabaseNote>();
     if(widgetNote != null){
@@ -101,6 +109,37 @@ class _CreateNoteState extends State<CreateNote> {
     final mainfolder= await _notesService.getOrCreateFolder(foldername: foldername);
     final newNote=await _notesService.createNote(owner: mainfolder);
     _note=newNote;
+    return newNote;
+  }
+
+   */
+  Future<DatabaseNote> createNote(BuildContext context) async {
+    // note edit করতে
+    if (widget.note != null) {
+      _note = widget.note;
+      _textEditingController.text = widget.note!.title;
+      _backgroundImage = widget.note!.background;
+      _bottomBarColor = BottomSheetScreen.backgrounds[_backgroundImage]
+          ?? const Color(0xFF076687);
+      if (widget.note!.content.isNotEmpty) {
+        try {
+          _document = _documentFromJson(widget.note!.content);
+        } catch (e) {
+          _document = _emptyDocument();
+        }
+      }
+      _rebuildEditor();
+      return widget.note!;
+    }
+
+    final existingNote = _note;
+    if (existingNote != null) return existingNote;
+
+    // নতুন note বানাতে
+    final foldername = widget.folderName ?? 'all folder'; // ✅ widget থেকে নেবে
+    final mainfolder = await _notesService.getOrCreateFolder(foldername: foldername);
+    final newNote = await _notesService.createNote(owner: mainfolder);
+    _note = newNote;
     return newNote;
   }
 

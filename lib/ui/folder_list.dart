@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:notes/main.dart';
 import 'package:notes/services/crud/notes_service.dart';
 
+import 'all_notes_page.dart';
+import 'notes_in_folder_page.dart';
+
 
 class FolderList extends StatefulWidget {
   const FolderList({super.key});
@@ -280,9 +283,19 @@ class _FolderListState extends State<FolderList> {
 
                       else{
 
-                        if(isAllFolder){
-                          Navigator.of(context).pop(folder);
-                        }
+                          if (isAllFolder) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const AllNotesPage(),
+                              ),
+                            );
+                          } else {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => NotesInFolderPage(folder: folder),
+                              ),
+                            );
+                          }
 
                       }
 

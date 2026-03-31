@@ -62,6 +62,26 @@ class NotesService {
       });
 
 
+  Stream<List<DatabaseNote>> get allNotesUnfiltered async* {
+    yield _notes; // ✅ সাথে সাথে current data দেবে
+    yield* _noteStreamController.stream;
+  }
+
+
+  Stream<List<DatabaseNote>> notesForFolder(int folderId) async* {
+
+    yield _notes.where((note) => note.userId == folderId).toList();
+
+    // ✅ তারপর থেকে real-time update
+    yield* _noteStreamController.stream.map(
+          (notes) => notes.where((note) => note.userId == folderId).toList(),
+    );
+  }
+
+  void refreshNotes() {
+    _noteStreamController.add(_notes);
+  }
+
   Future<void> _ensureDbisOpen()async{
     try{
       await open();
@@ -88,15 +108,6 @@ class NotesService {
 
   int getNoteCountForFolder({required String foldername}){
 
-    // return _notes.where((note) {
-    //   // folder id match করাতে হবে
-    //   // _notes এ userId আছে, folder এ id আছে
-    //   final folder = _folders.firstWhere(
-    //         (f) => f.foldername == foldername.toLowerCase(),
-    //     orElse: () => Folder(id: -1, foldername: ''),
-    //   );
-    //   return note.userId == folder.id;
-    // }).length;
 
     final folder = _folders.firstWhere(
           (f) => f.foldername.toLowerCase() == foldername.toLowerCase(),

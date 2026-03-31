@@ -13,6 +13,8 @@ import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/create_note.dart';
 import 'package:notes/ui/folder_list.dart';
 import 'package:notes/ui/settings_page.dart';
+import 'package:notes/ui/widgets/note_fab.dart';
+import 'package:notes/ui/widgets/note_grid.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -83,25 +85,6 @@ class _MainPageState extends State<MainPage> {
   Folder? _selectedFolder;
 
 
-
-
-
-  String? _getFirstImageFromContent(String content) {
-    if (content.isEmpty) return null;
-    try {
-      final list = jsonDecode(content) as List<dynamic>;
-      for (final item in list) {
-        if (item['type'] == 'image') {
-          return item['url'] as String?;
-        }
-      }
-    } catch (e) {
-      return null;
-    }
-    return null;
-  }
-
-
   String _getPlainTextFromContent(String content) {
     if (content.isEmpty) return '';
     try {
@@ -116,10 +99,6 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-  String _formatTime(int timestamp) {
-    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-    return DateFormat('MMM dd, hh:mm a').format(date);
-  }
 
   @override
   void initState() {
@@ -254,95 +233,7 @@ class _MainPageState extends State<MainPage> {
                                         plaintext.contains(_searchQuery);
                                   }).toList();
 
-                                   return MasonryGridView.builder(
-
-                                    itemCount: notes.length,
-                                    gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                    ),
-                                    mainAxisSpacing: 8,
-                                    crossAxisSpacing: 20,
-                                    itemBuilder: (context, index) {
-                                      final note = notes[index];
-                                      final firstimage = _getFirstImageFromContent(note.content);
-                                      final plainText = _getPlainTextFromContent(note.content);
-
-                                      return InkWell(
-                                        onTap: () {
-                                          Navigator.of(context).pushNamed(CreateNoteRoute,arguments: note);
-                                         //  Navigator.of(context).pushNamed(
-                                         //    CreateNoteRoute,
-                                         //    arguments: {'folder': _selectedFolder?.foldername ?? 'All Folder'},
-                                         //  );
-                                        },
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: Color(0xFF58B4D3),
-                                            borderRadius: BorderRadius.circular(5),
-                                          ),
-                                          clipBehavior: Clip.hardEdge,
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min, // ← এটাই magic, content অনুযায়ী height নেয়
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              if (firstimage != null)
-                                                Container(
-                                                  width: double.infinity,
-                                                  height: 75,
-                                                  decoration: BoxDecoration(
-                                                    image: DecorationImage(
-                                                      image: FileImage(File(firstimage)),
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                  ),
-                                                ),
-                                              Padding(
-                                                padding: const EdgeInsets.fromLTRB(5, 2, 5, 5),
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(note.title,
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: TextStyle(
-                                                        fontFamily: 'Regular',
-                                                        fontWeight: FontWeight.w600,
-                                                        fontSize: 13,
-                                                        color: Color(0xFFDBF5FB),
-                                                      ),
-                                                    ),
-
-                                                      Text(plainText,
-                                                        style: TextStyle(
-                                                          color: Color(0xFFDBF5FB),
-                                                          fontFamily: 'Regular',
-                                                          fontWeight: FontWeight.w400,
-                                                          fontSize: 12,
-                                                          height: 1.2,
-                                                        ),
-                                                        maxLines: 4,
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
-                                                    SizedBox(
-                                                      height: 5,
-                                                    ),
-                                                    Text(_formatTime(note.lastEdited),
-                                                      style: TextStyle(
-                                                        color: Color(0xFFDBF5FB),
-                                                        fontSize: 10,
-                                                        fontFamily: 'Fredoka',
-                                                        fontWeight: FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
+                                   return NoteGrid(notes: notes);
 
                                 }else{
                                   return const Center(child: Text(''),);
@@ -365,8 +256,8 @@ class _MainPageState extends State<MainPage> {
         ),
       ),
 
-
-
+      floatingActionButton: NoteFab(folderName: _selectedFolder?.foldername ?? 'all folder'),
+      /*
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           //Navigator.of(context).pushNamed(CreateNoteRoute);
@@ -397,6 +288,8 @@ class _MainPageState extends State<MainPage> {
           ),
         ),
       ),
+
+       */
     );
   }
 }
