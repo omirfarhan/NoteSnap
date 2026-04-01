@@ -152,9 +152,10 @@ class _FolderListState extends State<FolderList> {
 
   }
 
-  bool _isAllFolder(String folderName){
-    return folderName.toLowerCase() == 'all folder';
-  }
+  // bool _isAllFolder(String folderName){
+  //   return folderName.toLowerCase() == 'all folder';
+  // }
+
   int _getNoteCount(String foldername) {
     return _notesService.getNoteCountForFolder(foldername: foldername);
   }
@@ -216,142 +217,231 @@ class _FolderListState extends State<FolderList> {
         )
       ),
 
-      body: StreamBuilder<List<Folder>>(
-          stream: _notesService.allFolders,
-          builder: (context, snapshot) {
-            return StreamBuilder<List<DatabaseNote>>( // ← এটা add করো
-              stream: _notesService.allNotes,
-              builder: (context, noteSnapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+      body: Column(
+        children: [
 
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text('No folders yet',
-                        style: TextStyle(color: Color(0xFF9EDDE4))),
-                  );
-                }
+          StreamBuilder<List<DatabaseNote>>(
+              stream: _notesService.allNotesUnfiltered,
+              builder: (context, snapshot) {
 
-                final folders = snapshot.data!;
+                final noteCount=snapshot.data?.length ?? 0;
 
-                return ListView.separated(
-                  separatorBuilder: (context, index) =>
-                  const SizedBox(height: 0),
-                  itemCount: folders.length,
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                  child: GestureDetector(
+                    onTap: () {
+                      if (_isSelecting) return;
 
-                  itemBuilder: (context, index) {
-                    final folder = folders[index];
-                    final folderLower = folder.foldername.toLowerCase();
-                    final isAllFolder = _isAllFolder(folder.foldername);
-
-                    final isSelected =
-                        _selectedFoldernames.contains(folderLower) && !isAllFolder;
-                    final noteCount = _getNoteCount(folder.foldername);
-
-                    return GestureDetector(
-
-                      onLongPress: () {
-                        if (isAllFolder) return;
-
-                        setState(() {
-                          _isSelecting = true;
-                          _selectedFoldernames.add(
-                              folder.foldername.toLowerCase());
-                        });
-                      },
-
-                      onTap: () {
-
-                        if (_isSelecting) {
-
-                          if (isAllFolder) return;
-
-                          setState(() {
-                            final name = folder.foldername.toLowerCase(); // ✅ এটা যোগ করুন
-                            if (_selectedFoldernames.contains(name)) {
-                              _selectedFoldernames.remove(name);
-                              if (_selectedFoldernames.isEmpty)
-                                _isSelecting = false;
-                            } else {
-                              _selectedFoldernames.add(name);
-                            }
-                          });
-                        }
-                        //ekhane hocche folder e click korle note page e jabe
-                        //mane sob note dekha jabe
-
-                      else{
-
-                          if (isAllFolder) {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const AllNotesPage(),
-                              ),
-                            );
-                          } else {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => NotesInFolderPage(folder: folder),
-                              ),
-                            );
-                          }
-
-                      }
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const AllNotesPage(),
+                        ),
+                      );
+                    },
 
 
-
-                      },
-
-
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 5),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF1A7EA8)
-                                  : const Color(0xFF4592AC),
-                              borderRadius: BorderRadius.circular(12),
-                              border: BoxBorder.all(
-                                  color: isSelected
-                                      ? const Color(0xFF9EDDE4)
-                                      : const Color(0xFF1A7EA8),
-                                  width: 0.5
-                              )
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      decoration: BoxDecoration(
+                        color: _selectedFoldernames.contains('all')
+                            ? const Color(0xFF1A7EA8)
+                            : const Color(0xFF4592AC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _selectedFoldernames.contains('all')
+                              ? const Color(0xFF9EDDE4)
+                              : const Color(0xFF1A7EA8),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          'All Folder',
+                          style: TextStyle(
+                            color: Color(0xFFE8F8FD),
+                            fontSize: 18,
                           ),
+                        ),
+                        trailing:Text(
+                          '$noteCount',
 
-                          child: ListTile(
-                            //ekhane kisu baki
-
-                            title: Text(
-                              folder.foldername,
-                              style: const TextStyle(
-                                color: Color(0xFFE8F8FD),
-                                fontSize: 18,
-                                fontFamily: 'Regular',
-                              ),
-                            ),
-                            trailing: Text(
-                              '$noteCount',
-                              style: const TextStyle(
-                                color: Color(0xFFE8F8FD),
-                                fontSize: 12,
-                                fontFamily: 'Regular',
-                              ),
-                            ),
+                          style: const TextStyle(
+                            color: Color(0xFFE8F8FD),
+                            fontSize: 12,
+                            fontFamily: 'Regular',
                           ),
                         ),
                       ),
-                    );
-                  },
-
-
+                    ),
+                  ),
                 );
               },
-            );
-          })
+
+
+
+    ),
+          Expanded(
+            child: StreamBuilder<List<Folder>>(
+                stream: _notesService.allFolders,
+                builder: (context, snapshot) {
+
+                  return StreamBuilder<List<DatabaseNote>>( // ← এটা add করো
+                    stream: _notesService.allNotes,
+                    builder: (context, noteSnapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(
+                          child: Text('No folders yet',
+                              style: TextStyle(color: Color(0xFF9EDDE4))),
+                        );
+                      }
+
+                      final folders = snapshot.data!
+                      .where((folder)=>folder.foldername.toLowerCase() != 'all folder')
+                      .toList();
+                      
+
+                      return StreamBuilder<List<DatabaseNote>>(
+                        stream: _notesService.allNotesUnfiltered,
+                        builder: (context, noteSnapshot) {
+
+
+
+                          return ListView.separated(
+                            separatorBuilder: (context, index) =>
+                            const SizedBox(height: 0),
+                            itemCount: folders.length,
+
+                            itemBuilder: (context, index) {
+                              final folder = folders[index];
+                              final folderLower = folder.foldername.toLowerCase();
+                              //final isAllFolder = _isAllFolder(folder.foldername);
+
+                              final isSelected =
+                                  _selectedFoldernames.contains(folderLower) ;//&& !isAllFolder
+                              // final noteCount = noteSnapshot.hasData
+                              //     ? noteSnapshot.data!
+                              //     .where((note) => note.userId == folder.id)
+                              //     .length
+                              //     : _notesService.getNoteCountForFolder(foldername: folder.foldername);
+
+                              final noteCount=_getNoteCount(folder.foldername);
+
+                              return GestureDetector(
+
+                                onLongPress: () {
+                                  //if (isAllFolder) return;
+
+                                  setState(() {
+                                    _isSelecting = true;
+                                    _selectedFoldernames.add(
+                                        folder.foldername.toLowerCase());
+                                  });
+                                },
+
+                                onTap: () {
+
+                                  if (_isSelecting) {
+
+                                    //if (isAllFolder) return;
+
+                                    setState(() {
+                                      final name = folder.foldername.toLowerCase(); // ✅ এটা যোগ করুন
+                                      if (_selectedFoldernames.contains(name)) {
+                                        _selectedFoldernames.remove(name);
+                                        if (_selectedFoldernames.isEmpty)
+                                          _isSelecting = false;
+                                      } else {
+                                        _selectedFoldernames.add(name);
+                                      }
+                                    });
+                                  }
+                                  //ekhane hocche folder e click korle note page e jabe
+                                  //mane sob note dekha jabe
+
+                                  else{
+
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => NotesInFolderPage(folder: folder),
+                                      ),
+                                    );
+
+                                    // if (isAllFolder) {
+                                    //   Navigator.of(context).push(
+                                    //     MaterialPageRoute(
+                                    //       builder: (context) => const AllNotesPage(),
+                                    //     ),
+                                    //   );
+                                    // } else {
+                                    //
+                                    // }
+
+                                  }
+
+
+
+                                },
+
+
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5, vertical: 5),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? const Color(0xFF1A7EA8)
+                                            : const Color(0xFF4592AC),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: BoxBorder.all(
+                                            color: isSelected
+                                                ? const Color(0xFF9EDDE4)
+                                                : const Color(0xFF1A7EA8),
+                                            width: 0.5
+                                        )
+                                    ),
+
+                                    child: ListTile(
+                                      //ekhane kisu baki
+
+                                      title: Text(
+                                        folder.foldername,
+                                        style: const TextStyle(
+                                          color: Color(0xFFE8F8FD),
+                                          fontSize: 18,
+                                          fontFamily: 'Regular',
+                                        ),
+                                      ),
+                                      trailing: Text(
+                                        '$noteCount',
+                                        style: const TextStyle(
+                                          color: Color(0xFFE8F8FD),
+                                          fontSize: 12,
+                                          fontFamily: 'Regular',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+
+
+                          );
+                        },
+
+                      );
+                    },
+                  );
+                }),
+          )
+        ],
+      )
+
     );
   }
 }

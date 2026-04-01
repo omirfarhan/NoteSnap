@@ -51,7 +51,7 @@ class _NotesInFolderPageState extends State<NotesInFolderPage> {
           padding: const EdgeInsets.fromLTRB(10, 5, 10, 0),
           child: Column(
             children: [
-              // search field same...
+
               Expanded(
                 child: StreamBuilder<List<DatabaseNote>>(
                   stream: _notesService.notesForFolder(widget.folder.id),

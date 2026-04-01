@@ -106,6 +106,8 @@ class NotesService {
     _noteStreamController.add(_notes);
   }
 
+  //eta hocche sodu folder er jonne
+  //--> mane listview te eta dara show korbe noteCount
   int getNoteCountForFolder({required String foldername}){
 
 

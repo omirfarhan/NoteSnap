@@ -218,7 +218,7 @@ class _MainPageState extends State<MainPage> {
                     switch(snapshot.connectionState){
                       case ConnectionState.done:
                         return  StreamBuilder<List<DatabaseNote>>(
-                          stream: _notesService.allNotes,
+                          stream: _notesService.allNotesUnfiltered,
                           builder: (context, snapshot) {
                             switch(snapshot.connectionState){
                               case ConnectionState.waiting:
