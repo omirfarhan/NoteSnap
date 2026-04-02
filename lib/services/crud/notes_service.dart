@@ -295,6 +295,7 @@ class NotesService {
   Future<Folder> getFolder({required String foldername})async{
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
+
     final result=await db.query(
         folderTable,
         limit: 1,
@@ -334,8 +335,20 @@ class NotesService {
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
 
+    final folder = await getFolder(foldername: foldername);
+
+    final deleteNotes= await db.delete(
+      noteTable,
+      whereArgs: [folder.id],
+      where: '$folderIdColumn = ?',
+    );
+    
+    _notes.removeWhere((note) => note.userId == folder.id);
+    _noteStreamController.add(_notes);
+
     final deleteAccount= await db.delete(
-        folderTable,where: 'foldername = ?',
+        folderTable,
+        where: 'foldername = ?',
         whereArgs: [foldername.toLowerCase()]
     );
     if(deleteAccount!= 1){

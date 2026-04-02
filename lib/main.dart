@@ -80,9 +80,15 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+
+  late Future _initFuture;
+
   late final NotesService _notesService;
   String _searchQuery='';
   Folder? _selectedFolder;
+
+  Set<int> _selectedNoteIds = {};
+  bool _isSelecting = false;
 
 
   String _getPlainTextFromContent(String content) {
@@ -99,11 +105,70 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  void _toggleSelection(int noteId){
+    setState(() {
+      if (_selectedNoteIds.contains(noteId)) {
+        _selectedNoteIds.remove(noteId);
+        if (_selectedNoteIds.isEmpty) _isSelecting = false;
+      } else {
+        _selectedNoteIds.add(noteId);
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedNotes()async{
+    final confirm=await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0D6186),
+        title: const Text(
+          'Delete notes?',
+          style: TextStyle(color: Color(0xFFD9FFFF)),
+        ),
+
+        content: Text(
+          '${_selectedNoteIds.length} note(s) will be deleted.',
+          style: const TextStyle(color: Color(0xFF9EDDE4)),
+        ),
+
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel',
+                style: TextStyle(color: Color(0xFF9EDDE4))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete',
+                style: TextStyle(color: Color(0xFFD9FFFF))),
+          ),
+        ],
+      ),
+
+    );
+
+    if(confirm == true){
+      for(final id in _selectedNoteIds){
+        await _notesService.deleteNote(id: id);
+      }
+
+      setState(() {
+        _selectedNoteIds.clear();
+        _isSelecting = false;
+      });
+    }
+
+  }
+
 
   @override
   void initState() {
     super.initState();
     _notesService=NotesService();
+
+    _initFuture = _notesService.getOrCreateFolder(
+      foldername: 'All Folder',
+    );
   }
 
 
@@ -125,6 +190,13 @@ class _MainPageState extends State<MainPage> {
         ),
 
         actions: [
+
+          if(_isSelecting)
+            IconButton(
+                onPressed: _selectedNoteIds.isEmpty ? null
+                    :_deleteSelectedNotes,
+                icon:  const Icon(Icons.delete_outline)
+            ),
 
           IconButton(onPressed: ()async{
 
@@ -213,7 +285,7 @@ class _MainPageState extends State<MainPage> {
             ),
             Expanded(
               child:FutureBuilder(
-                  future: _notesService.getOrCreateFolder(foldername: 'All Folder'),
+                  future: _initFuture,
                   builder: (context, snapshot) {
                     switch(snapshot.connectionState){
                       case ConnectionState.done:
@@ -233,7 +305,19 @@ class _MainPageState extends State<MainPage> {
                                         plaintext.contains(_searchQuery);
                                   }).toList();
 
-                                   return NoteGrid(notes: notes);
+                                  return NoteGrid(
+                                    notes: notes,
+                                    onNoteChanged: () => _notesService.refreshNotes(),
+                                    selectedNoteIds: _selectedNoteIds,
+                                    onNoteLongPress: (id) {
+                                      setState(() {
+                                        _isSelecting = true;
+                                        _selectedNoteIds.add(id);
+                                      });
+                                    },
+
+                                    onNoteTap: _isSelecting ? _toggleSelection: null,
+                                  );
 
                                 }else{
                                   return const Center(child: Text(''),);

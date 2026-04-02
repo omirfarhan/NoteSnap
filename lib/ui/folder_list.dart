@@ -321,12 +321,8 @@ class _FolderListState extends State<FolderList> {
                               //final isAllFolder = _isAllFolder(folder.foldername);
 
                               final isSelected =
-                                  _selectedFoldernames.contains(folderLower) ;//&& !isAllFolder
-                              // final noteCount = noteSnapshot.hasData
-                              //     ? noteSnapshot.data!
-                              //     .where((note) => note.userId == folder.id)
-                              //     .length
-                              //     : _notesService.getNoteCountForFolder(foldername: folder.foldername);
+                                  _selectedFoldernames.contains(folderLower);
+
 
                               final noteCount=_getNoteCount(folder.foldername);
 

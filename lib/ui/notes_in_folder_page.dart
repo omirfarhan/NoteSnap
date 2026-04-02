@@ -20,11 +20,70 @@ class _NotesInFolderPageState extends State<NotesInFolderPage> {
   late final NotesService _notesService;
   String _searchQuery = '';
 
+  Set<int> _selectedNoteIds = {};
+  bool _isSelecting = false;
+
   @override
   void initState() {
     super.initState();
     _notesService = NotesService();
   }
+
+  void _toggleSelection(int noteId){
+    setState(() {
+      if (_selectedNoteIds.contains(noteId)) {
+        _selectedNoteIds.remove(noteId);
+        if (_selectedNoteIds.isEmpty) _isSelecting = false;
+      } else {
+        _selectedNoteIds.add(noteId);
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedNotes()async{
+    final confirm=await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF0D6186),
+          title: const Text(
+            'Delete notes?',
+            style: TextStyle(color: Color(0xFFD9FFFF)),
+          ),
+
+          content: Text(
+            '${_selectedNoteIds.length} note(s) will be deleted.',
+            style: const TextStyle(color: Color(0xFF9EDDE4)),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel',
+                  style: TextStyle(color: Color(0xFF9EDDE4))),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete',
+                  style: TextStyle(color: Color(0xFFD9FFFF))),
+            ),
+          ],
+        ),
+
+    );
+
+    if(confirm == true){
+      for(final id in _selectedNoteIds){
+        await _notesService.deleteNote(id: id);
+      }
+
+      setState(() {
+        _selectedNoteIds.clear();
+        _isSelecting = false;
+      });
+    }
+
+  }
+
 
   String _getPlainTextFromContent(String content) {
     if (content.isEmpty) return '';
@@ -45,7 +104,21 @@ class _NotesInFolderPageState extends State<NotesInFolderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text(widget.folder.foldername), // ✅ folder name appbar এ
+          title: Text(
+             _isSelecting
+             ? '${_selectedNoteIds.length} Selected'
+             :widget.folder.foldername
+          ), //widget.folder.foldername ✅ folder name appbar এ
+
+          actions: [
+            if(_isSelecting)
+              IconButton(
+                  onPressed: _selectedNoteIds.isEmpty ? null
+                  :_deleteSelectedNotes,
+                  icon:  const Icon(Icons.delete_outline)
+              )
+          ],
+
         ),
         body: Padding(
           padding: const EdgeInsets.fromLTRB(10, 5, 10, 0),
@@ -78,8 +151,19 @@ class _NotesInFolderPageState extends State<NotesInFolderPage> {
 
                     return NoteGrid(
                         notes: notes,
-                        onNoteChanged: () => _notesService.refreshNotes()
+                        onNoteChanged: () => _notesService.refreshNotes(),
+                      selectedNoteIds: _selectedNoteIds,
+                      onNoteLongPress: (id) {
+                        setState(() {
+                          _isSelecting = true;
+                          _selectedNoteIds.add(id);
+                        });
+                      },
+
+                      onNoteTap: _isSelecting ? _toggleSelection: null,
                     );
+
+
                   },
                 ),
               ),
