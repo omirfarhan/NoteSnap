@@ -135,8 +135,8 @@ class _CreateNoteState extends State<CreateNote> {
     final existingNote = _note;
     if (existingNote != null) return existingNote;
 
-    // নতুন note বানাতে
-    final foldername = widget.folderName ?? 'all folder'; // ✅ widget থেকে নেবে
+
+    final foldername = widget.folderName ?? 'all folder';
     final mainfolder = await _notesService.getOrCreateFolder(foldername: foldername);
     final newNote = await _notesService.createNote(owner: mainfolder);
     _note = newNote;

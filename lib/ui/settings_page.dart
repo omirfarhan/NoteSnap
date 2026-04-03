@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:notes/ui/recently_deleted_page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/routes.dart';
@@ -125,7 +126,13 @@ class _SettingsPageState extends State<SettingsPage> {
           onTap: (){
 
 
-            print('Recently delete items');
+            print('Recently delete items121');
+
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const RecentlyDeletedPage(),
+              ),
+            );
 
 
           },

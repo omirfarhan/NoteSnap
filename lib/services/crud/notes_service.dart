@@ -62,6 +62,13 @@ class NotesService {
       });
 
 
+  Stream<List<DatabaseNote>> get deletedNotes async* {
+    yield await _getDeletedNotes();
+    yield* _noteStreamController.stream.asyncMap((_) => _getDeletedNotes());
+  }
+
+
+
   Stream<List<DatabaseNote>> get allNotesUnfiltered async* {
     yield _notes; // ✅ সাথে সাথে current data দেবে
     yield* _noteStreamController.stream;
@@ -69,12 +76,39 @@ class NotesService {
 
 
   Stream<List<DatabaseNote>> notesForFolder(int folderId) async* {
-
     yield _notes.where((note) => note.userId == folderId).toList();
-
-    // ✅ তারপর থেকে real-time update
     yield* _noteStreamController.stream.map(
           (notes) => notes.where((note) => note.userId == folderId).toList(),
+    );
+  }
+
+  Future<List<DatabaseNote>> _getDeletedNotes() async {
+    await _ensureDbisOpen();
+    final db = _getDatabaseorThrow();
+    final thirtyDaysAgo = DateTime.now()
+        .subtract(const Duration(days: 30))
+        .millisecondsSinceEpoch;
+
+    final notes = await db.query(
+      noteTable,
+      where: 'deleted_at IS NOT NULL AND deleted_at > ?',
+      whereArgs: [thirtyDaysAgo],
+    );
+    return notes.map((row) => DatabaseNote.fromRow(row)).toList();
+
+  }
+
+  Future<void> cleanupOldDeletedNotes() async {
+    await _ensureDbisOpen();
+    final db = _getDatabaseorThrow();
+    final thirtyDaysAgo = DateTime.now()
+        .subtract(const Duration(days: 30))
+        .millisecondsSinceEpoch;
+
+    await db.delete(
+      noteTable,
+      where: 'deleted_at IS NOT NULL AND deleted_at < ?',
+      whereArgs: [thirtyDaysAgo],
     );
   }
 
@@ -100,10 +134,25 @@ class NotesService {
   }
 
   Future<void> _cacheNote()async{
-    final allNotes=await getallNotes();
-    _notes=allNotes.toList();
+    //changes this code
 
+    // final allNotes=await getallNotes();
+    // _notes=allNotes.toList();
+    //
+    // _noteStreamController.add(_notes);
+
+    await _ensureDbisOpen();
+    final db = _getDatabaseorThrow();
+
+    // ✅ deleted_at null মানে active note
+    final notes = await db.query(
+      noteTable,
+      where: 'deleted_at IS NULL',
+    );
+
+    _notes = notes.map((row) => DatabaseNote.fromRow(row)).toList();
     _noteStreamController.add(_notes);
+
   }
 
   //eta hocche sodu folder er jonne
@@ -189,7 +238,10 @@ class NotesService {
   Future<Iterable<DatabaseNote>> getallNotes()async{
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
-    final notes= await db.query(noteTable);
+    final notes = await db.query(
+      noteTable,
+      orderBy: '$lastEditedColumn DESC', // 👈 এই লাইনটা ADD করো
+    );
     return notes.map((noteRow) => DatabaseNote.fromRow(noteRow));
   }
 
@@ -221,23 +273,42 @@ class NotesService {
     _noteStreamController.add(_notes);
     return numberofDeletetions;
   }
-  //kisu baki ase
+
+
+
   Future<void> deleteNote({required int id})async{
     await _ensureDbisOpen();
     final db=_getDatabaseorThrow();
-    final deleteCount=await db.delete(
-     noteTable,
-      where: ' id = ? ',
-      whereArgs: [id]
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    final updateCount = await db.update(
+      noteTable,
+      {deletedAtColumn: now}, // ✅ delete না করে timestamp set করুন
+      where: 'id = ?',
+      whereArgs: [id],
     );
-    if(deleteCount == 0){
+
+//changes the code
+//     final deleteCount=await db.delete(
+//      noteTable,
+//       where: ' id = ? ',
+//       whereArgs: [id]
+//     );
+
+
+    if(updateCount == 0){
       throw CouldNotdeleteNote();
-    }else{
-      _notes.removeWhere((note)=> note.id ==id);
-      _noteStreamController.add(_notes);
-      // ←←← এই লাইন যোগ করুন
-      await _cacheFolders();
     }
+    //changes else{
+    //       _notes.removeWhere((note)=> note.id ==id);
+    //       _noteStreamController.add(_notes);
+    //       // ←←← এই লাইন যোগ করুন
+    //       await _cacheFolders();
+    //     }
+
+    _notes.removeWhere((note) => note.id == id);
+    _noteStreamController.add(_notes);
+    await _cacheFolders();
 
   }
 
@@ -395,17 +466,22 @@ class NotesService {
       // ✅ Migration — background column না থাকলে add করো
       final columns = await db.rawQuery('PRAGMA table_info(note)');
       final columnNames = columns.map((c) => c['name'] as String).toList();
+      
       if (!columnNames.contains('background')) {
         await db.execute('ALTER TABLE note ADD COLUMN background TEXT');
       }
-
       // 👇 ADD THIS
       if (!columnNames.contains('last_edited')) {
         await db.execute('ALTER TABLE note ADD COLUMN last_edited INTEGER');
       }
+      
+      if(!columnNames.contains('deleted_at')){
+        await db.execute('ALTER TABLE note ADD COLUMN deleted_at INTEGER');
+      }
 
       await _cacheNote();
       await _cacheFolders();
+      await cleanupOldDeletedNotes(); // ✅ app open হলেই পুরনো note clean হবে
     }on MissingPlatformDirectoryException{
       throw UnabletoGetDocuments();
     }
@@ -422,8 +498,9 @@ class DatabaseNote{
   final String title;
   final String content;
   final String? background;
-  final int lastEdited; // 👈 ADD
-  //is_synced_with_cloud ei option ta pore add korbo jodi lge
+  final int lastEdited;
+  final int? deletedAt;
+
 
   DatabaseNote({
     required this.id,
@@ -432,6 +509,7 @@ class DatabaseNote{
     required this.content,
     this.background,
     required this.lastEdited,
+    this.deletedAt
   });
 
   DatabaseNote.fromRow(Map<String, Object?> map):
@@ -445,7 +523,9 @@ class DatabaseNote{
             ? 0
             : map[lastEditedColumn] is int
             ? map[lastEditedColumn] as int
-            : int.tryParse(map[lastEditedColumn].toString()) ?? 0;
+            : int.tryParse(map[lastEditedColumn].toString()) ?? 0,
+
+  deletedAt = map[deletedAtColumn] as int;
 
   @override
   String toString() => 'Note, ID=$id, user_id=$userId, title=$title,';
@@ -496,6 +576,7 @@ const createNoteTable='''CREATE TABLE IF NOT EXISTS "note" (
 	        "content" TEXT,
 	        "background" TEXT,
 	        "last_edited" TEXT,
+	        "deleted_at" INTEGER,  -- ✅ নতুন, null মানে active note
 	         FOREIGN KEY("user_id") REFERENCES "user"("id"),
 	         PRIMARY KEY("id" AUTOINCREMENT)
 );''';
@@ -512,3 +593,4 @@ const folderTable='user';
 const noteTable='note';
 const backgroundColumn = 'background';
 const lastEditedColumn= 'last_edited';
+const deletedAtColumn = 'deleted_at';
