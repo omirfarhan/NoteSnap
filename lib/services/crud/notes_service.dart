@@ -98,6 +98,26 @@ class NotesService {
 
   }
 
+  Future<void> restoreNote({required int id}) async {
+    await _ensureDbisOpen();
+    final db = _getDatabaseorThrow();
+
+    await db.update(
+      noteTable,
+      {deletedAtColumn: null},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    final notes = await db.query(noteTable, where: 'id = ?', whereArgs: [id]);
+    if (notes.isNotEmpty) {
+      final restoredNote = DatabaseNote.fromRow(notes.first);
+      _notes.insert(0, restoredNote);
+      _noteStreamController.add(_notes);
+      await _cacheFolders();
+    }
+  }
+
   Future<void> cleanupOldDeletedNotes() async {
     await _ensureDbisOpen();
     final db = _getDatabaseorThrow();
@@ -525,7 +545,7 @@ class DatabaseNote{
             ? map[lastEditedColumn] as int
             : int.tryParse(map[lastEditedColumn].toString()) ?? 0,
 
-  deletedAt = map[deletedAtColumn] as int;
+  deletedAt = map[deletedAtColumn] as int?;
 
   @override
   String toString() => 'Note, ID=$id, user_id=$userId, title=$title,';
