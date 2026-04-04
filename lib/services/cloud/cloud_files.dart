@@ -56,12 +56,10 @@ class _CloudFilesState extends State<CloudFiles> {
       final isConnected = results.any((r) => r != ConnectivityResult.none);
 
       if (!isConnected) {
-        // Net গেছে - track করো
         _wasDisconnected = true;
       } else if (isConnected && _wasDisconnected) {
-        // Net ফিরে এসেছে - reload করো
         _wasDisconnected = false;
-        _loadAccessToken(); // ✅ Auto reload
+        _loadAccessToken();
       }
     });
   }
@@ -130,7 +128,7 @@ class _CloudFilesState extends State<CloudFiles> {
 
 
 
-                      final createSubFolder=await uploadDriveFile.createFolder('new folder 123', client);
+                      final createSubFolder=await uploadDriveFile.createFolder('new folder 12434', client);
                       final uploadToServer=await uploadDriveFile.uploadNotesToFolder(client, createSubFolder,notes);
 
                       print('upload to server Report: ${createSubFolder}');
@@ -259,7 +257,7 @@ class _CloudFilesState extends State<CloudFiles> {
 
       double totalGBstorage = totalstorage / (1024 * 1024 * 1024);
       double usedGBStorage = usedStorage / (1024 * 1024 * 1024);
-      //double percentage = (usedGBStorage/totalGBstorage) * 100;
+
       double percentvalues=(usedGBStorage/totalGBstorage);
       if(percentvalues>1.0){
         percentvalues=1.0;
@@ -270,9 +268,6 @@ class _CloudFilesState extends State<CloudFiles> {
         _percent=percent;
       });
 
-      //print('total percentage : ${percentage.toStringAsFixed(2)} %');
-      print('total storage: $totalGBstorage');
-      print('used storage: ${usedGBStorage.toStringAsFixed(2)} GB');
     }
   }
 

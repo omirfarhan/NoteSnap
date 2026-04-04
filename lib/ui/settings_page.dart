@@ -124,10 +124,6 @@ class _SettingsPageState extends State<SettingsPage> {
           borderRadius: BorderRadius.circular(1),
 
           onTap: (){
-
-
-            print('Recently delete items121');
-
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => const RecentlyDeletedPage(),

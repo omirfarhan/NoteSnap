@@ -16,7 +16,7 @@ import 'package:notes/ui/notebottomcomponent/fullscreenimagepage.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
 import 'package:super_editor/super_editor.dart';
 import 'notebottomcomponent/bottomsheet/image_preview_page.dart';
-import 'notebottomcomponent/checkbox/CheckboxTapDelegate.dart';
+import 'notebottomcomponent/checkbox/checkbox_tap_delegate.dart';
 import 'notebottomcomponent/note_image_component_builder.dart';
 
 import 'package:pdf/pdf.dart';
@@ -275,11 +275,18 @@ class _CreateNoteState extends State<CreateNote> {
   }
 
   void _deleteNoteifTextIsEmpty(){
-    final note= _note;
+    // final note= _note;
+    // if (note == null) return;
+    // if(_textEditingController.text.trim().isEmpty && !_hasAnyContent()){
+    //   _notesService.deleteNote(id: note.id);
+    // }
+
+    final note = _note;
     if (note == null) return;
-    if(_textEditingController.text.trim().isEmpty && !_hasAnyContent()){
-      _notesService.deleteNote(id: note.id);
+    if (_textEditingController.text.trim().isEmpty && !_hasAnyContent()) {
+      _notesService.permanentlyDeleteNote(id: note.id); // ✅ soft delete না
     }
+
   }
 
   void _insertImages(List<XFile> images) async {
@@ -623,7 +630,7 @@ class _CreateNoteState extends State<CreateNote> {
                             _hideToolbar();
                           },
                           child: Stack(
-                
+
                             children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -631,7 +638,7 @@ class _CreateNoteState extends State<CreateNote> {
                     children: [
                       SizedBox(height: MediaQuery.of(context).padding.top + kToolbarHeight),
                       TextField(
-                
+
                         autocorrect: false,
                         controller: _textEditingController,
                         keyboardType: TextInputType.multiline,
@@ -652,35 +659,35 @@ class _CreateNoteState extends State<CreateNote> {
                         ),
                       ),
                       Expanded(
-                
+
                         child: SuperEditor(
                           editor: _editor,
                           document: _document,
                           composer: _composer,
-                
+
                           focusNode: _descriptionFocusNode,
                           inputSource: TextInputSource.ime,
-                
+
                           imeConfiguration: const SuperEditorImeConfiguration(
                             enableAutocorrect: false,      // ← এটাই underline বন্ধ করবে
-                
+
                           ),
-                
+
                           selectionStyle: const SelectionStyles(
                             selectionColor: Color(0x44C8E1E4),
-                
+
                           ),
                           contentTapDelegateFactories: [
                                 (_) => CheckboxTapDelegate(
                                 document: _document,
                                 editor: _editor,
                                 onSave: _saveNote
-                
+
                             )
                           ],
-                
+
                           componentBuilders: [
-                
+
                             NoteImageComponentBuilder(
                               onImageTap: (imagePath, imageKey) {
                                 _descriptionFocusNode.unfocus();
@@ -713,30 +720,30 @@ class _CreateNoteState extends State<CreateNote> {
                                       fontSize: 16,
                                       decoration: TextDecoration.none
                                   ),
-                
+
                                   Styles.padding: const CascadingPadding.symmetric(
                                       vertical: 0,
                                       horizontal: 0
                                   )
-                
+
                                 },
                               ),
-                
+
                             ],
                           ),
-                
+
                         ),
-                
+
                       ),
-                
+
                     ],
                   ),
                 ),
-                
+
                             ],
                           ),
                         )
-                
+
                       ),
               ),
       );
@@ -1237,11 +1244,11 @@ class _CreateNoteState extends State<CreateNote> {
             fit: BoxFit.cover
           ):null,
         ),
-      
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
-      
+
           children: [
             Text(
              _textEditingController.text,
@@ -1256,7 +1263,7 @@ class _CreateNoteState extends State<CreateNote> {
             ..._buildExportContent()
           ],
         ),
-      
+
       ),
     );
 

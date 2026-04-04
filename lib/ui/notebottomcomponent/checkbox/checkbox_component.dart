@@ -3,14 +3,15 @@ import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_node.dart';
 import 'package:super_editor/super_editor.dart';
 
 class CheckboxComponent extends StatefulWidget {
-  final CheckboxNode node;
+  final AttributedText text;
   final bool isChecked;
   final ValueChanged<bool> onCheckChange;
+
   const CheckboxComponent({
     super.key,
-    required this.node,
+    required this.text,
     required this.isChecked,
-    required this.onCheckChange
+    required this.onCheckChange,
   });
 
   @override
@@ -18,167 +19,128 @@ class CheckboxComponent extends StatefulWidget {
 }
 
 class _CheckboxComponentState extends State<CheckboxComponent>
-    with DocumentComponent<CheckboxComponent>{
-
-  //final _textKey = GlobalKey();
-
-  // @override
-  // GlobalKey get childDocumentComponentKey => _textKey;
+    with DocumentComponent<CheckboxComponent> {
 
   @override
-  TextComposable get childTextComposable {
-    // null check যোগ করুন
-    final state = _textKey.currentState;
-    if (state == null) {
-      throw Exception('TextComponent state is null');
-    }
-    return state as TextComposable;
-  }
-
+  NodePosition getBeginningPosition() => const TextNodePosition(offset: 0);
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: () => widget.onCheckChange(!widget.isChecked),
-          child: Container(
-            width: 15,
-            height: 15,
-            margin: const EdgeInsets.only(right: 8, top: 2),
-            decoration: BoxDecoration(
-              border: Border.all(color: Color(0xFFD2FEFF), width: 1.5),
-              borderRadius: BorderRadius.circular(4),
-              color: widget.isChecked
-                  ? Color(0xFFD2FEFF).withOpacity(0.3)
-                  : Colors.transparent,
-            ),
-            child: widget.isChecked
-                ? Icon(Icons.check, size: 10, color: Color(0xFFD2FEFF))
-                : null,
-          ),
-        ),
-        Expanded(
-          child: TextComponent(
-            key: _textKey,
-            text: widget.node.text,
-            textStyleBuilder: (_) => TextStyle(
-              color: widget.isChecked
-                  ? Color(0xFFD2FEFF).withOpacity(0.5)
-                  : Color(0xFFD2FEFF),
-              fontFamily: 'Regular',
-              fontSize: 16,
-              decoration: widget.isChecked
-                  ? TextDecoration.lineThrough
-                  : TextDecoration.none,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-
-  final GlobalKey<TextComponentState> _textKey = GlobalKey();
-
-  TextComponentState get _text => _textKey.currentState!;
+  NodePosition getEndPosition() => TextNodePosition(offset: widget.text.text.length);
 
   @override
-  NodePosition getBeginningPosition() {
-    return _text.getBeginningPosition();
-  }
+  NodePosition getBeginningPositionNearX(double x) => const TextNodePosition(offset: 0);
 
   @override
-  NodePosition getBeginningPositionNearX(double x) {
-    return _text.getBeginningPositionNearX(x);
-  }
+  NodePosition getEndPositionNearX(double x) => TextNodePosition(offset: widget.text.text.length);
 
   @override
-  NodeSelection getCollapsedSelectionAt(NodePosition nodePosition) {
-    return _text.getCollapsedSelectionAt(nodePosition);
-  }
+  NodePosition? getPositionAtOffset(Offset localOffset) => const TextNodePosition(offset: 0);
 
   @override
-  MouseCursor? getDesiredCursorAtOffset(Offset localOffset) {
-    return _text.getDesiredCursorAtOffset(localOffset);
-  }
+  NodePosition? movePositionLeft(NodePosition currentPosition, [MovementModifier? movementModifier]) => null;
 
   @override
-  Rect getEdgeForPosition(NodePosition nodePosition) {
-    return _text.getEdgeForPosition(nodePosition);
-  }
+  NodePosition? movePositionRight(NodePosition currentPosition, [MovementModifier? movementModifier]) => null;
 
   @override
-  NodePosition getEndPosition() {
-    return _text.getEndPosition();
-  }
+  NodePosition? movePositionUp(NodePosition currentPosition) => null;
 
   @override
-  NodePosition getEndPositionNearX(double x) {
-    return _text.getEndPositionNearX(x);
-  }
+  NodePosition? movePositionDown(NodePosition currentPosition) => null;
 
   @override
-  Offset getOffsetForPosition(NodePosition nodePosition) {
-    return _text.getOffsetForPosition(nodePosition);
-  }
-
-  @override
-  NodePosition? getPositionAtOffset(Offset localOffset) {
-    return _text.getPositionAtOffset(localOffset);
-  }
-
-  @override
-  Rect getRectForPosition(NodePosition nodePosition) {
-    return _text.getRectForPosition(nodePosition);
-  }
-
-  @override
-  Rect getRectForSelection(NodePosition baseNodePosition, NodePosition extentNodePosition) {
-    return _text.getRectForSelection(baseNodePosition, extentNodePosition);
-  }
+  NodeSelection getCollapsedSelectionAt(NodePosition nodePosition) =>
+      TextNodeSelection.collapsed(offset: (nodePosition as TextNodePosition).offset);
 
   @override
   NodeSelection getSelectionBetween({
     required NodePosition basePosition,
     required NodePosition extentPosition,
-  }) {
-    return _text.getSelectionBetween(
-      basePosition: basePosition,
-      extentPosition: extentPosition,
+  }) => TextNodeSelection(
+    baseOffset: (basePosition as TextNodePosition).offset,
+    extentOffset: (extentPosition as TextNodePosition).offset,
+  );
+
+  @override
+  NodeSelection? getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset) =>
+      const TextNodeSelection.collapsed(offset: 0);
+
+  @override
+  NodeSelection getSelectionOfEverything() => TextNodeSelection(
+    baseOffset: 0,
+    extentOffset: widget.text.text.length,
+  );
+
+  @override
+  MouseCursor? getDesiredCursorAtOffset(Offset localOffset) => SystemMouseCursors.text;
+
+  @override
+  Rect getRectForPosition(NodePosition nodePosition) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return Rect.zero;
+    return Rect.fromLTWH(0, 0, 1, box.size.height);
+  }
+
+  @override
+  Rect getRectForSelection(NodePosition baseNodePosition, NodePosition extentNodePosition) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return Rect.zero;
+    return Rect.fromLTWH(0, 0, 1, box.size.height);
+  }
+
+  @override
+  Rect getEdgeForPosition(NodePosition nodePosition) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return Rect.zero;
+    return Rect.fromLTWH(0, 0, 1, box.size.height);
+  }
+
+  @override
+  Offset getOffsetForPosition(NodePosition nodePosition) => Offset.zero;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => widget.onCheckChange(!widget.isChecked),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 15,
+              height: 15,
+              margin: const EdgeInsets.only(right: 8, top: 2),
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFFD2FEFF), width: 1.5),
+                borderRadius: BorderRadius.circular(4),
+                color: widget.isChecked
+                    ? const Color(0xFFD2FEFF).withOpacity(0.3)
+                    : Colors.transparent,
+              ),
+              child: widget.isChecked
+                  ? const Icon(Icons.check, size: 10, color: Color(0xFFD2FEFF))
+                  : null,
+            ),
+            Expanded(
+              child: Text(
+                widget.text.text,
+                style: TextStyle(
+                  color: widget.isChecked
+                      ? const Color(0xFFD2FEFF).withOpacity(0.5)
+                      : const Color(0xFFD2FEFF),
+                  fontFamily: 'Regular',
+                  fontSize: 16,
+                  decoration: widget.isChecked
+                      ? TextDecoration.lineThrough
+                      : TextDecoration.none,
+                  decorationColor: const Color(0xFFD2FEFF),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
-
-  @override
-  NodeSelection? getSelectionInRange(Offset localBaseOffset, Offset localExtentOffset) {
-    return _text.getSelectionInRange(localBaseOffset, localExtentOffset);
-  }
-
-  @override
-  NodeSelection getSelectionOfEverything() {
-    return _text.getSelectionOfEverything();
-  }
-
-  @override
-  NodePosition? movePositionDown(NodePosition currentPosition) {
-    return _text.movePositionDown(currentPosition);
-  }
-
-  @override
-  NodePosition? movePositionLeft(NodePosition currentPosition, [MovementModifier? movementModifier]) {
-    return _text.movePositionLeft(currentPosition, movementModifier);
-  }
-
-  @override
-  NodePosition? movePositionRight(NodePosition currentPosition, [MovementModifier? movementModifier]) {
-    return _text.movePositionRight(currentPosition, movementModifier);
-  }
-
-  @override
-  NodePosition? movePositionUp(NodePosition currentPosition) {
-    return _text.movePositionUp(currentPosition);
-  }
-
-
 }

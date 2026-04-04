@@ -74,7 +74,6 @@ class _FolderListState extends State<FolderList> {
     if(confirm == true){
       
       for(final name in _selectedFoldernames){
-        print('Deleting folder: $name'); // debug
         await _notesService.deleteFolder(foldername: name);
       }
 

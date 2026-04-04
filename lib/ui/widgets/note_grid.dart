@@ -82,7 +82,6 @@ class NoteGrid extends StatelessWidget {
 
         return InkWell(
           onLongPress: () {
-            //HapticFeedback.mediumImpact();
             onNoteLongPress?.call(note.id);
           } ,
 

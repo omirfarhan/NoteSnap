@@ -93,10 +93,31 @@ class NotesService {
       noteTable,
       where: 'deleted_at IS NOT NULL AND deleted_at > ?',
       whereArgs: [thirtyDaysAgo],
+      orderBy: '$deletedAtColumn DESC'
     );
     return notes.map((row) => DatabaseNote.fromRow(row)).toList();
 
   }
+
+  // সরাসরি database থেকে delete — recently deleted তে যাবে না
+  Future<void> permanentlyDeleteNote({required int id}) async {
+    await _ensureDbisOpen();
+    final db = _getDatabaseorThrow();
+
+    final deleteCount = await db.delete(
+      noteTable,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (deleteCount == 0) throw CouldNotdeleteNote();
+
+    _notes.removeWhere((note) => note.id == id);
+    _noteStreamController.add(_notes);
+    await _cacheFolders();
+  }
+
+
 
   Future<void> restoreNote({required int id}) async {
     await _ensureDbisOpen();
@@ -145,7 +166,10 @@ class NotesService {
 
   Future<void> _cacheFolders() async {
     final db = _getDatabaseorThrow();
-    final result = await db.query(folderTable);
+    final result = await db.query(
+        folderTable,
+      orderBy: '$idColumn DESC'
+    );
     _folders = result.map((row) => Folder.fromRow(row)).toList();
     if (!_folderStreamController.isClosed) {
       _folderStreamController.add(_folders);
@@ -417,8 +441,7 @@ class NotesService {
     });
 
     final folder = Folder(id: folderId, foldername: foldername);
-    _folders.add(folder);          // এটা যোগ করো
-    _folderStreamController.add(_folders); // এটা যোগ করো
+    await _cacheFolders();
     return folder;
   }
 
