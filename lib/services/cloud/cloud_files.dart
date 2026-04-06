@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:notes/Data/notemodel.dart';
-import 'package:notes/Data/user_model.dart';
+import 'package:notes/Data/folder_model.dart';
 import 'package:notes/Data_Layer/drive_http_request_to_server.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:provider/provider.dart';
@@ -43,8 +43,8 @@ class _CloudFilesState extends State<CloudFiles> {
 
 
 
-  List<UserModel> users=[];
-  List<UserModel> filedata=[];
+  List<FolderModel> users=[];
+  List<FolderModel> filedata=[];
 
 
 
@@ -128,7 +128,7 @@ class _CloudFilesState extends State<CloudFiles> {
 
 
 
-                      final createSubFolder=await uploadDriveFile.createFolder('new folder 12434', client);
+                      final createSubFolder=await uploadDriveFile.createFolder('n', client);
                       final uploadToServer=await uploadDriveFile.uploadNotesToFolder(client, createSubFolder,notes);
 
                       print('upload to server Report: ${createSubFolder}');
@@ -136,6 +136,7 @@ class _CloudFilesState extends State<CloudFiles> {
 
                     }else{
                       //await AuthProvider.signinwithGoogle();
+                      print('upload to server Report false $accessTokem');
                     }
 
 
@@ -277,6 +278,7 @@ class _CloudFilesState extends State<CloudFiles> {
 
     setState(() {
       isLoading = true;
+      accessTokem=authProviderr.accessToken;
     });
 
     try {
@@ -284,6 +286,7 @@ class _CloudFilesState extends State<CloudFiles> {
       if(success!= null){
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
       }
+
       await getdriveStorage();
       await loadDriveFile();
 

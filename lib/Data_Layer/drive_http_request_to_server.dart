@@ -1,6 +1,6 @@
 
 import 'package:notes/Data/notemodel.dart';
-import 'package:notes/Data/user_model.dart';
+import 'package:notes/Data/folder_model.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'dart:convert';
@@ -42,7 +42,7 @@ class DriveHttpRequestToServer {
       print('📁 File/Folder id: ${filess.id}');
       final filename=filess.name;
       final id=filess.id;
-      UserModel(
+      FolderModel(
         name: filename,
         id: id,
       );
@@ -54,7 +54,7 @@ class DriveHttpRequestToServer {
     return result;
   }
 
-  Future<List<UserModel>> getappDataFile(GoogleHttpClient client)async{
+  Future<List<FolderModel>> getappDataFile(GoogleHttpClient client)async{
     final driveapi=drive.DriveApi(client);
 
     final folderList= await driveapi.files.list(
@@ -65,11 +65,11 @@ class DriveHttpRequestToServer {
 
     return (folderList.files ?? [])
         .where((f) => f.name != null && f.id != null)
-        .map((f) => UserModel(name: f.name, id: f.id)).toList();
+        .map((f) => FolderModel(name: f.name, id: f.id)).toList();
 
   }
 
-  Future<List<UserModel>> listFilesInFolder(GoogleHttpClient client, String folderid)async{
+  Future<List<FolderModel>> listFilesInFolder(GoogleHttpClient client, String folderid)async{
     final driveapi=drive.DriveApi(client);
     final filelist=await driveapi.files.list(
       spaces: "appDataFolder",
@@ -78,7 +78,7 @@ class DriveHttpRequestToServer {
     );
     return (filelist.files ?? [])
         .where((f) => f.name != null && f.id != null)
-        .map((f) => UserModel(name: f.name, id: f.id)).toList();
+        .map((f) => FolderModel(name: f.name, id: f.id)).toList();
   }
 
 

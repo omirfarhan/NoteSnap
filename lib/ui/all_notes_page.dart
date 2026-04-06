@@ -7,8 +7,10 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:notes/ui/widgets/note_fab.dart';
 import 'package:notes/ui/widgets/note_grid.dart';
+import 'package:provider/provider.dart';
 
 import '../constants/routes.dart';
+import '../services/auth/auth_provider.dart';
 import '../services/crud/notes_service.dart';
 
 class AllNotesPage extends StatefulWidget {
@@ -23,8 +25,12 @@ class _AllNotesPageState extends State<AllNotesPage> {
   late final NotesService _notesService;
   String _searchQuery = '';
 
+  late AuthProvider authProviderr;
+  bool isLoading = false;
+
   Set<int> _selectedNoteIds = {};
   bool _isSelecting = false;
+  String? accessTokem;
 
   @override
   void initState() {
@@ -103,6 +109,29 @@ class _AllNotesPageState extends State<AllNotesPage> {
 
   }
 
+  Future<void> _loadAccessToken() async {
+    authProviderr = Provider.of<AuthProvider>(context, listen: false);
+
+    setState(() {
+      isLoading = true;
+      accessTokem=authProviderr.accessToken;
+    });
+
+    try {
+      final success= await authProviderr.getAccessTokenFromServer(); // এই method provider এ রাখবে
+      if(success!= null){
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
+      }
+
+    }catch (e) {
+      print("Error loading token: $e");
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
 //All Notes
 
   @override
@@ -117,7 +146,19 @@ class _AllNotesPageState extends State<AllNotesPage> {
         ),
 
         actions: [
+
+          IconButton(
+              onPressed: (){
+                _loadAccessToken();
+
+
+                //ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(accessTokem!)));
+              },
+              icon: const Icon(Icons.cloud_circle)
+          ),
+
           if(_isSelecting)
+
             IconButton(
                 onPressed: _selectedNoteIds.isEmpty ? null
                     :_deleteSelectedNotes,
