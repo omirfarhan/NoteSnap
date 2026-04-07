@@ -1,4 +1,5 @@
 
+import 'package:notes/Data/folder_with_file.dart';
 import 'package:notes/Data/notemodel.dart';
 import 'package:notes/Data/folder_model.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
@@ -198,8 +199,23 @@ class DriveHttpRequestToServer {
 //
 //
 // }
+Future<List<FolderWithFiles>> getAllFoldersWithFiles(
+    GoogleHttpClient client,
+    )async{
+  final folderList = await getappDataFile(client);
+  final result=<FolderWithFiles>[];
 
+  for (final folder in folderList) {
+    if (folder.id == null) continue;
 
+    final files = await listFilesInFolder(client, folder.id!);
+    result.add(FolderWithFiles(
+      folder: folder,
+      files: files,
+    ));
+  }
+  return result;
+ }
 
 
 }

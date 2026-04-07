@@ -3,19 +3,26 @@ import 'dart:convert';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:notes/services/crud/notes_service.dart';
 
-class DriveService {
+import '../../Data_Layer/google_http_client.dart';
 
+class DriveService {
   final String accessToken;
   late final drive.DriveApi _driveApi;
 
+  DriveService({required this.accessToken}) {
+    final client = GoogleHttpClient({
+      'Authorization': 'Bearer $accessToken',
+    });
+    _driveApi = drive.DriveApi(client);
+  }
+
+  /// 🔹 Get or Create Main App Folder (inside appDataFolder)
   Future<String> _getOrCreateAppFolder() async {
     const appFolderName = 'MyNotesApp';
 
     final result = await _driveApi.files.list(
-      q: "name='$appFolderName' "
-          "and mimeType='application/vnd.google-apps.folder' "
-          "and trashed=false",
-      spaces: 'drive',
+      spaces: 'appDataFolder',
+      q: "name='$appFolderName' and mimeType='application/vnd.google-apps.folder'",
       $fields: 'files(id)',
     );
 
@@ -23,26 +30,23 @@ class DriveService {
       return result.files!.first.id!;
     }
 
-    final folder=drive.File();
-    folder.name=appFolderName;
-    folder.mimeType='application/vnd.google-apps.folder';
+    final folder = drive.File()
+      ..name = appFolderName
+      ..mimeType = 'application/vnd.google-apps.folder'
+      ..parents = ['appDataFolder']; // 🔥 IMPORTANT
 
     final created = await _driveApi.files.create(folder);
     return created.id!;
   }
 
-
+  /// 🔹 Create sub-folder inside app folder
   Future<String> _getOrCreateNoteFolder({
     required String folderName,
     required String parentId,
-  })async{
-
+  }) async {
     final result = await _driveApi.files.list(
-      q: "name='$folderName' "
-          "and mimeType='application/vnd.google-apps.folder' "
-          "and '$parentId' in parents "
-          "and trashed=false",
-      spaces: 'drive',
+      spaces: 'appDataFolder',
+      q: "name='$folderName' and mimeType='application/vnd.google-apps.folder' and '$parentId' in parents",
       $fields: 'files(id)',
     );
 
@@ -50,31 +54,29 @@ class DriveService {
       return result.files!.first.id!;
     }
 
-    final folder = drive.File();
-    folder.name=folderName;
-    folder.mimeType='application/vnd.google-apps.folder';
-    folder.parents=[parentId];
+    final folder = drive.File()
+      ..name = folderName
+      ..mimeType = 'application/vnd.google-apps.folder'
+      ..parents = [parentId];
 
     final created = await _driveApi.files.create(folder);
     return created.id!;
-
   }
 
-
+  /// 🔹 Upload Single Note
   Future<void> uploadNote({
     required DatabaseNote note,
-    required String folderName
-  })async{
+    required String folderName,
+  }) async {
+    final appFolderId = await _getOrCreateAppFolder();
 
-    final appFolderId=await _getOrCreateAppFolder();
-
-    final noteFolderId=await _getOrCreateNoteFolder(
+    final noteFolderId = await _getOrCreateNoteFolder(
       folderName: folderName,
-      parentId: appFolderId
+      parentId: appFolderId,
     );
 
-    final jsonStr=jsonEncode({
-      'id':note.id,
+    final jsonStr = jsonEncode({
+      'id': note.id,
       'folderId': note.userId,
       'title': note.title,
       'content': note.content,
@@ -82,28 +84,52 @@ class DriveService {
       'lastEdited': note.lastEdited,
     });
 
-    final bytes=utf8.encode(jsonStr);
-    final fileName='note_${note.id}.json';
+    final bytes = utf8.encode(jsonStr);
+    final fileName = 'note_${note.id}.json';
 
     final existing = await _driveApi.files.list(
-      q: "name='$fileName' "
-          "and '$noteFolderId' in parents "
-          "and trashed=false",
-      spaces: 'drive',
+      spaces: 'appDataFolder',
+      q: "name='$fileName' and '$noteFolderId' in parents",
       $fields: 'files(id)',
     );
 
     if (existing.files != null && existing.files!.isNotEmpty) {
+      /// 🔄 Update existing
       await _driveApi.files.update(
         drive.File(),
         existing.files!.first.id!,
         uploadMedia: drive.Media(
-          Stream.fromIterable([bytes]),
+          Stream.value(bytes),
           bytes.length,
-        ));
+        ),
+      );
+    } else {
+      /// 🆕 Create new
+      final driveFile = drive.File()
+        ..name = fileName
+        ..parents = [noteFolderId];
+
+      await _driveApi.files.create(
+        driveFile,
+        uploadMedia: drive.Media(
+          Stream.value(bytes),
+          bytes.length,
+        ),
+      );
     }
+  }
 
- }
-
+  /// 🔹 Upload Multiple Notes
+  Future<void> uploadMultipleNotes({
+    required List<DatabaseNote> notes,
+    required String folderName,
+  }) async {
+    for (final note in notes) {
+      await uploadNote(
+        note: note,
+        folderName: folderName,
+      );
+    }
+  }
 }
 

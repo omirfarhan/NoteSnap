@@ -6,6 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:notes/Data/folder_with_file.dart';
 import 'package:notes/Data/notemodel.dart';
 import 'package:notes/Data/folder_model.dart';
 import 'package:notes/Data_Layer/drive_http_request_to_server.dart';
@@ -34,6 +35,9 @@ class _CloudFilesState extends State<CloudFiles> {
   bool _wasDisconnected = false;
   late AuthProvider authProviderr;
   bool isLoading = false;
+  bool isSelected = false;
+
+  List<FolderWithFiles> _allData = [];
 
   String? accessTokem;
    double? _percentvalue;
@@ -43,8 +47,9 @@ class _CloudFilesState extends State<CloudFiles> {
 
 
 
-  List<FolderModel> users=[];
+  List<FolderModel> folders=[];
   List<FolderModel> filedata=[];
+
 
 
 
@@ -64,6 +69,10 @@ class _CloudFilesState extends State<CloudFiles> {
     });
   }
 
+  GoogleHttpClient get _client => GoogleHttpClient({
+    'Authorization': 'Bearer ${authProviderr.accessToken}',
+  });
+
 
   @override
   Widget build(BuildContext context) {
@@ -71,34 +80,43 @@ class _CloudFilesState extends State<CloudFiles> {
 
       return Scaffold(
         appBar: AppBar(
-          title: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 70, 0),
+          centerTitle: true,
+           title: SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center, // 🔥 center align
               children: [
                 const Text('Storage'),
-                const SizedBox(height:4),
-
-
-
-                  LinearPercentIndicator(
-                    lineHeight: 10,
-                    percent: percentvalue ?? 0,
-                    center: Text(
-                      "${(percent ?? 0).toStringAsFixed(1)} %",
-                      style: new TextStyle(fontSize: 6),
-                    ),
-                    backgroundColor: Color(0xFFA9CBD7),
-                    progressColor: Color(0xFFFF2040),
-                    barRadius: Radius.circular(25),
-                    animation: true,
-                    animationDuration: 2500,
-
-
+                const SizedBox(height: 4),
+                LinearPercentIndicator(
+                  lineHeight: 8,
+                  percent: percentvalue ?? 0,
+                  center: Text(
+                    "${(percent ?? 0).toStringAsFixed(1)} %",
+                    style: TextStyle(fontSize: 6),
                   ),
-
+                  backgroundColor: Color(0xFFA9CBD7),
+                  progressColor: Color(0xFFFF2040),
+                  barRadius: Radius.circular(25),
+                  animation: true,
+                  animationDuration: 2500,
+                ),
               ],
             ),
           ),
+        ),
+
+          actions: [
+            IconButton(
+              onPressed: (){
+
+              },
+              icon: Icon(Icons.delete_outline)
+            )
+          ],
 
         ),
 
@@ -106,6 +124,7 @@ class _CloudFilesState extends State<CloudFiles> {
         body: SafeArea(
           child: Column(
             children: [
+              /*
               ElevatedButton(
                   onPressed: () async{
 
@@ -144,6 +163,8 @@ class _CloudFilesState extends State<CloudFiles> {
                   child: const Text('Save Drive')
               ),
 
+               */
+
               if(isLoading)
                 const Expanded(
                     child:Center(
@@ -157,7 +178,7 @@ class _CloudFilesState extends State<CloudFiles> {
                 )
               else ...[
                 Expanded(
-                  child: users.isEmpty ?
+                  child: _allData.isEmpty ?  //folders.isEmpty
                       const Center(
                         child: Text(
                           'No note is created',
@@ -168,18 +189,59 @@ class _CloudFilesState extends State<CloudFiles> {
                         ),
                       )
         :ListView.builder(
-                    itemCount: users.length,
+                    itemCount: _allData.length,   //folders.length
                     itemBuilder: (context, index) {
-                      final folder=users[index];
-                      return ListTile(
-                        leading: const Icon(Icons.folder),
-                        title: Text(users[index].name ?? 'Unknown' ),
-                        onTap: ()async{
-                          await _loadDrivefiless(folder.id!);
-                          print('folder id: ${folder.id}');
-                        },
+                      final folder=_allData[index];
+                      //final isSelected = _selectedFoldernames.contains(folder.folder.name);
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFF1A7EA8)
+                                : const Color(0xFF4592AC),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF9EDDE4)
+                                  : const Color(0xFF1A7EA8),
+                              width: 0.5,
+                            ),
+                          ),
+                          child: ListTile(
+                            leading: const Icon(Icons.folder, color: Color(0xFFE8F8FD)),
+                            title: Text(
+                              folder.folder.name ?? 'Unknown',
+                              style: const TextStyle(
+                                color: Color(0xFFE8F8FD),
+                                fontSize: 18,
+                              ),
+                            ),
+                            // trailing: Text(
+                            //   '${folder.noteCount ?? 0}', // যদি থাকে
+                            //   style: const TextStyle(
+                            //     color: Color(0xFFE8F8FD),
+                            //     fontSize: 12,
+                            //     fontFamily: 'Regular',
+                            //   ),
+                            // ),
+                          ),
+                        ),
+
+
+
                       );
-                    },
+                      // return ListTile(
+                      //   leading: const Icon(Icons.folder),
+                      //   title: Text(folder.folder.name ?? 'Unknown' ),
+                      //   onTap: ()async{
+                      //     // await _loadDrivefiless(folder.id!);
+                      //     // print('folder id: ${folder.id}');
+                      //   },
+                      // );
+                    }
                   ),
                 ),
                 if(filedata.isNotEmpty) ...[
@@ -235,7 +297,7 @@ class _CloudFilesState extends State<CloudFiles> {
 
     final files=await uploadDriveFile.getappDataFile(client);
     setState(() {
-      users =files;
+      folders =files;
     });
   }
 
@@ -274,12 +336,16 @@ class _CloudFilesState extends State<CloudFiles> {
 
 
   Future<void> _loadAccessToken() async {
+
     authProviderr = Provider.of<AuthProvider>(context, listen: false);
+
 
     setState(() {
       isLoading = true;
       accessTokem=authProviderr.accessToken;
     });
+
+
 
     try {
       final success= await authProviderr.getAccessTokenFromServer(); // এই method provider এ রাখবে
@@ -287,8 +353,14 @@ class _CloudFilesState extends State<CloudFiles> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
       }
 
+      final data = await uploadDriveFile.getAllFoldersWithFiles(_client);
+
       await getdriveStorage();
       await loadDriveFile();
+
+      if (mounted) {
+        setState(() => _allData = data);
+      }
 
     }catch (e) {
       print("Error loading token: $e");

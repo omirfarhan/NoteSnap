@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:notes/services/crud/drive_service.dart';
 import 'package:notes/ui/widgets/note_fab.dart';
 import 'package:notes/ui/widgets/note_grid.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +15,13 @@ import '../services/auth/auth_provider.dart';
 import '../services/crud/notes_service.dart';
 
 class AllNotesPage extends StatefulWidget {
-  const AllNotesPage({super.key});
+  final String folderName; // ← এটা add করো
+
+  const AllNotesPage({
+    super.key,
+    required this.folderName, // ← এটা add করো
+  });
+
 
   @override
   State<AllNotesPage> createState() => _AllNotesPageState();
@@ -30,7 +37,9 @@ class _AllNotesPageState extends State<AllNotesPage> {
 
   Set<int> _selectedNoteIds = {};
   bool _isSelecting = false;
-  String? accessTokem;
+   String? accessTokem;
+
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -132,6 +141,49 @@ class _AllNotesPageState extends State<AllNotesPage> {
     });
   }
 
+  Future<void> _uploadSelectedNotesToDrive()async{
+    if (_selectedNoteIds.isEmpty) return;
+
+    setState(() => _isUploading = true);
+
+    try{
+
+      final driveService=DriveService(accessToken: accessTokem!);
+      final allNotes = await _notesService.allNotesUnfiltered.first;
+      final selectedNotes = allNotes
+          .where((note) => _selectedNoteIds.contains(note.id))
+          .toList();
+
+      await driveService.uploadMultipleNotes(
+        notes: selectedNotes,
+        folderName: widget.folderName, // ← এই page এ কোন folder open আছে
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${selectedNotes.length} note(s) uploaded ✓'),
+            backgroundColor: const Color(0xFF0D6186),
+          ),
+        );
+        setState(() {
+          _selectedNoteIds.clear();
+          _isSelecting = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e')),
+        );
+      }
+      print('Upload failed: $e');
+
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+
+  }
+
 //All Notes
 
   @override
@@ -151,8 +203,13 @@ class _AllNotesPageState extends State<AllNotesPage> {
               onPressed: (){
                 _loadAccessToken();
 
+                if(_isSelecting && _selectedNoteIds.isNotEmpty && !_isUploading){
+                  _uploadSelectedNotesToDrive();
+                }else{
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('error upload')));
+                }
 
-                //ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(accessTokem!)));
+
               },
               icon: const Icon(Icons.cloud_circle)
           ),

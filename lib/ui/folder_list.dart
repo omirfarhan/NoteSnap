@@ -233,7 +233,7 @@ class _FolderListState extends State<FolderList> {
 
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => const AllNotesPage(),
+                          builder: (context) => const AllNotesPage(folderName: 'All Folder'),
                         ),
                       );
                     },
