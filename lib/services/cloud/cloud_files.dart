@@ -17,6 +17,7 @@ import '../../Data_Layer/google_http_client.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:http/http.dart' as http;
 import '../auth/auth_provider.dart';
+import 'cloud_folder_file_page.dart';
 
 
 class CloudFiles extends StatefulWidget {
@@ -196,37 +197,54 @@ class _CloudFilesState extends State<CloudFiles> {
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFF1A7EA8)
-                                : const Color(0xFF4592AC),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
+                        child: InkWell(
+
+                          onTap:() {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => CloudFolderFilePage(
+                                    folderName: folder.folder.name ?? 'Unknown',
+                                    folderId: folder.folder.id!,
+                                    authProvider: authProviderr,
+                                  ),
+                              ),
+                            );
+                          },
+
+
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            decoration: BoxDecoration(
                               color: isSelected
-                                  ? const Color(0xFF9EDDE4)
-                                  : const Color(0xFF1A7EA8),
-                              width: 0.5,
-                            ),
-                          ),
-                          child: ListTile(
-                            leading: const Icon(Icons.folder, color: Color(0xFFE8F8FD)),
-                            title: Text(
-                              folder.folder.name ?? 'Unknown',
-                              style: const TextStyle(
-                                color: Color(0xFFE8F8FD),
-                                fontSize: 18,
+                                  ? const Color(0xFF1A7EA8)
+                                  : const Color(0xFF4592AC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF9EDDE4)
+                                    : const Color(0xFF1A7EA8),
+                                width: 0.5,
                               ),
                             ),
-                            // trailing: Text(
-                            //   '${folder.noteCount ?? 0}', // যদি থাকে
-                            //   style: const TextStyle(
-                            //     color: Color(0xFFE8F8FD),
-                            //     fontSize: 12,
-                            //     fontFamily: 'Regular',
-                            //   ),
-                            // ),
+                            child: ListTile(
+                              leading: const Icon(Icons.folder, color: Color(0xFFE8F8FD)),
+                              title: Text(
+                                folder.folder.name ?? 'Unknown',
+                                style: const TextStyle(
+                                  color: Color(0xFFE8F8FD),
+                                  fontSize: 18,
+                                ),
+                              ),
+                              trailing: Text(
+                                '${folder.files.length ?? 0}', // যদি থাকে
+                                style: const TextStyle(
+                                  color: Color(0xFFE8F8FD),
+                                  fontSize: 12,
+                                  fontFamily: 'Regular',
+                                ),
+                              ),
+                            ),
                           ),
                         ),
 
@@ -244,22 +262,22 @@ class _CloudFilesState extends State<CloudFiles> {
                     }
                   ),
                 ),
-                if(filedata.isNotEmpty) ...[
-                  const Divider(),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filedata.length,
-                      itemBuilder: (context, index) {
-                        final file = filedata[index];
-                        return ListTile(
-                          leading: const Icon(Icons.insert_drive_file),
-                          title: Text(file.name?? 'Unnamed'),
-                        );
-                      },
-                    ),
-
-                  ),
-                ],
+                // if(filedata.isNotEmpty) ...[
+                //   const Divider(),
+                //   Expanded(
+                //     child: ListView.builder(
+                //       itemCount: filedata.length,
+                //       itemBuilder: (context, index) {
+                //         final file = filedata[index];
+                //         return ListTile(
+                //           leading: const Icon(Icons.insert_drive_file),
+                //           title: Text(file.name?? 'Unnamed'),
+                //         );
+                //       },
+                //     ),
+                //
+                //   ),
+                // ],
               ],
 
             ],

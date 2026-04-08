@@ -6,6 +6,10 @@ import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'dart:convert';
 
+import 'package:notes/services/cloud/cloud_folder_file_page.dart';
+
+import '../Data/cloud_note_model.dart';
+
 class DriveHttpRequestToServer {
  // final AccessToken=AuthProvider.driveAccessToken;
   Future<drive.File> createFolder(String folderName, GoogleHttpClient client) async {
@@ -216,6 +220,41 @@ Future<List<FolderWithFiles>> getAllFoldersWithFiles(
   }
   return result;
  }
+
+
+  Future<List<CloudNoteModel>> getNotesContentInFolder(
+      GoogleHttpClient client,
+      String folderId,
+      ) async {
+    final driveApi = drive.DriveApi(client);
+
+
+    final fileList = await driveApi.files.list(
+      spaces: 'appDataFolder',
+      q: "'$folderId' in parents and trashed = false",
+      $fields: 'files(id, name)',
+    );
+
+    final notes = <CloudNoteModel>[];
+
+    for (final file in fileList.files ?? []) {
+      try {
+
+        final content = await readFileContent(driveApi, file.id!);
+        final json = jsonDecode(content) as Map<String, dynamic>;
+
+        notes.add(CloudNoteModel.fromJson(
+          json,
+          fileId: file.id!,
+          fileName: file.name ?? '',
+        ));
+      } catch (e) {
+        print('Error reading file ${file.name}: $e');
+      }
+    }
+
+    return notes;
+  }
 
 
 }
