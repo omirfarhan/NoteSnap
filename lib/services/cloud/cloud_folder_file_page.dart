@@ -153,81 +153,93 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
                 ),
               ),
               clipBehavior: Clip.hardEdge,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
                 children: [
-
-                  // ── Image ──────────────────────
-                  if (firstImage != null)
-                    Container(
-                      width: double.infinity,
-                      height: 75,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          // Drive url হলে NetworkImage
-                          // local path হলে FileImage
-                          image: firstImage.startsWith('http')
-                              ? NetworkImage(firstImage)
-                              : FileImage(File(firstImage))
-                          as ImageProvider,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF58B4D3),
+                      borderRadius: BorderRadius.circular(5),
                     ),
-
-                  // ── Text ───────────────────────
-                  Padding(
-                    padding:
-                    const EdgeInsets.fromLTRB(5, 2, 5, 5),
+                    clipBehavior: Clip.hardEdge,
                     child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          note.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: 'Regular',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            color: Color(0xFFDBF5FB),
-                          ),
-                        ),
-                        Text(
-                          plainText,
-                          style: const TextStyle(
-                            color: Color(0xFFDBF5FB),
-                            fontFamily: 'Regular',
-                            fontWeight: FontWeight.w400,
-                            fontSize: 12,
-                            height: 1.2,
-                          ),
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 5),
-                        Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              _formatTime(note.lastEdited),
-                              style: const TextStyle(
-                                color: Color(0xFFDBF5FB),
-                                fontSize: 10,
-                                fontFamily: 'Fredoka',
-                                fontWeight: FontWeight.w600,
+
+                        // ── Image ──────────────────────
+                        if (firstImage != null)
+                          Container(
+                            width: double.infinity,
+                            height: 75,
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+
+                                image: firstImage.startsWith('http')
+                                    ? NetworkImage(firstImage)
+                                    : FileImage(File(firstImage))
+                                as ImageProvider,
+                                fit: BoxFit.cover,
                               ),
                             ),
-                          ],
+                          ),
+
+                        // ── Text ───────────────────────
+                        Padding(
+                          padding:
+                          const EdgeInsets.fromLTRB(5, 2, 5, 5),
+                          child: Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                note.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontFamily: 'Regular',
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: Color(0xFFDBF5FB),
+                                ),
+                              ),
+                              Text(
+                                plainText,
+                                style: const TextStyle(
+                                  color: Color(0xFFDBF5FB),
+                                  fontFamily: 'Regular',
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: 12,
+                                  height: 1.2,
+                                ),
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    _formatTime(note.lastEdited),
+                                    style: const TextStyle(
+                                      color: Color(0xFFDBF5FB),
+                                      fontSize: 10,
+                                      fontFamily: 'Fredoka',
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ],
-              ),
+              )
+
+
             );
           },
         ),

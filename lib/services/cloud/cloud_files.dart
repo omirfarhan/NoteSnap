@@ -179,7 +179,7 @@ class _CloudFilesState extends State<CloudFiles> {
                 )
               else ...[
                 Expanded(
-                  child: _allData.isEmpty ?  //folders.isEmpty
+                  child: folders.isEmpty ?  //folders.isEmpty
                       const Center(
                         child: Text(
                           'No note is created',
@@ -190,9 +190,9 @@ class _CloudFilesState extends State<CloudFiles> {
                         ),
                       )
         :ListView.builder(
-                    itemCount: _allData.length,   //folders.length
+                    itemCount: folders.length,   //folders.length
                     itemBuilder: (context, index) {
-                      final folder=_allData[index];
+                      final folder=folders[index];
                       //final isSelected = _selectedFoldernames.contains(folder.folder.name);
 
                       return Padding(
@@ -204,8 +204,8 @@ class _CloudFilesState extends State<CloudFiles> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) => CloudFolderFilePage(
-                                    folderName: folder.folder.name ?? 'Unknown',
-                                    folderId: folder.folder.id!,
+                                    folderName: folder.name ?? 'Unknown',
+                                    folderId: folder.id!,
                                     authProvider: authProviderr,
                                   ),
                               ),
@@ -230,20 +230,20 @@ class _CloudFilesState extends State<CloudFiles> {
                             child: ListTile(
                               leading: const Icon(Icons.folder, color: Color(0xFFE8F8FD)),
                               title: Text(
-                                folder.folder.name ?? 'Unknown',
+                                folder.name ?? 'Unknown',
                                 style: const TextStyle(
                                   color: Color(0xFFE8F8FD),
                                   fontSize: 18,
                                 ),
                               ),
-                              trailing: Text(
-                                '${folder.files.length ?? 0}', // যদি থাকে
-                                style: const TextStyle(
-                                  color: Color(0xFFE8F8FD),
-                                  fontSize: 12,
-                                  fontFamily: 'Regular',
-                                ),
-                              ),
+                              // trailing: Text(
+                              //   '${folder.length ?? 0}', // যদি থাকে
+                              //   style: const TextStyle(
+                              //     color: Color(0xFFE8F8FD),
+                              //     fontSize: 12,
+                              //     fontFamily: 'Regular',
+                              //   ),
+                              // ),
                             ),
                           ),
                         ),
@@ -371,14 +371,14 @@ class _CloudFilesState extends State<CloudFiles> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
       }
 
-      final data = await uploadDriveFile.getAllFoldersWithFiles(_client);
+      //final data = await uploadDriveFile.getAllFoldersWithFiles(_client);
 
       await getdriveStorage();
       await loadDriveFile();
 
-      if (mounted) {
-        setState(() => _allData = data);
-      }
+      // if (mounted) {
+      //   setState(() => _allData = data);
+      // }
 
     }catch (e) {
       print("Error loading token: $e");

@@ -215,7 +215,7 @@ Future<List<FolderWithFiles>> getAllFoldersWithFiles(
     final files = await listFilesInFolder(client, folder.id!);
     result.add(FolderWithFiles(
       folder: folder,
-      files: files,
+      //files: files,
     ));
   }
   return result;
