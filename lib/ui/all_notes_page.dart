@@ -184,6 +184,76 @@ class _AllNotesPageState extends State<AllNotesPage> {
 
   }
 
+  Future<void> _handleCloudUpload() async {
+    // ── 1. Select check ──────────────────────────────────────
+    if (!_isSelecting || _selectedNoteIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one note')),
+      );
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    try {
+      // ── 2. Token load করো (await দিয়ে) ─────────────────────
+      authProviderr = Provider.of<AuthProvider>(context, listen: false);
+
+      final error = await authProviderr.getAccessTokenFromServer();
+      if (error != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error)),
+          );
+        }
+        return;
+      }
+
+      final token = authProviderr.accessToken;
+      if (token == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please sign in first')),
+          );
+        }
+        return;
+      }
+
+      // ── 3. Token পাওয়ার পর upload করো ──────────────────────
+      final allNotes = await _notesService.allNotesUnfiltered.first;
+      final selectedNotes = allNotes
+          .where((note) => _selectedNoteIds.contains(note.id))
+          .toList();
+
+      final driveService = DriveService(accessToken: token);
+      await driveService.uploadMultipleNotes(
+        notes: selectedNotes,
+        folderName: widget.folderName,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${selectedNotes.length} note(s) uploaded ✓'),
+            backgroundColor: const Color(0xFF0D6186),
+          ),
+        );
+        setState(() {
+          _selectedNoteIds.clear();
+          _isSelecting = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
 //All Notes
 
   @override
@@ -200,18 +270,35 @@ class _AllNotesPageState extends State<AllNotesPage> {
         actions: [
 
           IconButton(
-              onPressed: (){
-                _loadAccessToken();
+            onPressed: () => _handleCloudUpload(),
+            icon: _isUploading
+                ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+                : const Icon(Icons.cloud_circle),
 
-                if(_isSelecting && _selectedNoteIds.isNotEmpty && !_isUploading){
-                  _uploadSelectedNotesToDrive();
-                }else{
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('error upload')));
-                }
 
-
-              },
-              icon: const Icon(Icons.cloud_circle)
+            // onPressed: () => ,
+            //   // onPressed: (){
+            //   //   _loadAccessToken();
+            //   //
+            //   //   if(_isSelecting && _selectedNoteIds.isNotEmpty && !_isUploading){
+            //   //     _uploadSelectedNotesToDrive();
+            //   //   }else{
+            //   //     ScaffoldMessenger.of(context)
+            //   //         .showSnackBar(SnackBar(
+            //   //         content: Text('Please select this note')
+            //   //     ));
+            //   //   }
+            //   //
+            //   //
+            //   // },
+            //   icon: const Icon(Icons.cloud_circle)
           ),
 
           if(_isSelecting)
