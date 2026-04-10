@@ -361,19 +361,13 @@ class _FolderListState extends State<FolderList> {
 
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (context) => NotesInFolderPage(folder: folder),
+                                        builder: (context) =>
+                                            NotesInFolderPage(
+                                              folder: folder,
+                                              folderName: folder.foldername,
+                                            ),
                                       ),
                                     );
-
-                                    // if (isAllFolder) {
-                                    //   Navigator.of(context).push(
-                                    //     MaterialPageRoute(
-                                    //       builder: (context) => const AllNotesPage(),
-                                    //     ),
-                                    //   );
-                                    // } else {
-                                    //
-                                    // }
 
                                   }
 

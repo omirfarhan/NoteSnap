@@ -4,12 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:notes/ui/widgets/note_fab.dart';
 import 'package:notes/ui/widgets/note_grid.dart';
+import 'package:provider/provider.dart';
 
+import '../services/auth/auth_provider.dart';
+import '../services/crud/drive_service.dart';
 import '../services/crud/notes_service.dart';
 
 class NotesInFolderPage extends StatefulWidget {
   final Folder folder;
-  const NotesInFolderPage({super.key, required this.folder});
+  final String folderName;
+  const NotesInFolderPage({
+    super.key,
+    required this.folder,
+    required this.folderName
+  });
 
   @override
   State<NotesInFolderPage> createState() => _NotesInFolderPageState();
@@ -20,8 +28,12 @@ class _NotesInFolderPageState extends State<NotesInFolderPage> {
   late final NotesService _notesService;
   String _searchQuery = '';
 
-  Set<int> _selectedNoteIds = {};
+  late AuthProvider authProviderr;
+
+  final Set<int> _selectedNoteIds = {}; //ekhane final add kora hoise
   bool _isSelecting = false;
+
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -100,6 +112,76 @@ class _NotesInFolderPageState extends State<NotesInFolderPage> {
   }
 
 
+  Future<void> _handleCloudUpload() async {
+
+    if (!_isSelecting || _selectedNoteIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one note')),
+      );
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    try {
+
+      authProviderr = Provider.of<AuthProvider>(context, listen: false);
+
+      final error = await authProviderr.getAccessTokenFromServer();
+      if (error != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error)),
+          );
+        }
+        return;
+      }
+
+      final token = authProviderr.accessToken;
+      if (token == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please sign in first')),
+          );
+        }
+        return;
+      }
+
+
+      final allNotes = await _notesService.allNotesUnfiltered.first;
+      final selectedNotes = allNotes
+          .where((note) => _selectedNoteIds.contains(note.id))
+          .toList();
+
+      final driveService = DriveService(accessToken: token);
+      await driveService.uploadMultipleNotes(
+        notes: selectedNotes,
+        folderName: widget.folderName,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${selectedNotes.length} note(s) uploaded ✓'),
+            backgroundColor: const Color(0xFF0D6186),
+          ),
+        );
+        setState(() {
+          _selectedNoteIds.clear();
+          _isSelecting = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,6 +193,21 @@ class _NotesInFolderPageState extends State<NotesInFolderPage> {
           ), //widget.folder.foldername ✅ folder name appbar এ
 
           actions: [
+
+            IconButton(
+              onPressed: () => _handleCloudUpload(),
+              icon: _isUploading
+                  ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+                  : const Icon(Icons.cloud_circle),
+            ),
+
             if(_isSelecting)
               IconButton(
                   onPressed: _selectedNoteIds.isEmpty ? null

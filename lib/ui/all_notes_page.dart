@@ -1,16 +1,15 @@
 import 'dart:convert';
-import 'dart:io';
+
 
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:notes/services/crud/drive_service.dart';
 import 'package:notes/ui/widgets/note_fab.dart';
 import 'package:notes/ui/widgets/note_grid.dart';
 import 'package:provider/provider.dart';
 
-import '../constants/routes.dart';
+
 import '../services/auth/auth_provider.dart';
 import '../services/crud/notes_service.dart';
 
@@ -35,7 +34,7 @@ class _AllNotesPageState extends State<AllNotesPage> {
   late AuthProvider authProviderr;
   bool isLoading = false;
 
-  Set<int> _selectedNoteIds = {};
+  final Set<int> _selectedNoteIds = {};
   bool _isSelecting = false;
    String? accessTokem;
 
@@ -118,74 +117,10 @@ class _AllNotesPageState extends State<AllNotesPage> {
 
   }
 
-  Future<void> _loadAccessToken() async {
-    authProviderr = Provider.of<AuthProvider>(context, listen: false);
 
-    setState(() {
-      isLoading = true;
-      accessTokem=authProviderr.accessToken;
-    });
-
-    try {
-      final success= await authProviderr.getAccessTokenFromServer(); // এই method provider এ রাখবে
-      if(success!= null){
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
-      }
-
-    }catch (e) {
-      print("Error loading token: $e");
-    }
-
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  Future<void> _uploadSelectedNotesToDrive()async{
-    if (_selectedNoteIds.isEmpty) return;
-
-    setState(() => _isUploading = true);
-
-    try{
-
-      final driveService=DriveService(accessToken: accessTokem!);
-      final allNotes = await _notesService.allNotesUnfiltered.first;
-      final selectedNotes = allNotes
-          .where((note) => _selectedNoteIds.contains(note.id))
-          .toList();
-
-      await driveService.uploadMultipleNotes(
-        notes: selectedNotes,
-        folderName: widget.folderName, // ← এই page এ কোন folder open আছে
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${selectedNotes.length} note(s) uploaded ✓'),
-            backgroundColor: const Color(0xFF0D6186),
-          ),
-        );
-        setState(() {
-          _selectedNoteIds.clear();
-          _isSelecting = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e')),
-        );
-      }
-      print('Upload failed: $e');
-
-    } finally {
-      if (mounted) setState(() => _isUploading = false);
-    }
-
-  }
 
   Future<void> _handleCloudUpload() async {
-    // ── 1. Select check ──────────────────────────────────────
+
     if (!_isSelecting || _selectedNoteIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select at least one note')),
@@ -196,7 +131,7 @@ class _AllNotesPageState extends State<AllNotesPage> {
     setState(() => _isUploading = true);
 
     try {
-      // ── 2. Token load করো (await দিয়ে) ─────────────────────
+
       authProviderr = Provider.of<AuthProvider>(context, listen: false);
 
       final error = await authProviderr.getAccessTokenFromServer();
@@ -219,7 +154,7 @@ class _AllNotesPageState extends State<AllNotesPage> {
         return;
       }
 
-      // ── 3. Token পাওয়ার পর upload করো ──────────────────────
+
       final allNotes = await _notesService.allNotesUnfiltered.first;
       final selectedNotes = allNotes
           .where((note) => _selectedNoteIds.contains(note.id))
@@ -281,24 +216,6 @@ class _AllNotesPageState extends State<AllNotesPage> {
               ),
             )
                 : const Icon(Icons.cloud_circle),
-
-
-            // onPressed: () => ,
-            //   // onPressed: (){
-            //   //   _loadAccessToken();
-            //   //
-            //   //   if(_isSelecting && _selectedNoteIds.isNotEmpty && !_isUploading){
-            //   //     _uploadSelectedNotesToDrive();
-            //   //   }else{
-            //   //     ScaffoldMessenger.of(context)
-            //   //         .showSnackBar(SnackBar(
-            //   //         content: Text('Please select this note')
-            //   //     ));
-            //   //   }
-            //   //
-            //   //
-            //   // },
-            //   icon: const Icon(Icons.cloud_circle)
           ),
 
           if(_isSelecting)

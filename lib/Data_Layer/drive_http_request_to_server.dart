@@ -11,7 +11,7 @@ import 'package:notes/services/cloud/cloud_folder_file_page.dart';
 import '../Data/cloud_note_model.dart';
 
 class DriveHttpRequestToServer {
- // final AccessToken=AuthProvider.driveAccessToken;
+
   Future<drive.File> createFolder(String folderName, GoogleHttpClient client) async {
     final drivetoserverupload = drive.DriveApi(client);
 
@@ -41,10 +41,8 @@ class DriveHttpRequestToServer {
        $fields: "files(id, name, mimeType)",
     );
 
-    print("📂 appDataFolder contents:");
+
     for (drive.File filess in fileList.files ?? []) {
-      print('📁 File/Folder name: ${filess.name}');
-      print('📁 File/Folder id: ${filess.id}');
       final filename=filess.name;
       final id=filess.id;
       FolderModel(
@@ -53,20 +51,31 @@ class DriveHttpRequestToServer {
       );
     }
 
-
-
-    print('✅ Created folder id: ${result.name}');
     return result;
   }
 
   Future<List<FolderModel>> getappDataFile(GoogleHttpClient client)async{
     final driveapi=drive.DriveApi(client);
 
-    final folderList= await driveapi.files.list(
-      spaces: "appDataFolder",
-      q: "mimeType = 'application/vnd.google-apps.folder' and trashed = false",
-      $fields: "files(id, name, mimeType)",
+    final appFolderResult = await driveapi.files.list(
+      spaces: 'appDataFolder',
+      q: "name='MyNotesApp' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+      $fields: 'files(id, name)',
     );
+
+    if (appFolderResult.files == null || appFolderResult.files!.isEmpty) {
+      return [];
+    }
+
+    final appFolderId = appFolderResult.files!.first.id!;
+
+    // ── Step 2: MyNotesApp এর ভেতরের folders নাও ────────────
+    final folderList = await driveapi.files.list(
+      spaces: 'appDataFolder',
+      q: "'$appFolderId' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false",
+      $fields: 'files(id, name)',
+    );
+
 
     return (folderList.files ?? [])
         .where((f) => f.name != null && f.id != null)
@@ -112,14 +121,14 @@ class DriveHttpRequestToServer {
                   utf8.encode(jsondata).length
               )
           );
-          print('upload at new content');
+
         }else{
-          print('Skipped at: ${filename}');
+
           continue;
         }
 
       }else{
-        //if file does not exists then create new file
+
         final noteFile=drive.File();
         noteFile.name=filename;
         noteFile.parents=[folder.id!];
@@ -131,8 +140,6 @@ class DriveHttpRequestToServer {
               utf8.encode(jsondata).length
           )
         );
-
-        print('new file create at: ${filename}');
 
       }
 
@@ -254,6 +261,12 @@ Future<List<FolderWithFiles>> getAllFoldersWithFiles(
     }
 
     return notes;
+  }
+
+
+  Future<void> deleteFile(GoogleHttpClient client, String fileId) async {
+    final driveApi = drive.DriveApi(client);
+    await driveApi.files.delete(fileId);
   }
 
 

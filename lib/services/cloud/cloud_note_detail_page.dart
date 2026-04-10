@@ -29,7 +29,7 @@ class CloudNoteDetailPage extends StatelessWidget {
           if (text.trim().isEmpty) continue;
           widgets.add(
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: 10),
               child: Text(
                 text,
                 style: const TextStyle(
@@ -46,26 +46,31 @@ class CloudNoteDetailPage extends StatelessWidget {
           if (url.isEmpty) continue;
           widgets.add(
             Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: 22),
               child: ClipRRect(
+
                 borderRadius: BorderRadius.circular(8),
-                child: url.startsWith('http')
-                    ? Image.network(
-                  url,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.broken_image,
-                    color: Colors.white54,
+                child:AspectRatio(
+                    aspectRatio: 16 / 9,
+                  child: url.startsWith('http')
+                      ? Image.network(
+                    url,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.broken_image,
+                      color: Colors.white54,
+                    ),
+                  )
+                      : Image.file(
+                    File(url),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.broken_image,
+                      color: Colors.white54,
+                    ),
                   ),
                 )
-                    : Image.file(
-                  File(url),
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.broken_image,
-                    color: Colors.white54,
-                  ),
-                ),
+
               ),
             ),
           );
@@ -152,7 +157,7 @@ class CloudNoteDetailPage extends StatelessWidget {
             : null,
 
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          padding: const EdgeInsets.fromLTRB(10,0,10,5),
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,7 +165,7 @@ class CloudNoteDetailPage extends StatelessWidget {
 
               if (note.title.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.only(bottom: 9),
                   child: Text(
                     note.title,
                     style: const TextStyle(

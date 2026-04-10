@@ -36,6 +36,9 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
   List<CloudNoteModel> _notes = [];
   bool _isLoading = true;
 
+  Set<String> _selectedFileIds = {};
+  bool _isSelecting = false;
+
 
   @override
   void initState() {
@@ -64,7 +67,6 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
 
   }
 
-  // content থেকে plain text বের করো
   String _getPlainText(String content) {
     if (content.isEmpty) return '';
     try {
@@ -100,12 +102,88 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
     return DateFormat('MMM dd, hh:mm a').format(dt);
   }
 
+  Future<void> _deleteSelectedNotes()async{
+    final confirm=await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0D6186),
+        title: const Text('Delete?',
+            style: TextStyle(color: Color(0xFFD9FFFF))),
+        content: Text(
+          '${_selectedFileIds.length} note(s) will be deleted from cloud.',
+          style: const TextStyle(color: Color(0xFF9EDDE4)),
+        ),
+
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel',
+                style: TextStyle(color: Color(0xFF9EDDE4))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete',
+                style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+    setState(() => _isLoading = true);
+
+    try{
+      // Drive থেকে delete করো
+      for (final fileId in _selectedFileIds) {
+        await _driveService.deleteFile(_client, fileId);
+      }
+
+      // UI থেকে সরাও
+      setState(() {
+        _notes.removeWhere((note) => _selectedFileIds.contains(note.fileId));
+        _selectedFileIds.clear();
+        _isSelecting = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Deleted from cloud ✓'),
+            backgroundColor: Color(0xFF0D6186),
+          ),
+        );
+      }
+
+    }catch (e){
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: $e')),
+        );
+      }
+    }finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.folderName),
+        title: Text(
+          _isSelecting
+            ? '${_selectedFileIds.length} Selected'
+            : widget.folderName
+        ),
+        actions: [
+          IconButton(
+              onPressed: _isSelecting && _selectedFileIds.isNotEmpty
+                  ? _deleteSelectedNotes //
+                  : null,
+            icon: Icon(Icons.delete_outline),
+          )
+        ],
       ),
 
       body: _isLoading
@@ -144,23 +222,45 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
             final firstImage = _getFirstImage(note.content);
 
             return InkWell(
+              onLongPress: () {
+                setState(() {
+                  _isSelecting = true;
+                  _selectedFileIds.add(note.fileId);
+                });
+              },
               onTap: () {
-                Navigator.push(
+                if (_isSelecting) {
+
+                  setState(() {
+                    if (_selectedFileIds.contains(note.fileId)) {
+                      _selectedFileIds.remove(note.fileId);
+                      if (_selectedFileIds.isEmpty) _isSelecting = false;
+                    } else {
+                      _selectedFileIds.add(note.fileId);
+                    }
+                  });
+                } else {
+
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => CloudNoteDetailPage(
-                          note: note
-                        ),
-                    )
-                );
+                      builder: (_) => CloudNoteDetailPage(note: note),
+                    ),
+                  );
+                }
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF58B4D3),
+
+                  color: _selectedFileIds.contains(note.fileId)
+                      ? const Color(0xFF1A7EA8)
+                      : const Color(0xFF58B4D3),
                   borderRadius: BorderRadius.circular(5),
                   border: Border.all(
-                    color: Colors.transparent,
+                    color: _selectedFileIds.contains(note.fileId)
+                        ? Colors.white
+                        : Colors.transparent,
                     width: 1.5,
                   ),
                 ),
@@ -177,7 +277,7 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-              
+
                           // ── Image ──────────────────────
                           if (firstImage != null)
                             Container(
@@ -185,7 +285,7 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
                               height: 75,
                               decoration: BoxDecoration(
                                 image: DecorationImage(
-              
+
                                   image: firstImage.startsWith('http')
                                       ? NetworkImage(firstImage)
                                       : FileImage(File(firstImage))
@@ -194,7 +294,7 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
                                 ),
                               ),
                             ),
-              
+
                           // ── Text ───────────────────────
                           Padding(
                             padding:
@@ -250,8 +350,8 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
                     ),
                   ],
                 )
-              
-              
+
+
               ),
             );
           },

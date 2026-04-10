@@ -38,7 +38,13 @@ class _CloudFilesState extends State<CloudFiles> {
   bool isLoading = false;
   bool isSelected = false;
 
-  List<FolderWithFiles> _allData = [];
+
+  bool _isSelecting = false;
+
+  Set<String> _selectedFolderIds = {};
+
+
+
 
   String? accessTokem;
    double? _percentvalue;
@@ -74,6 +80,90 @@ class _CloudFilesState extends State<CloudFiles> {
     'Authorization': 'Bearer ${authProviderr.accessToken}',
   });
 
+  void _toggleFolderSelect(String id) {
+    setState(() {
+      if (_selectedFolderIds.contains(id)) {
+        _selectedFolderIds.remove(id);
+        if (_selectedFolderIds.isEmpty) _isSelecting = false;
+      } else {
+        _selectedFolderIds.add(id);
+      }
+    });
+  }
+
+  // ── Delete selected folders (ভেতরের notes সহ) ────────────
+  Future<void> _deleteSelectedFolders() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF0D6186),
+        title: const Text(
+          'Delete folders?',
+          style: TextStyle(color: Color(0xFFD9FFFF)),
+        ),
+        content: Text(
+          '${_selectedFolderIds.length} folder(s) and all notes inside will be permanently deleted.',
+          style: const TextStyle(color: Color(0xFF9EDDE4)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel',
+                style: TextStyle(color: Color(0xFF9EDDE4))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete',
+                style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+    setState(() => isLoading = true);
+
+    try {
+      for (final folderId in _selectedFolderIds) {
+
+        final files = await uploadDriveFile.listFilesInFolder(
+          _client,
+          folderId,
+        );
+        for (final file in files) {
+          if (file.id != null) {
+            await uploadDriveFile.deleteFile(_client, file.id!);
+          }
+        }
+
+        await uploadDriveFile.deleteFile(_client, folderId);
+      }
+
+      // UI থেকে সরাও
+      setState(() {
+        folders.removeWhere((f) => _selectedFolderIds.contains(f.id));
+        _selectedFolderIds.clear();
+        _isSelecting = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Deleted ✓'),
+            backgroundColor: Color(0xFF0D6186),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,9 +202,9 @@ class _CloudFilesState extends State<CloudFiles> {
 
           actions: [
             IconButton(
-              onPressed: (){
-
-              },
+              onPressed: _isSelecting && _selectedFolderIds.isNotEmpty
+                ? _deleteSelectedFolders
+                : null,
               icon: Icon(Icons.delete_outline)
             )
           ],
@@ -125,46 +215,6 @@ class _CloudFilesState extends State<CloudFiles> {
         body: SafeArea(
           child: Column(
             children: [
-              /*
-              ElevatedButton(
-                  onPressed: () async{
-
-                    if(accessTokem !=null){
-                      print('accessToken is : $accessTokem');
-                      final client=GoogleHttpClient({
-                        'Authorization': 'Bearer $accessTokem',
-                      });
-
-                      final notes = [
-                        Notemodel(
-                          id: '1',
-                          title: 'Second folder2',
-                          text: 'Hello Google Drive1',
-                          //createdAt: DateTime.now(),
-                          //updatedAt: DateTime.now(),
-                          imagesPath: ['null'],
-                        ),
-                      ];
-
-
-
-                      final createSubFolder=await uploadDriveFile.createFolder('n', client);
-                      final uploadToServer=await uploadDriveFile.uploadNotesToFolder(client, createSubFolder,notes);
-
-                      print('upload to server Report: ${createSubFolder}');
-
-
-                    }else{
-                      //await AuthProvider.signinwithGoogle();
-                      print('upload to server Report false $accessTokem');
-                    }
-
-
-                  },
-                  child: const Text('Save Drive')
-              ),
-
-               */
 
               if(isLoading)
                 const Expanded(
@@ -179,7 +229,7 @@ class _CloudFilesState extends State<CloudFiles> {
                 )
               else ...[
                 Expanded(
-                  child: folders.isEmpty ?  //folders.isEmpty
+                  child: folders.isEmpty ?
                       const Center(
                         child: Text(
                           'No note is created',
@@ -193,23 +243,39 @@ class _CloudFilesState extends State<CloudFiles> {
                     itemCount: folders.length,   //folders.length
                     itemBuilder: (context, index) {
                       final folder=folders[index];
-                      //final isSelected = _selectedFoldernames.contains(folder.folder.name);
+
+                      final isSelected = _selectedFolderIds.contains(folder.id);
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                         child: InkWell(
 
+                          onLongPress: () {
+                            setState(() {
+                              _isSelecting = true;
+                              _selectedFolderIds.add(folder.id!);
+                            });
+
+                          },
+
                           onTap:() {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
+
+                            if(_isSelecting){
+                              _toggleFolderSelect(folder.id!);
+                            }else{
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
                                   builder: (context) => CloudFolderFilePage(
                                     folderName: folder.name ?? 'Unknown',
                                     folderId: folder.id!,
                                     authProvider: authProviderr,
                                   ),
-                              ),
-                            );
+                                ),
+                              );
+                            }
+
+
                           },
 
 
@@ -251,33 +317,11 @@ class _CloudFilesState extends State<CloudFiles> {
 
 
                       );
-                      // return ListTile(
-                      //   leading: const Icon(Icons.folder),
-                      //   title: Text(folder.folder.name ?? 'Unknown' ),
-                      //   onTap: ()async{
-                      //     // await _loadDrivefiless(folder.id!);
-                      //     // print('folder id: ${folder.id}');
-                      //   },
-                      // );
+
                     }
                   ),
                 ),
-                // if(filedata.isNotEmpty) ...[
-                //   const Divider(),
-                //   Expanded(
-                //     child: ListView.builder(
-                //       itemCount: filedata.length,
-                //       itemBuilder: (context, index) {
-                //         final file = filedata[index];
-                //         return ListTile(
-                //           leading: const Icon(Icons.insert_drive_file),
-                //           title: Text(file.name?? 'Unnamed'),
-                //         );
-                //       },
-                //     ),
-                //
-                //   ),
-                // ],
+
               ],
 
             ],
@@ -287,22 +331,6 @@ class _CloudFilesState extends State<CloudFiles> {
       );
   }
 
-  Future<void> _loadDrivefiless(String folderid)async{
-    if(authProviderr.accessToken == null){
-      print('please set accessToken');
-    }
-
-    final client=GoogleHttpClient({
-      'Authorization': 'Bearer ${authProviderr.accessToken}',
-    });
-
-    final filess=await uploadDriveFile.listFilesInFolder(client, folderid);
-
-    setState(() {
-      filedata=filess;
-    });
-
-  }
 
   Future<void> loadDriveFile()async{
     if(authProviderr.accessToken == null){
@@ -320,7 +348,6 @@ class _CloudFilesState extends State<CloudFiles> {
   }
 
 
-  // drive storage check
   Future<void> getdriveStorage()async {
     if (authProviderr.accessToken != null) {
       final client = GoogleHttpClient({
@@ -371,14 +398,8 @@ class _CloudFilesState extends State<CloudFiles> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
       }
 
-      //final data = await uploadDriveFile.getAllFoldersWithFiles(_client);
-
       await getdriveStorage();
       await loadDriveFile();
-
-      // if (mounted) {
-      //   setState(() => _allData = data);
-      // }
 
     }catch (e) {
       print("Error loading token: $e");

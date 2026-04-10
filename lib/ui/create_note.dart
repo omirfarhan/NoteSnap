@@ -697,16 +697,6 @@ class _CreateNoteState extends State<CreateNote> {
                                 _toggleToolbar(context, imageKey);
                               },
                             ),
-                            // CheckboxComponentBuilder(
-                            //   onCheckChanged: (nodeId, isChecked) {
-                            //     final node = _document.getNodeById(nodeId);
-                            //     if (node is CheckboxNode) {
-                            //       node.isChecked = isChecked;
-                            //       setState(() {});
-                            //       _saveNote();
-                            //     }
-                            //   },
-                            // ),
                             ...defaultComponentBuilders,
                           ],
                           stylesheet: defaultStylesheet.copyWith(
