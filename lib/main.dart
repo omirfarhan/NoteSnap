@@ -341,39 +341,7 @@ class _MainPageState extends State<MainPage> {
       ),
 
       floatingActionButton: NoteFab(folderName: _selectedFolder?.foldername ?? 'all folder'),
-      /*
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          //Navigator.of(context).pushNamed(CreateNoteRoute);
-          Navigator.of(context).pushNamed(
-            CreateNoteRoute,
-            // ✅ এখন folder নামও পাঠাচ্ছি
-            arguments: _selectedFolder?.foldername ?? 'all folder',
-          );
-        },
-        backgroundColor: Color(0xFF219BCB),
-        splashColor: Colors.transparent,
-        highlightElevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50)
-        ),
-        elevation: 0,
-        child: Container(
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Color(0xFFFFFFFF),
-          ),
-          padding: const EdgeInsets.all(6),
-          child: const Icon(
-            Icons.add,
-            size: 35,
-            color: Color(0xFF219BCB),
 
-          ),
-        ),
-      ),
-
-       */
     );
   }
 }

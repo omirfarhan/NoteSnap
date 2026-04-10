@@ -146,7 +146,7 @@ class NoteGrid extends StatelessWidget {
                             style: const TextStyle(
                               fontFamily: 'Regular',
                               fontWeight: FontWeight.w600,
-                              fontSize: 13,
+                              fontSize: 15,
                               color: Color(0xFFDBF5FB),
                             ),
                           ),
@@ -156,7 +156,7 @@ class NoteGrid extends StatelessWidget {
                               color: Color(0xFFDBF5FB),
                               fontFamily: 'Regular',
                               fontWeight: FontWeight.w400,
-                              fontSize: 12,
+                              fontSize: 13.5,
                               height: 1.2,
                             ),
                             maxLines: 4,
@@ -171,7 +171,7 @@ class NoteGrid extends StatelessWidget {
                                 style: const TextStyle(
                                   color: Color(0xFFDBF5FB),
                                   fontSize: 10,
-                                  fontFamily: 'Fredoka',
+                                  fontFamily: 'Regular',
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

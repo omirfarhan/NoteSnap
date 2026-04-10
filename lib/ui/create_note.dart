@@ -73,46 +73,8 @@ class _CreateNoteState extends State<CreateNote> {
 
   Color _bottomBarColor = const Color(0xFF137FA5); // default color
   Color get bottomBarColor => _bottomBarColor;
-
   OverlayEntry? _toolbarOverlay;
-
   final GlobalKey _globalKey=GlobalKey();
-
-  /*
-  Future<DatabaseNote> createNote(BuildContext context)async{
-    final widgetNote=context.arguments<DatabaseNote>();
-    if(widgetNote != null){
-      _note=widgetNote;
-      _textEditingController.text=widgetNote.title;
-      _backgroundImage=widgetNote.background;
-
-
-      _bottomBarColor = BottomSheetScreen.backgrounds[_backgroundImage]
-          ?? const Color(0xFF076687);
-
-      if(widgetNote.content.isNotEmpty){
-        try{
-          _document=_documentFromJson(widgetNote.content);
-        }catch (e){
-          _document=_emptyDocument();
-        }
-      }
-      _rebuildEditor();
-      return widgetNote;
-    }
-    final existingNote=_note;
-    if(existingNote != null){
-      return existingNote;
-    }
-
-    final foldername = context.arguments<String>() ?? 'all folder';
-    final mainfolder= await _notesService.getOrCreateFolder(foldername: foldername);
-    final newNote=await _notesService.createNote(owner: mainfolder);
-    _note=newNote;
-    return newNote;
-  }
-
-   */
   Future<DatabaseNote> createNote(BuildContext context) async {
     // note edit করতে
     if (widget.note != null) {
@@ -218,7 +180,7 @@ class _CreateNoteState extends State<CreateNote> {
       composer: _composer,
     );
 
-    // Cursor guard for checkbox
+
     _composer.selectionNotifier.addListener(_enforceCheckboxCursor);
 
     _document.addListener((DocumentChangeLog changeLog) {
@@ -244,7 +206,7 @@ class _CreateNoteState extends State<CreateNote> {
   Future<void> _saveNote()async{
     final note=_note;
     if(note == null)return;
-    if (!_isInitialized) return; // initialize হওয়ার আগে save করবে না
+    if (!_isInitialized) return;
     final title=_textEditingController.text;
     final content=_documentToJson();
 
@@ -275,11 +237,6 @@ class _CreateNoteState extends State<CreateNote> {
   }
 
   void _deleteNoteifTextIsEmpty(){
-    // final note= _note;
-    // if (note == null) return;
-    // if(_textEditingController.text.trim().isEmpty && !_hasAnyContent()){
-    //   _notesService.deleteNote(id: note.id);
-    // }
 
     final note = _note;
     if (note == null) return;
@@ -381,6 +338,7 @@ class _CreateNoteState extends State<CreateNote> {
         });
 
       }
+      setState(() {});
       _saveNote();
     });
 
@@ -441,32 +399,28 @@ class _CreateNoteState extends State<CreateNote> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Padding(
-          padding: const EdgeInsets.fromLTRB(0, 0, 0, 15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-               spacing: 5,
-              children: [
-                Text(_currentTime,
-                  style: TextStyle(fontSize: 10,
-                      color: Color(0xFF9EDDE4),
-                      fontFamily: 'Regular'
-                  ),
-                ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+           spacing: 5,
+          children: [
+            Text(_currentTime,
+              style: TextStyle(fontSize: 13,
+                  color: Color(0xFF9EDDE4),
+                  fontFamily: 'Regular'
+              ),
+            ),
 
 
-                Text(
-                 "${_getCharacterCount()} character",
-                  style: TextStyle(fontSize: 10,
-                      color: Color(0xFF9EDDE4),
-                      fontFamily: 'Regular'
-                  ),
-                )
-
-
-              ],
+            Text(
+             "${_getCharacterCount()} character",
+              style: TextStyle(fontSize: 12,
+                  color: Color(0xFF9EDDE4),
+                  fontFamily: 'Regular'
+              ),
             )
 
+
+          ],
         ),
 
 
@@ -541,8 +495,7 @@ class _CreateNoteState extends State<CreateNote> {
         ],
       ),
         bottomNavigationBar: _isDescriptionFocused
-            ?
-        Padding(
+        ? Padding(
           padding: const EdgeInsets.fromLTRB(10,0,10,5),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -630,7 +583,6 @@ class _CreateNoteState extends State<CreateNote> {
                             _hideToolbar();
                           },
                           child: Stack(
-
                             children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -648,7 +600,8 @@ class _CreateNoteState extends State<CreateNote> {
                             hintText: 'Title',
                             hintStyle: TextStyle(
                                 color: Color(0xFFD2FEFF),
-                                fontFamily: 'Regular'
+                                fontFamily: 'Regular',
+
                             ),
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none

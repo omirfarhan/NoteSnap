@@ -133,6 +133,7 @@ class CloudNoteDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: const Color(0xFF137FA5),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -147,6 +148,9 @@ class CloudNoteDetailPage extends StatelessWidget {
       ),
 
       body: Container(
+        
+        width: double.infinity,
+        height: double.infinity,
         decoration: note.background != null
             ? BoxDecoration(
           image: DecorationImage(
@@ -154,32 +158,41 @@ class CloudNoteDetailPage extends StatelessWidget {
             fit: BoxFit.cover,
           ),
         )
-            : null,
+            : BoxDecoration(
+          color: const Color(0xFF137FA5), // ✅ background না থাকলে default color
+        ),
 
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(10,0,10,5),
-
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-
-              if (note.title.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 9),
-                  child: Text(
-                    note.title,
-                    style: const TextStyle(
-                      color: Color(0xFFD2FEFF),
-                      fontFamily: 'Regular',
-                      fontSize: 19,
-                      fontWeight: FontWeight.w600,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              10,
+              0,
+              10,
+              5,
+            ),
+          
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+          
+                if (note.title.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 9),
+                    child: Text(
+                      note.title,
+                      style: const TextStyle(
+                        color: Color(0xFFD2FEFF),
+                        fontFamily: 'Regular',
+                        fontSize: 19,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-
-              ..._buildContent(note.content)
-
-            ],
+          
+                ..._buildContent(note.content)
+          
+              ],
+            ),
           ),
         ),
       ),

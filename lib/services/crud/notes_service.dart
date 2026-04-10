@@ -178,20 +178,14 @@ class NotesService {
   }
 
   Future<void> _cacheNote()async{
-    //changes this code
-
-    // final allNotes=await getallNotes();
-    // _notes=allNotes.toList();
-    //
-    // _noteStreamController.add(_notes);
 
     await _ensureDbisOpen();
     final db = _getDatabaseorThrow();
 
-    // ✅ deleted_at null মানে active note
     final notes = await db.query(
       noteTable,
       where: 'deleted_at IS NULL',
+      orderBy: '$lastEditedColumn DESC',
     );
 
     _notes = notes.map((row) => DatabaseNote.fromRow(row)).toList();
@@ -199,16 +193,11 @@ class NotesService {
 
   }
 
-  //eta hocche sodu folder er jonne
-  //--> mane listview te eta dara show korbe noteCount
   int getNoteCountForFolder({required String foldername}){
-
-
     final folder = _folders.firstWhere(
           (f) => f.foldername.toLowerCase() == foldername.toLowerCase(),
       orElse: () => Folder(id: -1, foldername: ''),
     );
-
     if (folder.id == -1) return 0;
     return _notes.where((note) => note.userId == folder.id).length;
   }
@@ -307,13 +296,13 @@ class NotesService {
 
   }
 
-  //kisu baki ase
+
   Future<int> deleteAllNotes()async{
     await _ensureDbisOpen();
     final db= _getDatabaseorThrow();
     final numberofDeletetions= await db.delete(noteTable);
     _notes=[];
-    //stream controller use
+
     _noteStreamController.add(_notes);
     return numberofDeletetions;
   }
