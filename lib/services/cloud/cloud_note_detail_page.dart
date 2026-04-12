@@ -159,7 +159,7 @@ class CloudNoteDetailPage extends StatelessWidget {
           ),
         )
             : BoxDecoration(
-          color: const Color(0xFF137FA5), // ✅ background না থাকলে default color
+          color: const Color(0xFF137FA5),
         ),
 
         child: SafeArea(

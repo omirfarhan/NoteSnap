@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 
+import 'AppLocked/lock_screen.dart';
+
 
 
 class SettingsPage extends StatefulWidget {
@@ -409,7 +411,13 @@ class _SettingsPageState extends State<SettingsPage> {
         splashColor: Colors.white.withOpacity(0.25),
         borderRadius: BorderRadius.circular(1),
         onTap: (){
-          print('Backup Email ');
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LockScreen(),
+            ),
+          );
         },
 
         child: Padding(
