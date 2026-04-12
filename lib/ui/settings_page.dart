@@ -1,12 +1,12 @@
-import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:notes/ui/recently_deleted_page.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 
+import 'AppLocked/change_password.dart';
 import 'AppLocked/lock_screen.dart';
 
 
@@ -22,7 +22,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _isLoggingOut = false;
-  bool _isLogin = false;
+ // bool _isLogin = false;
 
 
 
@@ -58,33 +58,22 @@ class _SettingsPageState extends State<SettingsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     buildtitle('Cloud Service'),
-
                     CloudServiceContainer(context),
-
                     SizedBox(
                       height: 10,
                     ),
-
                     buildtitle('Profile'),
-
                     ProfileSectionContainer(context),
-
                     SizedBox(
                       height: 18,
                     ),
-
                     buildtitle('Security'),
                     SecuritySectionContainer(context),
-
                     SizedBox(
                       height: 18,
                     ),
-
                     buildtitle('About'),
-
                     AboutSectionContainer(context),
-
-
                   ],
                 ),
               ),
@@ -102,13 +91,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
-                    //buildCloudService(context, 'Cloud Files'),
                     buldCloudFileMethod(),
                     Divider(thickness: 1),
                     buildRecentlyDeleteItems(),
-                    //buildCloudService(context, 'Recently delete items'),
-
                   ],
 
                 )
@@ -268,11 +253,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ? () async {
               try {
                await auth.signinwithGoogle();
-               // if(context.mounted){
-               //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
-               // }
-
-
               } catch (e) {
                 if (mounted) {
                   debugPrint('Login failed: $e');
@@ -402,7 +382,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   }
 
-  //Backup Email
+
   Widget buildCloudService(BuildContext context, String title){
     
     return Material(
@@ -412,12 +392,24 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: BorderRadius.circular(1),
         onTap: (){
 
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => LockScreen(),
-            ),
-          );
+          if(title == 'App Locked'){
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => LockScreen(),
+              ),
+            );
+          }else{
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChangePassword(),
+              ),
+            );
+
+          }
+
         },
 
         child: Padding(

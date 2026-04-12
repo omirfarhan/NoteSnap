@@ -19,6 +19,9 @@ class _LockScreenState extends State<LockScreen> {
   TextEditingController text6 = TextEditingController();
   TextEditingController text7 = TextEditingController();
 
+  TextEditingController nicknameController = TextEditingController();
+  TextEditingController colorController = TextEditingController();
+
   final focustext = FocusNode();
   final focustext1 = FocusNode();
   final focustext2 = FocusNode();
@@ -32,6 +35,9 @@ class _LockScreenState extends State<LockScreen> {
   bool showConfirmRow = false;
   bool isFirstStepDone = false;
   bool isPasswordMatched = false;
+
+  bool showSecurityQuestion = false;
+  bool isAllCompleted = false;
 
   String? errorMessage;
 
@@ -76,7 +82,10 @@ class _LockScreenState extends State<LockScreen> {
       if(firstPass == confirmPass){
         setState(() {
           errorMessage = null;
-          isPasswordMatched = true;
+
+          //isPasswordMatched = true;
+
+          showSecurityQuestion = true;
         });
         print('Password confirmed: $confirmPass');
       }else{
@@ -100,6 +109,21 @@ class _LockScreenState extends State<LockScreen> {
 
   }
 
+  void _submitSecurityAnswer(){
+
+    if(nicknameController.text.isNotEmpty &&
+        colorController.text.isNotEmpty){
+      setState(() {
+        isAllCompleted = true;
+      });
+    }else{
+      setState(() {
+        errorMessage = "Please fill all fields";
+      });
+    }
+
+  }
+
 
 
   @override
@@ -113,81 +137,21 @@ class _LockScreenState extends State<LockScreen> {
       ),
 
 
-      body: Column(
-        children: [
-          SizedBox(height: 20),
+      body: Center(
+        child: Column(
+          children: [
+            SizedBox(height: 20),
 
-          if(!isFirstStepDone)...[
-            Align(
-              alignment: Alignment.topCenter,
-              child: Text(
-                'Please enter your privacy key',
-                style: TextStyle(
-                    fontFamily: 'Regular',
-                    fontWeight: FontWeight.w500,
-                    fontSize: 15,
-                    color: Color(0xFFDBF5FB)
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  myinputBox(context, text, focustext),
-                  myinputBox(context, text1, focustext1),
-                  myinputBox(context, text2, focustext2),
-                  myinputBox(
-                      context,
-                      text3,
-                      focustext3,
-                      isLastOfRow: true,
-                      onRowComplete: _checkFirstPassword
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          if (showConfirmRow) ...[
-            if (isPasswordMatched)
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-
-                  SizedBox(height: 40),
-
-                  Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                    size: 80,
-                  ),
-
-                  SizedBox(height: 10),
-
-                  Text(
-                    "Password Set Successfully",
-                    style: TextStyle(
-                      color: Color(0xFFDBF5FB),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              )
-            else ...[
+            if(!isFirstStepDone)...[
               Align(
                 alignment: Alignment.topCenter,
                 child: Text(
-                  'Please confirm your privacy key',
+                  'Please enter your privacy key',
                   style: TextStyle(
-                    fontFamily: 'Regular',
-                    fontWeight: FontWeight.w500,
-                    fontSize: 15,
-                    color: Color(0xFFDBF5FB),
+                      fontFamily: 'Regular',
+                      fontWeight: FontWeight.w500,
+                      fontSize: 15,
+                      color: Color(0xFFDBF5FB)
                   ),
                 ),
               ),
@@ -197,37 +161,161 @@ class _LockScreenState extends State<LockScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    myinputBox(context, text4, focustext4),
-                    myinputBox(context, text5, focustext5),
-                    myinputBox(context, text6, focustext6),
+                    myinputBox(context, text, focustext),
+                    myinputBox(context, text1, focustext1),
+                    myinputBox(context, text2, focustext2),
                     myinputBox(
-                      context,
-                      text7,
-                      focustext7,
-                      isLastOfRow: true,
-                      onRowComplete: _checkConfirmPassword,
+                        context,
+                        text3,
+                        focustext3,
+                        isLastOfRow: true,
+                        onRowComplete: _checkFirstPassword
                     ),
                   ],
                 ),
               ),
+            ],
 
-              // --- Error Message ---
-              if (errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
+            if (showConfirmRow) ...[
+              if (isAllCompleted)
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 80,
+                      ),
+
+                      SizedBox(height: 10),
+
+                      Text(
+                        "Password set successfully",
+                        style: TextStyle(
+                          color: Color(0xFFDBF5FB),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Regular',
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                else if(showSecurityQuestion) ...[
+
+                  Align(
+                  alignment: Alignment.topCenter,
                   child: Text(
-                    errorMessage!,
+                    'Security Questions',
                     style: TextStyle(
-                      color: Color(0xFFFF2040),
-                      fontSize: 14,
+                      fontSize: 16,
+                      color: Color(0xFFDBF5FB),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                      children: [
+                        TextField(
+                          controller: nicknameController,
+                          decoration: InputDecoration(
+                            hintText: "What is your nickname?",
+                            hintStyle: TextStyle(
+                              color: Color(0xFFDBF5FB),
+                              fontFamily: 'Regular',
+                            )
+                          ),
+                          style: TextStyle(
+                            color: Color(0xFFDBF5FB),
+                            fontFamily: 'Regular',
+                          ),
+
+                        ),
+                        SizedBox(height: 10),
+                        TextField(
+                          controller: colorController,
+                          decoration: InputDecoration(
+                            hintText: "Favorite color?",
+                              hintStyle: TextStyle(
+                                color: Color(0xFFDBF5FB),
+                                fontFamily: 'Regular',
+                              )
+                          ),
+                          
+                          style: TextStyle(
+                            color: Color(0xFFDBF5FB),
+                            fontFamily: 'Regular',
+                          ),
+                        ),
+                        SizedBox(height: 20),
+
+                        ElevatedButton(
+                          onPressed: _submitSecurityAnswer,
+                          child: Text("Submit"),
+                        ),
+                      ],
+                  ),
+                )
+
+
+
+
+              ] else ...[
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: Text(
+                    'Please confirm your privacy key',
+                    style: TextStyle(
+                      fontFamily: 'Regular',
+                      fontWeight: FontWeight.w500,
+                      fontSize: 15,
+                      color: Color(0xFFDBF5FB),
+                    ),
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      myinputBox(context, text4, focustext4),
+                      myinputBox(context, text5, focustext5),
+                      myinputBox(context, text6, focustext6),
+                      myinputBox(
+                        context,
+                        text7,
+                        focustext7,
+                        isLastOfRow: true,
+                        onRowComplete: _checkConfirmPassword,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // --- Error Message ---
+                if (errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      errorMessage!,
+                      style: TextStyle(
+                        color: Color(0xFFFF2040),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
             ],
+            Spacer(),
           ],
-          Spacer(),
-        ],
+        ),
       ),
     );
   }
