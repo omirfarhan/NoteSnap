@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LockScreen extends StatefulWidget {
   const LockScreen({super.key});
@@ -34,7 +35,7 @@ class _LockScreenState extends State<LockScreen> {
 
   bool showConfirmRow = false;
   bool isFirstStepDone = false;
-  bool isPasswordMatched = false;
+  //bool isPasswordMatched = false;
 
   bool showSecurityQuestion = false;
   bool isAllCompleted = false;
@@ -44,6 +45,8 @@ class _LockScreenState extends State<LockScreen> {
   @override
   void initState() {
     super.initState();
+    _loadData();
+
     focustext.addListener(() => setState(() {}));
     focustext1.addListener(() => setState(() {}));
     focustext2.addListener(() => setState(() {}));
@@ -55,22 +58,77 @@ class _LockScreenState extends State<LockScreen> {
     focustext7.addListener(() => setState(() {}));
   }
 
+  Future<void> _saveData()async{
+    final prefs=await SharedPreferences.getInstance();
+    String password = text.text + text1.text + text2.text + text3.text;
 
-  void _checkFirstPassword(){
-    String firstPass = text.text + text1.text + text2.text + text3.text;
-    if(firstPass.length == 4){
+    await prefs.setString('password', password);
+    await prefs.setString('nickname', nicknameController.text);
+    await prefs.setString('color', colorController.text);
+    await prefs.setBool('isPasswordSet', true);
+    await prefs.setBool('isAllCompleted', true);
+  }
+
+  Future<void> _loadData() async {
+    final prefs = await SharedPreferences.getInstance();
+    bool isSet = prefs.getBool('isPasswordSet') ?? false;
+    bool completed = prefs.getBool('isAllCompleted') ?? false;
+
+    if(isSet){
       setState(() {
-        showConfirmRow = true;
         isFirstStepDone = true;
-
-        errorMessage = null;
-      });
-
-      Future.delayed(Duration(milliseconds: 100), () {
-       FocusScope.of(context).requestFocus(focustext4);
+        showConfirmRow = true;
+        showSecurityQuestion = false;
+        isAllCompleted = completed;
       });
     }
+  }
 
+  Future<void> _checkSavedPassword() async {
+    final prefs = await SharedPreferences.getInstance();
+    String savedPass = prefs.getString('password') ?? '';
+    String enteredPass = text.text + text1.text + text2.text + text3.text;
+
+    if(enteredPass == savedPass){
+      print("Access granted");
+      // Navigator.pushReplacement(...)
+    }else{
+      setState(() {
+        errorMessage = "Wrong password!";
+      });
+      print("Access denied");
+      text.clear();
+      text1.clear();
+      text2.clear();
+      text3.clear();
+
+      FocusScope.of(context).requestFocus(focustext);
+    }
+  }
+
+  Future<void> _checkFirstPassword() async {
+    final prefs = await SharedPreferences.getInstance();
+    bool isSet = prefs.getBool('isPasswordSet') ?? false;
+
+    String firstPass = text.text + text1.text + text2.text + text3.text;
+    if(firstPass.length == 4){
+
+      if(isSet){
+        // 👉 already password set → login mode
+        _checkSavedPassword();
+      }else{
+        // 👉 first time setup
+        setState(() {
+          showConfirmRow = true;
+          isFirstStepDone = true;
+          errorMessage = null;
+        });
+
+        Future.delayed(Duration(milliseconds: 100), () {
+          FocusScope.of(context).requestFocus(focustext4);
+        });
+      }
+    }
   }
 
   void _checkConfirmPassword(){
@@ -82,9 +140,6 @@ class _LockScreenState extends State<LockScreen> {
       if(firstPass == confirmPass){
         setState(() {
           errorMessage = null;
-
-          //isPasswordMatched = true;
-
           showSecurityQuestion = true;
         });
         print('Password confirmed: $confirmPass');
@@ -109,19 +164,19 @@ class _LockScreenState extends State<LockScreen> {
 
   }
 
-  void _submitSecurityAnswer(){
-
-    if(nicknameController.text.isNotEmpty &&
-        colorController.text.isNotEmpty){
+  void _submitSecurityAnswer()async{
+    if(nicknameController.text.length < 4 || colorController.text.length < 4){
       setState(() {
-        isAllCompleted = true;
+        errorMessage = "Each answer must be at least 4 characters";
       });
-    }else{
-      setState(() {
-        errorMessage = "Please fill all fields";
-      });
+      return;
     }
+    await _saveData();
 
+    setState(() {
+      errorMessage = null;
+      isAllCompleted = true;
+    });
   }
 
 
@@ -218,17 +273,28 @@ class _LockScreenState extends State<LockScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: Column(
                       children: [
                         TextField(
                           controller: nicknameController,
+                          cursorColor: Color(0xFFDBF5FB),
                           decoration: InputDecoration(
                             hintText: "What is your nickname?",
+
+                            enabledBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: Color(0xFF83E3ED)),
+                            ),
+
+                            focusedBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: Color(0xFF83E3ED)),
+                            ),
                             hintStyle: TextStyle(
                               color: Color(0xFFDBF5FB),
                               fontFamily: 'Regular',
-                            )
+                              fontSize: 14
+                            ),
+
                           ),
                           style: TextStyle(
                             color: Color(0xFFDBF5FB),
@@ -236,17 +302,29 @@ class _LockScreenState extends State<LockScreen> {
                           ),
 
                         ),
+
                         SizedBox(height: 10),
+
                         TextField(
+                          cursorColor: Color(0xFFDBF5FB),
                           controller: colorController,
                           decoration: InputDecoration(
                             hintText: "Favorite color?",
+
+                              enabledBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(color: Color(0xFF83E3ED)),
+                              ),
+
+                              focusedBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(color: Color(0xFF83E3ED)),
+                              ),
                               hintStyle: TextStyle(
                                 color: Color(0xFFDBF5FB),
                                 fontFamily: 'Regular',
+                                  fontSize: 14
                               )
                           ),
-                          
+
                           style: TextStyle(
                             color: Color(0xFFDBF5FB),
                             fontFamily: 'Regular',
@@ -258,11 +336,24 @@ class _LockScreenState extends State<LockScreen> {
                           onPressed: _submitSecurityAnswer,
                           child: Text("Submit"),
                         ),
+
+
+                        if (errorMessage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Text(
+                              errorMessage!,
+                              style: TextStyle(
+                                color:  Color(0xFFFF2040),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Regular',
+                              ),
+                            ),
+                          ),
                       ],
                   ),
                 )
-
-
 
 
               ] else ...[
@@ -298,7 +389,7 @@ class _LockScreenState extends State<LockScreen> {
                   ),
                 ),
 
-                // --- Error Message ---
+
                 if (errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
