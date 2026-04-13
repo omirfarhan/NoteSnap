@@ -10,6 +10,7 @@ import 'package:notes/constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 import 'package:notes/services/cloud/cloud_files.dart';
 import 'package:notes/services/crud/notes_service.dart';
+import 'package:notes/ui/AppLocked/app_lock_wrapper.dart';
 import 'package:notes/ui/create_note.dart';
 import 'package:notes/ui/folder_list.dart';
 import 'package:notes/ui/settings_page.dart';
@@ -20,16 +21,16 @@ import 'package:provider/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(
 
+  runApp(
     MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => AuthProvider()),
-
         ],
       child: const MyApp(),
     )
   );
+
 }
 
 
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Note App',
-      home: const MainPage(),
+      home: const AppLockWrapper(child: MainPage()), // ← এখানে wrap করুন,
       routes: {
         SettingspageRoute: (context) => const SettingsPage(),
         CloudFilesRoute: (context) => const CloudFiles(),
@@ -69,7 +70,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-//typedef NoteCallback=void Function(DatabaseNote note);
+
 
 class MainPage extends StatefulWidget {
   //final NoteCallback onTap;

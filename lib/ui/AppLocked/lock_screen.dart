@@ -35,7 +35,7 @@ class _LockScreenState extends State<LockScreen> {
 
   bool showConfirmRow = false;
   bool isFirstStepDone = false;
-  //bool isPasswordMatched = false;
+
 
   bool showSecurityQuestion = false;
   bool isAllCompleted = false;
