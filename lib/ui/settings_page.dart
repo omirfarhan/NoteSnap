@@ -5,13 +5,9 @@ import 'package:notes/ui/recently_deleted_page.dart';
 import 'package:provider/provider.dart';
 import '../constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
-
 import 'AppLocked/change_password.dart';
 import 'AppLocked/lock_screen.dart';
-
 import 'package:url_launcher/url_launcher.dart';
-
-
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -20,11 +16,8 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-
-
 class _SettingsPageState extends State<SettingsPage> {
   bool _isLoggingOut = false;
- // bool _isLogin = false;
  int count =0;
 
 
@@ -410,6 +403,10 @@ class _SettingsPageState extends State<SettingsPage> {
             );
           }else if( title == 'Help Center'){
             openEmail();
+          }else if( title ==  'Rate us' ){
+            rateApp();
+          }else{
+            print('privacy policy');
           }
 
         },
@@ -438,21 +435,33 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> openEmail() async {
-    final Uri emailUri = Uri(
-      scheme: 'mailto',
-      path: 'mainulappstorehelp@gmail.com',
-      queryParameters: {
-        'subject': 'App Feedback',
-        'body': 'Write your problem here...',
-      },
+    final Uri gmailUri = Uri.parse(
+      'googlegmail://co?to=mainulappstorehelp@gmail.com'
+          '&subject=${Uri.encodeComponent('App Feedback')}'
+          '&body=${Uri.encodeComponent('Write your problem here...')}',
     );
 
-    if (await canLaunchUrl(emailUri)) {
-      await launchUrl(emailUri);
+    final Uri defaultUri = Uri.parse(
+      'mailto:mainulappstorehelp@gmail.com'
+          '?subject=${Uri.encodeComponent('App Feedback')}'
+          '&body=${Uri.encodeComponent('Write your problem here...')}',
+    );
+
+    if (await canLaunchUrl(gmailUri)) {
+      await launchUrl(gmailUri);
     } else {
-      print('Could not open email app');
+      await launchUrl(defaultUri, mode: LaunchMode.externalApplication);
     }
   }
+
+
+  Future<void> rateApp() async {
+    final Uri url = Uri.parse(
+      'https://play.google.com/store/apps/details?id=com.moinulislamsxs.notes',
+    );
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  }
+
 
   @override
   void dispose() {
