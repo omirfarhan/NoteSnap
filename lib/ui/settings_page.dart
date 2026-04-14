@@ -9,6 +9,8 @@ import 'package:notes/services/auth/auth_provider.dart';
 import 'AppLocked/change_password.dart';
 import 'AppLocked/lock_screen.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 
 
 class SettingsPage extends StatefulWidget {
@@ -23,7 +25,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool _isLoggingOut = false;
  // bool _isLogin = false;
-
+ int count =0;
 
 
   @override
@@ -399,15 +401,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 builder: (context) => LockScreen(),
               ),
             );
-          }else{
-
+          }else if(title == 'Change Password'){
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => ChangePasswordPage(),
               ),
             );
-
+          }else if( title == 'Help Center'){
+            openEmail();
           }
 
         },
@@ -433,6 +435,23 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
     
+  }
+
+  Future<void> openEmail() async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'mainulappstorehelp@gmail.com',
+      queryParameters: {
+        'subject': 'App Feedback',
+        'body': 'Write your problem here...',
+      },
+    );
+
+    if (await canLaunchUrl(emailUri)) {
+      await launchUrl(emailUri);
+    } else {
+      print('Could not open email app');
+    }
   }
 
   @override
