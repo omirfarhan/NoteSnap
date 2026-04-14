@@ -35,7 +35,13 @@ class _SettingsPageState extends State<SettingsPage> {
         },
         child: Scaffold(
             appBar: AppBar(
-              title: const Text('Settings Page'),
+              title: const Text(
+                'Settings',
+                style: TextStyle(
+                  fontFamily: 'ArchivoBlack',
+                  fontSize: 19
+                ),
+              ),
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () {
@@ -202,9 +208,12 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
 
                       buildProfileCreator(context),
-                      Divider(thickness: 1),
-                      buildCloudService(context, 'Backup Email'),
+                      //Divider(thickness: 1),
+                      //buildCloudService(context, 'Backup Email'),
 
+                      SizedBox(
+                        height: 10,
+                      )
                     ],
 
                   )

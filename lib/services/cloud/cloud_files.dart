@@ -183,11 +183,11 @@ class _CloudFilesState extends State<CloudFiles> {
                 const Text('Storage'),
                 const SizedBox(height: 4),
                 LinearPercentIndicator(
-                  lineHeight: 8,
+                  lineHeight: 14,
                   percent: percentvalue ?? 0,
                   center: Text(
                     "${(percent ?? 0).toStringAsFixed(1)} %",
-                    style: TextStyle(fontSize: 6),
+                    style: TextStyle(fontSize: 10),
                   ),
                   backgroundColor: Color(0xFFA9CBD7),
                   progressColor: Color(0xFFFF2040),
