@@ -590,7 +590,6 @@ class _CreateNoteState extends State<CreateNote> {
                     children: [
                       SizedBox(height: MediaQuery.of(context).padding.top + kToolbarHeight),
                       TextField(
-
                         autocorrect: false,
                         controller: _textEditingController,
                         keyboardType: TextInputType.multiline,
@@ -599,18 +598,27 @@ class _CreateNoteState extends State<CreateNote> {
                         decoration: InputDecoration(
                             hintText: 'Title',
                             hintStyle: TextStyle(
-                                color: Color(0xFFD2FEFF),
-                                fontFamily: 'Regular',
+                                color: Color(0xFFD2FEFF).withOpacity(0.5),
+                                fontFamily: 'ArchivoBlack',
+                                fontSize: 18,
 
                             ),
                             enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none
+                            focusedBorder: InputBorder.none,
+                          isDense: true,
+
                         ),
                         style: TextStyle(
                           color: Color(0xFFD2FEFF),
                           fontFamily: 'Regular',
+                          fontSize: 18
                         ),
                       ),
+                      Divider(
+                        color: Color(0xFFD2FEFF).withOpacity(0.2),
+                        thickness: 1.5,
+                      ),
+
                       Expanded(
 
                         child: SuperEditor(
@@ -622,7 +630,7 @@ class _CreateNoteState extends State<CreateNote> {
                           inputSource: TextInputSource.ime,
 
                           imeConfiguration: const SuperEditorImeConfiguration(
-                            enableAutocorrect: false,      // ← এটাই underline বন্ধ করবে
+                            enableAutocorrect: false,
 
                           ),
 
@@ -674,10 +682,15 @@ class _CreateNoteState extends State<CreateNote> {
 
                             ],
                           ),
+                          
+
 
                         ),
 
+
                       ),
+
+
 
                     ],
                   ),
