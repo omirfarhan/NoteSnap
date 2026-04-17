@@ -30,7 +30,7 @@ class _NotesInFolderPageState extends State<NotesInFolderPage> {
 
   late AuthProvider authProviderr;
 
-  final Set<int> _selectedNoteIds = {}; //ekhane final add kora hoise
+  final Set<int> _selectedNoteIds = {};
   bool _isSelecting = false;
 
   bool _isUploading = false;

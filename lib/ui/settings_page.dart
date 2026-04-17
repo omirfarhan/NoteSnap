@@ -9,6 +9,8 @@ import 'AppLocked/change_password.dart';
 import 'AppLocked/lock_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'Help Center/help_center.dart';
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -411,7 +413,13 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             );
           }else if( title == 'Help Center'){
-            openEmail();
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => HelpCenter(),
+              ),
+            );
+            //openEmail();
           }else if( title ==  'Rate us' ){
             rateApp();
           }else{
