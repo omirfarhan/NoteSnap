@@ -9,6 +9,7 @@ import 'package:notes/services/auth/auth_provider.dart';
 import 'package:notes/services/cloud/cloud_files.dart';
 import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/AppLocked/app_lock_wrapper.dart';
+import 'package:notes/ui/Notification/reminder_data.dart';
 import 'package:notes/ui/create_note.dart';
 import 'package:notes/ui/folder_list.dart';
 import 'package:notes/ui/settings_page.dart';
@@ -197,7 +198,11 @@ class _MainPageState extends State<MainPage> {
 
           IconButton(
               onPressed: (){
-                print('NOtification item');
+                Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (context) => ReminderScreen()
+                    ));
+
               },
               icon: Icon(Icons.notifications_active_outlined)
           ),
