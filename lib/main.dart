@@ -1,11 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
+
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:notes/constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
 import 'package:notes/services/cloud/cloud_files.dart';
@@ -175,7 +173,6 @@ class _MainPageState extends State<MainPage> {
 
   @override
   void dispose() {
-    //_notesService.close();
     super.dispose();
   }
 
@@ -186,7 +183,6 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        //backgroundColor: Color(0xFF137FA5),
         title: const Text('Note storage',
         ),
 
@@ -199,27 +195,26 @@ class _MainPageState extends State<MainPage> {
                 icon:  const Icon(Icons.delete_outline)
             ),
 
-          IconButton(onPressed: ()async{
+          IconButton(
+              onPressed: (){
+                print('NOtification item');
+              },
+              icon: Icon(Icons.notifications_active_outlined)
+          ),
 
+          IconButton(onPressed: ()async{
            final selected=await Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => FolderList())
             );
-
-
            if(selected!= null && selected is Folder){
-
              await _notesService.getOrCreateFolder(
                foldername: selected.foldername,
                setCurrentFolder: true,
              );
-
              setState(() {
                _selectedFolder = selected;
              });
            }
-
-
-
           }, icon: Icon(Icons.folder_copy_outlined)),
 
 
