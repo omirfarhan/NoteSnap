@@ -14,6 +14,7 @@ import 'package:notes/ui/notebottomcomponent/bottomsheet/saveimageoption.dart';
 import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_node.dart';
 import 'package:notes/ui/notebottomcomponent/fullscreenimagepage.dart';
 import 'package:notes/utilities/generic/get_arguments.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:super_editor/super_editor.dart';
 import 'notebottomcomponent/bottomsheet/image_preview_page.dart';
 import 'notebottomcomponent/checkbox/checkbox_tap_delegate.dart';
@@ -1090,8 +1091,11 @@ class _CreateNoteState extends State<CreateNote> {
     final content=buffer.toString().trim();
     if(content.isEmpty) return;
 
-    final baseDir=Directory('/storage/emulated/0/Documents');
-    final folder = Directory('${baseDir.path}/MyNotes');
+    final directory = await getExternalStorageDirectory();
+    final folder = Directory('${directory!.path}/MyNotes');
+   // final baseDir=Directory('/storage/emulated/0/Documents');
+    //final folder = Directory('${baseDir.path}/MyNotes');
+
 
     if (!await folder.exists()) {
       await folder.create(recursive: true);
@@ -1101,7 +1105,7 @@ class _CreateNoteState extends State<CreateNote> {
     final fileName = title.isNotEmpty
         ? '${title.replaceAll(RegExp(r'[^\w\s]'), '_')}.txt'
         : 'note_${DateTime.now().millisecondsSinceEpoch}.txt';
-    final file=File('${baseDir.path}/$fileName');
+    final file=File('${folder.path}/$fileName');
 
     await file.writeAsString(content);
 

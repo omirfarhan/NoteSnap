@@ -9,7 +9,6 @@ import 'package:notes/services/auth/auth_provider.dart';
 import 'package:notes/services/cloud/cloud_files.dart';
 import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/AppLocked/app_lock_wrapper.dart';
-import 'package:notes/ui/Notification/reminder_data.dart';
 import 'package:notes/ui/create_note.dart';
 import 'package:notes/ui/folder_list.dart';
 import 'package:notes/ui/settings_page.dart';
@@ -17,10 +16,11 @@ import 'package:notes/ui/widgets/note_fab.dart';
 import 'package:notes/ui/widgets/note_grid.dart';
 import 'package:provider/provider.dart';
 
+import 'method_channel_use.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
   runApp(
     MultiProvider(
         providers: [
@@ -72,24 +72,18 @@ class MyApp extends StatelessWidget {
 
 
 class MainPage extends StatefulWidget {
-  //final NoteCallback onTap;
   const MainPage({super.key});
-
   @override
   State<MainPage> createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
-
   late Future _initFuture;
-
   late final NotesService _notesService;
   String _searchQuery='';
   Folder? _selectedFolder;
-
   Set<int> _selectedNoteIds = {};
   bool _isSelecting = false;
-
 
   String _getPlainTextFromContent(String content) {
     if (content.isEmpty) return '';
@@ -200,7 +194,7 @@ class _MainPageState extends State<MainPage> {
               onPressed: (){
                 Navigator.of(context).push(
                     MaterialPageRoute(
-                        builder: (context) => ReminderScreen()
+                        builder: (context) => MethodChannelUse()
                     ));
 
               },

@@ -56,7 +56,10 @@ dependencies:
   image_picker: ^1.2.1
 
   image_gallery_saver_plus: ^4.0.1
+
   permission_handler: ^12.0.1
+  device_info_plus: ^10.1.0
+
   intl: ^0.20.2
   super_editor: ^0.3.0-dev.40
   flutter_staggered_grid_view: ^0.7.0
