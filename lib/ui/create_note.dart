@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:notes/services/crud/notes_service.dart';
+import 'package:notes/ui/methodChannelStorageService/storage_service.dart';
 import 'package:notes/ui/notebottomcomponent/bottomsheet/bottom_sheet_screen.dart';
 import 'package:notes/ui/notebottomcomponent/bottomsheet/saveimageoption.dart';
 import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_node.dart';
@@ -532,21 +533,6 @@ class _CreateNoteState extends State<CreateNote> {
 
                       IconButton(onPressed:(){
                         _insertCheckbox();
-                        //
-                        // final selection = _composer.selection;
-                        // String insertAfterNodeId = selection != null
-                        //     ? selection.extent.nodeId
-                        //     : _document.getNodeAt(_document.nodeCount - 1)!.id;
-                        //
-                        // _editor.execute([
-                        //   InsertNodeAfterNodeRequest(
-                        //     existingNodeId: insertAfterNodeId,
-                        //     newNode: CheckboxNode(
-                        //       id: Editor.createNodeId(),
-                        //       text: AttributedText(''),
-                        //     ),
-                        //   )
-                        // ]);
                       },
                           icon: Icon(Icons.crop_square,color: Colors.white,)
                       ),
@@ -816,7 +802,6 @@ class _CreateNoteState extends State<CreateNote> {
     }
     _saveNote();
   }
-
   void _undo() {
     if (_historyIndex <= 0) return;
     _historyIndex--;
@@ -831,7 +816,6 @@ class _CreateNoteState extends State<CreateNote> {
     });
     _saveNote();
   }
-
   void _redo() {
     if (_historyIndex >= _history.length - 1) return;
     _historyIndex++;
@@ -846,22 +830,6 @@ class _CreateNoteState extends State<CreateNote> {
     _saveNote();
   }
 
-  // bool _isDocumentEmpty() {
-  //   if (_document.nodeCount == 0) return true;
-  //
-  //   for (int i = 0; i < _document.nodeCount; i++) {
-  //     final node = _document.getNodeAt(i);
-  //
-  //     if (node is ParagraphNode && node.text.text.trim().isNotEmpty) {
-  //       return false;
-  //     }
-  //     if (node is ImageNode) {
-  //       return false;
-  //     }
-  //   }
-  //
-  //   return true;
-  // }
 
   void _insertCheckbox() {
     final selection = _composer.selection;
@@ -1070,50 +1038,54 @@ class _CreateNoteState extends State<CreateNote> {
 
   Future<void> _saveAsText()async{
 
-    final buffer=StringBuffer();
-    final currentTime = DateFormat('MMMM dd, hh:mm a').format(DateTime.now());
-    buffer.writeln(currentTime);
-    final title=_textEditingController.text.trim();
-    if(title.isNotEmpty){
-      buffer.writeln(title);
-      buffer.writeln();
-    }
+    try{
+      final buffer=StringBuffer();
+      final currentTime = DateFormat('MMMM dd, hh:mm a').format(DateTime.now());
+      buffer.writeln(currentTime);
+      final title=_textEditingController.text.trim();
 
-    for(int i=0; i <_document.nodeCount; i++){
-      final node = _document.getNodeAt(i)!;
-      if(node is ParagraphNode){
-        buffer.writeln(node.text.text);
-      }else if(node is ImageNode){
-        buffer.writeln('[Image]');
+      if(title.isNotEmpty){
+        buffer.writeln(title);
+        buffer.writeln();
+      }
+
+      for(int i=0; i <_document.nodeCount; i++){
+        final node = _document.getNodeAt(i)!;
+        if(node is ParagraphNode){
+          buffer.writeln(node.text.text);
+        }else if(node is ImageNode){
+          buffer.writeln('[Image]');
+        }
+      }
+
+      final content=buffer.toString().trim();
+      if(content.isEmpty) return;
+
+      final fileName = title.isNotEmpty
+          ? '${title.replaceAll(RegExp(r'[^\w\s]'), '_')}.txt'
+          : 'note_${DateTime.now().millisecondsSinceEpoch}.txt';
+
+      final path=await StorageService.saveTextFile(
+          fileName: fileName,
+          content: content
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Saved: $path')),
+        );
+      }
+
+    }catch (e){
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
       }
     }
 
-    final content=buffer.toString().trim();
-    if(content.isEmpty) return;
 
-    final directory = await getExternalStorageDirectory();
-    final folder = Directory('${directory!.path}/MyNotes');
-   // final baseDir=Directory('/storage/emulated/0/Documents');
-    //final folder = Directory('${baseDir.path}/MyNotes');
-
-
-    if (!await folder.exists()) {
-      await folder.create(recursive: true);
-    }
-
-
-    final fileName = title.isNotEmpty
-        ? '${title.replaceAll(RegExp(r'[^\w\s]'), '_')}.txt'
-        : 'note_${DateTime.now().millisecondsSinceEpoch}.txt';
-    final file=File('${folder.path}/$fileName');
-
-    await file.writeAsString(content);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Saved: ${file.path}')),
-      );
-    }
   }
 
   Future<void> _saveAsPDF()async{
@@ -1159,28 +1131,34 @@ class _CreateNoteState extends State<CreateNote> {
           },
         )
     );
-
-    final baseDir=Directory('/storage/emulated/0/Documents');
-    final folder=Directory('${baseDir.path}/MyNotes');
-    if (!await folder.exists()) {
-      await folder.create(recursive: true);
-    }
-
     final fileName = title.isNotEmpty
         ? '${title.replaceAll(RegExp(r'[^\w\s]'), '_')}.pdf'
         : 'note_${DateTime.now().millisecondsSinceEpoch}.pdf';
-    final file=File('${baseDir.path}/$fileName');
-    await file.writeAsBytes(await pdf.save());
+
+    final pdfBytes = await pdf.save();
+    final path= await StorageService.savePdfFile(
+      fileName: fileName,
+      bytes: Uint8List.fromList(pdfBytes),
+    );
+
 
     if(mounted){
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Saved: ${file.path}'))
+          SnackBar(content: Text('Saved: $path'))
       );
     }
   }
 
   Future<void> _saveAsImage()async{
+    final screenHeight = MediaQuery.of(context).size.height;
+
     final fileName = 'note_${DateTime.now().millisecondsSinceEpoch}.png';
+    await SaveAsImage.captureWidget(
+      _buildExportNote(),
+      width: 668,
+      minHeight: screenHeight, // ✅ full page minimum
+    );
+
     final path=await SaveAsImage.saveNoteAsImage(widget: _buildExportNote(), filename: fileName);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1190,44 +1168,52 @@ class _CreateNoteState extends State<CreateNote> {
 
   }
 
-  Widget _buildExportNote(){
+  Widget _buildExportNote() {
+    // Screen size বের করো
+    final screenSize = MediaQuery.of(context).size;
+    final screenHeight = screenSize.height;
+    final screenWidth = screenSize.width;
 
-    return IntrinsicHeight(
-      child: Container(
-        width: 668,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: _bottomBarColor,
-          image: _backgroundImage != null
+    return Container(
+      width: screenWidth,
+      constraints: BoxConstraints(
+        minHeight: screenHeight, // minimum full screen height
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: _bottomBarColor,
+        image: _backgroundImage != null
             ? DecorationImage(
-              image: AssetImage(_backgroundImage!),
-            fit: BoxFit.cover
-          ):null,
-        ),
-
+          image: AssetImage(_backgroundImage!),
+          fit: BoxFit.cover,
+        )
+            : null,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
-
           children: [
             Text(
-             _textEditingController.text,
+              _textEditingController.text,
               style: const TextStyle(
-                fontSize: 32,
+                fontSize: 18,
                 color: Color(0xFFD2FEFF),
-                fontFamily: 'Regular'
+                  fontFamily: 'Regular',
+
               ),
             ),
-            const SizedBox(height: 15),
-            //----------
-            ..._buildExportContent()
+            //const SizedBox(height: 4),
+            Divider(
+              color: Color(0xFFD2FEFF).withOpacity(0.2),
+              thickness: 1.5,
+            ),
+            ..._buildExportContent(),
           ],
         ),
-
       ),
     );
-
-
   }
 
 
@@ -1240,12 +1226,9 @@ class _CreateNoteState extends State<CreateNote> {
 
       if (node is ParagraphNode) {
         widgets.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              node.text.text,
-              style: const TextStyle(color: Colors.white, fontSize: 22),
-            ),
+          Text(
+            node.text.text,
+            style: const TextStyle(color: Color(0xFFD2FEFF), fontSize: 16),
           ),
         );
       }
@@ -1253,7 +1236,7 @@ class _CreateNoteState extends State<CreateNote> {
       if (node is ImageNode) {
         widgets.add(
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: 8,top: 8),
             child:AspectRatio(
               aspectRatio: 16/9,
               child: ClipRRect(

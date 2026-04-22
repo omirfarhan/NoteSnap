@@ -8,6 +8,8 @@ import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../methodChannelStorageService/storage_service.dart';
+
 class SaveAsImage {
   static const double targetwidth=668;
 
@@ -17,14 +19,13 @@ class SaveAsImage {
   })async{
     final bytes=await captureWidget(widget);
 
-    final dir = Directory('/storage/emulated/0/Documents/MyNotes');
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
-    }
+    // StorageService দিয়ে Documents/MyNotes এ save
+    final path = await StorageService.saveImageFile(
+      fileName: filename,
+      bytes: bytes,
+    );
 
-    final file = File('${dir.path}/$filename');
-    await file.writeAsBytes(bytes);
-    return file.path;
+    return path;
   }
 
   /*
@@ -72,7 +73,9 @@ class SaveAsImage {
 
 
   // 🔥 CORE RENDER LOGIC (private)
-  static Future<Uint8List> captureWidget(Widget widget) async {
+  static Future<Uint8List> captureWidget(Widget widget, {
+    double width = 668, double minHeight = 1280
+  }) async {
     final repaintBoundary = RenderRepaintBoundary();
 
     final renderView = RenderView(
@@ -81,9 +84,20 @@ class SaveAsImage {
         child: repaintBoundary,
       ),
       configuration: ViewConfiguration(
-        logicalConstraints: const BoxConstraints(maxWidth: targetwidth),
-        physicalConstraints: const BoxConstraints(maxWidth: targetwidth),
-        devicePixelRatio: 1.0,
+
+        logicalConstraints: BoxConstraints(
+          maxWidth: targetwidth,
+          maxHeight: double.infinity,
+          minHeight: minHeight
+        ),
+
+        physicalConstraints: BoxConstraints(
+          maxWidth: targetwidth,
+          maxHeight: double.infinity,
+          minHeight: minHeight
+        ),
+
+        devicePixelRatio: 2.0,
       ),
       view: WidgetsBinding.instance.platformDispatcher.views.first,
     );
@@ -109,7 +123,7 @@ class SaveAsImage {
     pipelineOwner.flushCompositingBits();
     pipelineOwner.flushPaint();
 
-    final image = await repaintBoundary.toImage(pixelRatio: 1.0);
+    final image = await repaintBoundary.toImage(pixelRatio: 2.0);
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
     if (byteData == null) {
