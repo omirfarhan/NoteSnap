@@ -1021,7 +1021,10 @@ class _CreateNoteState extends State<CreateNote> {
                         Navigator.push(
                           rootContext,
                           MaterialPageRoute(
-                            builder: (_) => ImagePreviewPage(uint8list: bytes),
+                            builder: (_) => ImagePreviewPage(
+                                uint8list: bytes,
+                               isSaveMode: false,
+                            ),
                           ),
                         );
                       }
@@ -1091,11 +1094,29 @@ class _CreateNoteState extends State<CreateNote> {
   Future<void> _saveAsPDF()async{
     final title=_textEditingController.text.trim();
     final pdf=pw.Document();
+    final ttf=pw.Font.ttf(
+        await rootBundle.load('assets/fonts/Inter_28pt-Regular.ttf')
+    );
+
+    // ✅ আগেই সব image bytes load করে নাও
+    final imageDataMap = <String, pw.MemoryImage>{};
+
+    for (int i = 0; i < _document.nodeCount; i++) {
+      final node = _document.getNodeAt(i);
+      if (node is ImageNode) {
+        try {
+          final bytes = await File(node.imageUrl).readAsBytes();
+          imageDataMap[node.imageUrl] = pw.MemoryImage(bytes);
+        } catch (e) {
+          // image load fail হলে skip
+        }
+      }
+    }
 
     pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(12),
+          margin: const pw.EdgeInsets.all(20),
           build: (pw.Context context){
             final widgets=<pw.Widget>[];
 
@@ -1104,7 +1125,8 @@ class _CreateNoteState extends State<CreateNote> {
                 pw.Text(
                     title,
                     style: pw.TextStyle(
-                        fontSize: 18,
+                        fontSize: 30,
+                        font: ttf,
                         fontWeight: pw.FontWeight.bold
                     )
                 ),
@@ -1120,12 +1142,31 @@ class _CreateNoteState extends State<CreateNote> {
                     pw.Text(
                         node.text.text,
                         style: pw.TextStyle(
-                            fontSize: 14
+                            fontSize: 20,
+                          font: ttf,
                         )
                     )
                 );
                 widgets.add(pw.SizedBox(height: 6));
               }
+
+              // ✅ Image node হলে PDF এ add করো
+              if (node is ImageNode) {
+                final memImage = imageDataMap[node.imageUrl];
+                if (memImage != null) {
+                  widgets.add(
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 8),
+                      child: pw.Image(
+                        memImage,
+                        fit: pw.BoxFit.contain,
+                        width: PdfPageFormat.a4.availableWidth,
+                      ),
+                    ),
+                  );
+                }
+              }
+
           }
             return widgets;
           },
@@ -1152,24 +1193,37 @@ class _CreateNoteState extends State<CreateNote> {
   Future<void> _saveAsImage()async{
     final screenHeight = MediaQuery.of(context).size.height;
 
-    final fileName = 'note_${DateTime.now().millisecondsSinceEpoch}.png';
-    await SaveAsImage.captureWidget(
+   // final fileName = 'note_${DateTime.now().millisecondsSinceEpoch}.png';
+    final bytes = await SaveAsImage.captureWidget(
       _buildExportNote(),
       width: 668,
       minHeight: screenHeight, // ✅ full page minimum
     );
 
-    final path=await SaveAsImage.saveNoteAsImage(widget: _buildExportNote(), filename: fileName);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Saved: $path')),
-      );
-    }
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ImagePreviewPage(
+          uint8list: bytes,
+          isSaveMode: true, // ✅ save button দেখাবে
+        ),
+      ),
+    );
+
+    // final path=await SaveAsImage.saveNoteAsImage(widget: _buildExportNote(), filename: fileName);
+    // if (mounted) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text('Saved: $path')),
+    //   );
+    // }
+
+
 
   }
 
   Widget _buildExportNote() {
-    // Screen size বের করো
+
     final screenSize = MediaQuery.of(context).size;
     final screenHeight = screenSize.height;
     final screenWidth = screenSize.width;
@@ -1177,7 +1231,7 @@ class _CreateNoteState extends State<CreateNote> {
     return Container(
       width: screenWidth,
       constraints: BoxConstraints(
-        minHeight: screenHeight, // minimum full screen height
+        minHeight: screenHeight,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
