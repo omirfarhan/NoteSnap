@@ -21,7 +21,8 @@ import 'notebottomcomponent/bottomsheet/image_preview_page.dart';
 import 'notebottomcomponent/checkbox/checkbox_tap_delegate.dart';
 import 'notebottomcomponent/note_image_component_builder.dart';
 
-import 'package:pdf/pdf.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+//import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 
@@ -42,6 +43,7 @@ class CreateNote extends StatefulWidget {
 
 
 class _CreateNoteState extends State<CreateNote> {
+
   bool _isDescriptionFocused = false;
   bool _isInitialized = false;
   bool _isLoading = true;
@@ -1091,16 +1093,28 @@ class _CreateNoteState extends State<CreateNote> {
 
   }
 
+  /*
   Future<void> _saveAsPDF()async{
+
+    pw.MemoryImage? backgroundImage;
     final title=_textEditingController.text.trim();
     final pdf=pw.Document();
+
     final ttf=pw.Font.ttf(
-        await rootBundle.load('assets/fonts/Inter_28pt-Regular.ttf')
+        await rootBundle.load('assets/fonts/NotoSansBengali-Regular.ttf')
     );
+
+
+    if(_backgroundImage != null){
+      try{
+        final bytes = await rootBundle.load(_backgroundImage!);
+        backgroundImage = pw.MemoryImage(bytes.buffer.asUint8List());
+      }catch (e){}
+    }
+
 
     // ✅ আগেই সব image bytes load করে নাও
     final imageDataMap = <String, pw.MemoryImage>{};
-
     for (int i = 0; i < _document.nodeCount; i++) {
       final node = _document.getNodeAt(i);
       if (node is ImageNode) {
@@ -1113,63 +1127,90 @@ class _CreateNoteState extends State<CreateNote> {
       }
     }
 
+    // ✅ Content widgets build করো
+    List<pw.Widget> _buildContent() {
+      final widgets=<pw.Widget>[];
+
+      if(title.isNotEmpty){
+        widgets.add(
+          pw.Text(
+              title,
+              style: pw.TextStyle(
+                  fontSize: 30,
+                  font: ttf,
+                  fontWeight: pw.FontWeight.bold
+              )
+          ),
+        );
+        widgets.add(pw.SizedBox(height: 8));
+      }
+
+      for (int i = 0; i < _document.nodeCount; i++) {
+        final node=_document.getNodeAt(i);
+
+        if(node is ParagraphNode && node.text.text.isNotEmpty){
+          widgets.add(
+              pw.Text(
+                  node.text.text,
+                  style: pw.TextStyle(
+                    fontSize: 25,
+                    font: ttf,
+                    lineSpacing: 4,
+                  )
+              )
+          );
+          widgets.add(pw.SizedBox(height: 6));
+        }
+
+        if (node is ImageNode) {
+          final memImage = imageDataMap[node.imageUrl];
+          if (memImage != null) {
+            widgets.add(
+              pw.Padding(
+                padding: const pw.EdgeInsets.symmetric(vertical: 8),
+                child: pw.Image(
+                  memImage,
+                  fit: pw.BoxFit.contain,
+                  width: PdfPageFormat.a4.availableWidth,
+                ),
+              ),
+            );
+          }
+        }
+
+      }
+
+      return widgets;
+    }
+
     pdf.addPage(
         pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(20),
-          build: (pw.Context context){
-            final widgets=<pw.Widget>[];
 
-            if(title.isNotEmpty){
-              widgets.add(
-                pw.Text(
-                    title,
-                    style: pw.TextStyle(
-                        fontSize: 30,
-                        font: ttf,
-                        fontWeight: pw.FontWeight.bold
-                    )
-                ),
-              );
-              widgets.add(pw.SizedBox(height: 8));
-            }
+          pageTheme: pw.PageTheme(
+            pageFormat: PdfPageFormat.a4,
+            margin: const pw.EdgeInsets.all(20),
+            theme: pw.ThemeData.withFont(base: ttf),
+            buildBackground: backgroundImage != null
+                ? (pw.Context context) => pw.FullPage(
+              ignoreMargins: true,
+              child: pw.Image(
+                backgroundImage!,
+                fit: pw.BoxFit.cover,
+                width: PdfPageFormat.a4.width,
+                height: PdfPageFormat.a4.height,
+              ),
+            )
+                : (pw.Context context) => pw.FullPage(
+              ignoreMargins: true,
+              child: pw.Container(
+                width: PdfPageFormat.a4.width,
+                height: PdfPageFormat.a4.height,
+                color: PdfColor.fromInt(_bottomBarColor.value),
+              ),
+            ),
+          ),
 
-            for(int i=0; i<_document.nodeCount; i++){
-              final node=_document.getNodeAt(i);
-
-              if(node is ParagraphNode && node.text.text.isNotEmpty){
-                widgets.add(
-                    pw.Text(
-                        node.text.text,
-                        style: pw.TextStyle(
-                            fontSize: 20,
-                          font: ttf,
-                        )
-                    )
-                );
-                widgets.add(pw.SizedBox(height: 6));
-              }
-
-              // ✅ Image node হলে PDF এ add করো
-              if (node is ImageNode) {
-                final memImage = imageDataMap[node.imageUrl];
-                if (memImage != null) {
-                  widgets.add(
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.symmetric(vertical: 8),
-                      child: pw.Image(
-                        memImage,
-                        fit: pw.BoxFit.contain,
-                        width: PdfPageFormat.a4.availableWidth,
-                      ),
-                    ),
-                  );
-                }
-              }
-
-          }
-            return widgets;
-          },
+          build: (pw.Context context) => _buildContent(),
         )
     );
     final fileName = title.isNotEmpty
@@ -1186,6 +1227,178 @@ class _CreateNoteState extends State<CreateNote> {
     if(mounted){
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Saved: $path'))
+      );
+    }
+  }
+
+   */
+
+  Future<void> _saveAsPDF() async {
+    final title = _textEditingController.text.trim();
+
+    // 🔹 Font load (Serif = better Bangla)
+    final regularFontData =
+    await rootBundle.load('assets/fonts/NotoSerifBengali-Regular.ttf');
+    final boldFontData =
+    await rootBundle.load('assets/fonts/NotoSerifBengali-Bold.ttf');
+
+    final regularFont =
+    PdfTrueTypeFont(regularFontData.buffer.asUint8List(), 20);
+    final boldFont =
+    PdfTrueTypeFont(boldFontData.buffer.asUint8List(), 30);
+
+    // 🔹 Background image
+    Uint8List? backgroundBytes;
+    if (_backgroundImage != null) {
+      try {
+        final data = await rootBundle.load(_backgroundImage!);
+        backgroundBytes = data.buffer.asUint8List();
+      } catch (_) {}
+    }
+
+    // 🔹 Content images
+    final imageDataMap = <String, Uint8List>{};
+    for (int i = 0; i < _document.nodeCount; i++) {
+      final node = _document.getNodeAt(i);
+      if (node is ImageNode) {
+        try {
+          imageDataMap[node.imageUrl] =
+          await File(node.imageUrl).readAsBytes();
+        } catch (_) {}
+      }
+    }
+
+    // 🔹 PDF init
+    final pdfDoc = PdfDocument();
+    pdfDoc.pageSettings.size = PdfPageSize.a4;
+    pdfDoc.pageSettings.margins.all = 20;
+
+    PdfPage page = pdfDoc.pages.add();
+
+    final pageWidth = page.getClientSize().width;
+    final pageHeight = page.getClientSize().height;
+    final contentWidth = pageWidth - 40;
+
+    double yOffset = 0;
+
+    final textBrush = PdfSolidBrush(PdfColor(0xD2, 0xFF, 0xFF));
+
+    // 🔹 Draw background
+    void drawBackground(PdfPage p) {
+      if (backgroundBytes != null) {
+        final bg = PdfBitmap(backgroundBytes!);
+        p.graphics.drawImage(
+          bg,
+          Rect.fromLTWH(0, 0, p.size.width, p.size.height),
+        );
+      } else {
+        p.graphics.drawRectangle(
+          brush: PdfSolidBrush(PdfColor(
+            _bottomBarColor.red,
+            _bottomBarColor.green,
+            _bottomBarColor.blue,
+          )),
+          bounds: Rect.fromLTWH(0, 0, p.size.width, p.size.height),
+        );
+      }
+    }
+
+    drawBackground(page);
+
+    // 🔹 Page break check
+    void checkNewPage(double neededHeight) {
+      if (yOffset + neededHeight > pageHeight - 40) {
+        page = pdfDoc.pages.add();
+        drawBackground(page);
+        yOffset = 0;
+      }
+    }
+
+    // 🔹 Title
+    if (title.isNotEmpty) {
+      final size = boldFont.measureString(title, layoutArea: Size(contentWidth, 0));
+
+      checkNewPage(size.height);
+
+      page.graphics.drawString(
+        title,
+        boldFont,
+        brush: textBrush,
+        bounds: Rect.fromLTWH(20, yOffset, contentWidth, pageHeight),
+        format: PdfStringFormat(
+          wordWrap: PdfWordWrapType.word,
+          lineSpacing: 6,
+        ),
+      );
+
+      yOffset += size.height + 16;
+    }
+
+    // 🔹 Content loop
+    for (int i = 0; i < _document.nodeCount; i++) {
+      final node = _document.getNodeAt(i);
+
+      // 📝 Text
+      if (node is ParagraphNode && node.text.text.isNotEmpty) {
+        final text = node.text.text;
+
+        final size =
+        regularFont.measureString(text, layoutArea: Size(contentWidth, 0));
+
+        checkNewPage(size.height);
+
+        page.graphics.drawString(
+          text,
+          regularFont,
+          brush: textBrush,
+          bounds: Rect.fromLTWH(20, yOffset, contentWidth, pageHeight),
+          format: PdfStringFormat(
+            wordWrap: PdfWordWrapType.word,
+            lineSpacing: 6,
+          ),
+        );
+
+        yOffset += size.height + 12;
+      }
+
+      // 🖼️ Image
+      if (node is ImageNode) {
+        final imgBytes = imageDataMap[node.imageUrl];
+
+        if (imgBytes != null) {
+          final image = PdfBitmap(imgBytes);
+
+          final imgHeight =
+              (contentWidth / image.width) * image.height;
+
+          checkNewPage(imgHeight);
+
+          page.graphics.drawImage(
+            image,
+            Rect.fromLTWH(20, yOffset, contentWidth, imgHeight),
+          );
+
+          yOffset += imgHeight + 16;
+        }
+      }
+    }
+
+    // 🔹 Save
+    final bytes = await pdfDoc.save();
+    pdfDoc.dispose();
+
+    final fileName = title.isNotEmpty
+        ? '${title.replaceAll(RegExp(r'[^\w\s]'), '_')}.pdf'
+        : 'note_${DateTime.now().millisecondsSinceEpoch}.pdf';
+
+    final path = await StorageService.savePdfFile(
+      fileName: fileName,
+      bytes: Uint8List.fromList(bytes),
+    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Saved: $path')),
       );
     }
   }
