@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -27,7 +29,9 @@ class StorageService {
     final hasPermission = await requestPermission();
     if (!hasPermission) throw Exception('Storage permission denied');
 
-    final bytes = Uint8List.fromList(content.codeUnits);
+    //final bytes = Uint8List.fromList(content.codeUnits);
+    // ✅ codeUnits এর বদলে utf8.encode ব্যবহার করো
+    final bytes = Uint8List.fromList(utf8.encode(content));
 
     final path = await _channel.invokeMethod<String>('saveFile', {
       'fileName': fileName,
@@ -54,6 +58,7 @@ class StorageService {
       'mimeType': 'application/pdf',
       'subFolder': subFolder,
     });
+
 
     return path ?? '';
   }

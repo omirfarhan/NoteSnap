@@ -32,30 +32,11 @@ import io.flutter.plugin.common.MethodChannel;
 
 public class MainActivity extends FlutterActivity {
 
-    //private static final String CHANNEL = "samples.flutter.dev/battery";
-    private static final String CHANNEL = "com.yourapp/storage";
+       private static final String CHANNEL = "com.yourapp/storage";
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
-
-//        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(),
-//                CHANNEL
-//        ).setMethodCallHandler((call, result) -> {
-//
-//            if (call.method.equals("getBatteryLevel")) {
-//                int batteryLevel = getBatteryLevel();
-//
-//                if (batteryLevel != -1) {
-//                    result.success(batteryLevel);
-//                } else {
-//                    result.error("UNAVAILABLE", "Battery level not available.", null);
-//                }
-//            } else {
-//                result.notImplemented();
-//            }
-//
-//        });
 
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
                 .setMethodCallHandler((call, result) -> {

@@ -16,8 +16,6 @@ import 'package:notes/ui/widgets/note_fab.dart';
 import 'package:notes/ui/widgets/note_grid.dart';
 import 'package:provider/provider.dart';
 
-import 'method_channel_use.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -189,17 +187,6 @@ class _MainPageState extends State<MainPage> {
                     :_deleteSelectedNotes,
                 icon:  const Icon(Icons.delete_outline)
             ),
-
-          IconButton(
-              onPressed: (){
-                Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (context) => MethodChannelUse()
-                    ));
-
-              },
-              icon: Icon(Icons.notifications_active_outlined)
-          ),
 
           IconButton(onPressed: ()async{
            final selected=await Navigator.of(context).push(
