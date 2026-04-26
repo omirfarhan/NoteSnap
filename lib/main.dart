@@ -2,6 +2,7 @@ import 'dart:convert';
 
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:notes/constants/routes.dart';
@@ -11,14 +12,31 @@ import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/AppLocked/app_lock_wrapper.dart';
 import 'package:notes/ui/create_note.dart';
 import 'package:notes/ui/folder_list.dart';
+import 'package:notes/ui/notifincation_in_firebase.dart';
 import 'package:notes/ui/settings_page.dart';
 import 'package:notes/ui/widgets/note_fab.dart';
 import 'package:notes/ui/widgets/note_grid.dart';
 import 'package:provider/provider.dart';
 
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("Background message: ${message.notification?.title}");
+}
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  await FirebaseMessaging.instance
+      .setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
   runApp(
     MultiProvider(
         providers: [
@@ -38,7 +56,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Note App',
-      home: const AppLockWrapper(child: MainPage()), // ← এখানে wrap করুন,
+      home: const AppLockWrapper(child: MainPage()),
       routes: {
         SettingspageRoute: (context) => const SettingsPage(),
         CloudFilesRoute: (context) => const CloudFiles(),
@@ -47,7 +65,7 @@ class MyApp extends StatelessWidget {
       },
       //0xFF239AC4
       theme: ThemeData(
-        scaffoldBackgroundColor: Color(0xFF137FA5), //Full app background color set
+        scaffoldBackgroundColor: Color(0xFF137FA5),
         appBarTheme: AppBarTheme(
           backgroundColor: Color(0xFF137FA5),
           titleTextStyle: TextStyle(
@@ -82,6 +100,8 @@ class _MainPageState extends State<MainPage> {
   Folder? _selectedFolder;
   Set<int> _selectedNoteIds = {};
   bool _isSelecting = false;
+  NotifincationInFirebase notificationservices=NotifincationInFirebase();
+
 
   String _getPlainTextFromContent(String content) {
     if (content.isEmpty) return '';
@@ -152,6 +172,9 @@ class _MainPageState extends State<MainPage> {
 
   }
 
+  // আপনার যেকোনো Screen বা initState এ:
+
+
 
   @override
   void initState() {
@@ -161,6 +184,11 @@ class _MainPageState extends State<MainPage> {
     _initFuture = _notesService.getOrCreateFolder(
       foldername: 'All Folder',
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notificationservices.init();
+    });
+
   }
 
 
@@ -188,6 +216,13 @@ class _MainPageState extends State<MainPage> {
                 icon:  const Icon(Icons.delete_outline)
             ),
 
+          // IconButton(onPressed: (){
+          //   Navigator.of(context).push(
+          //       MaterialPageRoute(
+          //           builder: (context) => NotifincationInFirebase(),
+          //       ));
+          // }, icon: Icon(Icons.notifications_on_outlined)),
+
           IconButton(onPressed: ()async{
            final selected=await Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => FolderList())
@@ -202,6 +237,7 @@ class _MainPageState extends State<MainPage> {
              });
            }
           }, icon: Icon(Icons.folder_copy_outlined)),
+
 
 
           IconButton(onPressed: (){

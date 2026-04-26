@@ -14,7 +14,6 @@ class StorageService {
     if (sdk >= 29) {
       return true;
     } else {
-      // Android 9 এবং নিচে
       final status = await Permission.storage.request();
       return status.isGranted;
     }
@@ -29,8 +28,7 @@ class StorageService {
     final hasPermission = await requestPermission();
     if (!hasPermission) throw Exception('Storage permission denied');
 
-    //final bytes = Uint8List.fromList(content.codeUnits);
-    // ✅ codeUnits এর বদলে utf8.encode ব্যবহার করো
+
     final bytes = Uint8List.fromList(utf8.encode(content));
 
     final path = await _channel.invokeMethod<String>('saveFile', {
