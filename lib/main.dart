@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:notes/constants/routes.dart';
@@ -12,18 +13,34 @@ import 'package:notes/services/crud/notes_service.dart';
 import 'package:notes/ui/AppLocked/app_lock_wrapper.dart';
 import 'package:notes/ui/create_note.dart';
 import 'package:notes/ui/folder_list.dart';
-import 'package:notes/ui/notifincation_in_firebase.dart';
+import 'package:notes/Data/notifincation_in_firebase.dart';
 import 'package:notes/ui/settings_page.dart';
 import 'package:notes/ui/widgets/note_fab.dart';
 import 'package:notes/ui/widgets/note_grid.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'firebase_notification.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
+
+  final prefs = await SharedPreferences.getInstance();
+  List<String> notifications = prefs.getStringList('mydatabase') ?? [];
+
+  notifications.add(jsonEncode({
+    'title': message.notification?.title ?? '',
+    'body': message.notification?.body ?? '',
+    'type': message.data['type'] ?? '',
+    'image': message.data['image'] ?? '',
+    'time': DateTime.now().toString(),
+  }));
+
+  await prefs.setStringList('mydatabase', notifications);
+
   print("Background message: ${message.notification?.title}");
 }
-
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +73,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Note App',
+      navigatorKey: navigatorKey,
       home: const AppLockWrapper(child: MainPage()),
       routes: {
         SettingspageRoute: (context) => const SettingsPage(),
@@ -100,7 +118,9 @@ class _MainPageState extends State<MainPage> {
   Folder? _selectedFolder;
   Set<int> _selectedNoteIds = {};
   bool _isSelecting = false;
+
   NotifincationInFirebase notificationservices=NotifincationInFirebase();
+  //NotificationService notificationServices = NotificationService();
 
 
   String _getPlainTextFromContent(String content) {
@@ -186,8 +206,21 @@ class _MainPageState extends State<MainPage> {
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      notificationservices.init();
+      notificationservices.init(context);
     });
+
+    // notificationServices.requestNotificationPermission();
+    // notificationServices.forgroundMessage();
+    // notificationServices.firebaseInit(context);
+    // notificationServices.setupInteractMessage(context);
+    // notificationServices.isTokenRefresh();
+    //
+    // notificationServices.getDeviceToken().then((value){
+    //   if (kDebugMode) {
+    //     print('device token');
+    //     print(value);
+    //   }
+    // });
 
   }
 
@@ -216,12 +249,12 @@ class _MainPageState extends State<MainPage> {
                 icon:  const Icon(Icons.delete_outline)
             ),
 
-          // IconButton(onPressed: (){
-          //   Navigator.of(context).push(
-          //       MaterialPageRoute(
-          //           builder: (context) => NotifincationInFirebase(),
-          //       ));
-          // }, icon: Icon(Icons.notifications_on_outlined)),
+          IconButton(onPressed: (){
+            Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (context) => FirebaseNotification(title: '', body: '', image: '',),
+                ));
+          }, icon: Icon(Icons.notifications_on_outlined)),
 
           IconButton(onPressed: ()async{
            final selected=await Navigator.of(context).push(
