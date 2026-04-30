@@ -25,7 +25,7 @@ class ImagePreviewPage extends StatelessWidget {
             fontFamily: 'Regular'
         ),),
         actions: [
-          if (isSaveMode) // ✅ save mode এ save button
+          if (isSaveMode)
             IconButton(
               onPressed: () async {
                 final fileName = 'note_${DateTime.now().millisecondsSinceEpoch}.png';
@@ -43,7 +43,7 @@ class ImagePreviewPage extends StatelessWidget {
               },
               icon: const Icon(Icons.save_alt, color: Color(0xFFD9FFFF)),
             )
-          else // ✅ share mode এ share button
+          else
             IconButton(
               onPressed: () async {
                 await SaveAsImage.shareImage(uint8list);
@@ -59,7 +59,6 @@ class ImagePreviewPage extends StatelessWidget {
           child: FittedBox(
             fit: BoxFit.contain,
             child: Image.memory(uint8list),
-
           ),
         ),
       ),

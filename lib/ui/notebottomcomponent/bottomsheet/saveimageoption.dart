@@ -19,7 +19,6 @@ class SaveAsImage {
   })async{
     final bytes=await captureWidget(widget);
 
-    // StorageService দিয়ে Documents/MyNotes এ save
     final path = await StorageService.saveImageFile(
       fileName: filename,
       bytes: bytes,
@@ -28,51 +27,8 @@ class SaveAsImage {
     return path;
   }
 
-  /*
-  static Future<Uint8List> _captureWidget(Widget widget) async{
-    final repaintBoundary = RenderRepaintBoundary();
-
-    final renderView = RenderView(
-      child: RenderPositionedBox(
-        alignment: Alignment.center,
-        child: repaintBoundary,
-      ),
-      configuration: ViewConfiguration(
-        logicalConstraints: BoxConstraints.tight(Size(1080, 1920)),
-        physicalConstraints: BoxConstraints.tight(Size(1080 * 3.0, 1920 * 3.0)),
-        devicePixelRatio: 3.0,
-      ),
-      view: WidgetsBinding.instance.platformDispatcher.views.first,
-    );
-
-    final pipelineOwner = PipelineOwner();
-    final buildOwner = BuildOwner(focusManager: FocusManager());
-
-    final rootElement = RenderObjectToWidgetAdapter<RenderBox>(
-      container: repaintBoundary,
-      child: Directionality(
-        textDirection: TextDirection.ltr,
-        child: widget,
-      ),
-    ).attachToRenderTree(buildOwner);
-
-    buildOwner.buildScope(rootElement);
-    buildOwner.finalizeTree();
-
-    pipelineOwner.flushLayout();
-    pipelineOwner.flushCompositingBits();
-    pipelineOwner.flushPaint();
-
-    final image = await repaintBoundary.toImage(pixelRatio: 3.0);
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    return byteData!.buffer.asUint8List();
-
-  }
-
-   */
 
 
-  // 🔥 CORE RENDER LOGIC (private)
   static Future<Uint8List> captureWidget(Widget widget, {
     double width = 668, double minHeight = 1280
   }) async {

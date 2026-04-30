@@ -274,11 +274,7 @@ class _CloudFilesState extends State<CloudFiles> {
                                 ),
                               );
                             }
-
-
                           },
-
-
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 150),
                             decoration: BoxDecoration(
@@ -302,32 +298,18 @@ class _CloudFilesState extends State<CloudFiles> {
                                   fontSize: 18,
                                 ),
                               ),
-                              // trailing: Text(
-                              //   '${folder.length ?? 0}', // যদি থাকে
-                              //   style: const TextStyle(
-                              //     color: Color(0xFFE8F8FD),
-                              //     fontSize: 12,
-                              //     fontFamily: 'Regular',
-                              //   ),
-                              // ),
+
                             ),
                           ),
                         ),
-
-
-
                       );
-
                     }
                   ),
                 ),
-
               ],
-
             ],
           ),
         ),
-        
       );
   }
 
@@ -381,30 +363,21 @@ class _CloudFilesState extends State<CloudFiles> {
 
 
   Future<void> _loadAccessToken() async {
-
     authProviderr = Provider.of<AuthProvider>(context, listen: false);
-
-
     setState(() {
       isLoading = true;
       accessTokem=authProviderr.accessToken;
     });
-
-
-
     try {
       final success= await authProviderr.getAccessTokenFromServer(); // এই method provider এ রাখবে
       if(success!= null){
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success)));
       }
-
       await getdriveStorage();
       await loadDriveFile();
-
     }catch (e) {
       print("Error loading token: $e");
     }
-
     setState(() {
       isLoading = false;
     });

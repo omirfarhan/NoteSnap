@@ -9,6 +9,15 @@ class CloudNoteDetailPage extends StatelessWidget {
   final CloudNoteModel note;
   const CloudNoteDetailPage({super.key,required this.note});
 
+  // এই helper method যোগ করুন:
+  Color _getBackgroundColor() {
+    if (note.background == null) return const Color(0xFF137FA5);
+    final parsed = int.tryParse(note.background!);
+    if (parsed == null) return const Color(0xFF137FA5);
+    return Color(parsed);
+  }
+
+
   String _formatTime(int ms) {
     if (ms == 0) return '';
     final dt = DateTime.fromMillisecondsSinceEpoch(ms);
@@ -132,9 +141,13 @@ class CloudNoteDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final bgColor = _getBackgroundColor();
+
+
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: const Color(0xFF137FA5),
+      backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: Text(
@@ -151,16 +164,7 @@ class CloudNoteDetailPage extends StatelessWidget {
         
         width: double.infinity,
         height: double.infinity,
-        decoration: note.background != null
-            ? BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(note.background!),
-            fit: BoxFit.cover,
-          ),
-        )
-            : BoxDecoration(
-          color: const Color(0xFF137FA5),
-        ),
+        color: bgColor,
 
         child: SafeArea(
           child: SingleChildScrollView(

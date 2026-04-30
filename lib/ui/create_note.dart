@@ -14,15 +14,12 @@ import 'package:notes/ui/notebottomcomponent/bottomsheet/bottom_sheet_screen.dar
 import 'package:notes/ui/notebottomcomponent/bottomsheet/saveimageoption.dart';
 import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_node.dart';
 import 'package:notes/ui/notebottomcomponent/fullscreenimagepage.dart';
-import 'package:notes/utilities/generic/get_arguments.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:super_editor/super_editor.dart';
 import 'notebottomcomponent/bottomsheet/image_preview_page.dart';
 import 'notebottomcomponent/checkbox/checkbox_tap_delegate.dart';
 import 'notebottomcomponent/note_image_component_builder.dart';
 
 import 'package:syncfusion_flutter_pdf/pdf.dart';
-//import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class CreateNote extends StatefulWidget {
@@ -58,21 +55,20 @@ class _CreateNoteState extends State<CreateNote> {
   String? _imagepath;
   String _currentTime="";
   String get currentTime=> _currentTime;
-  String? _backgroundImage;
+
 
 
   DatabaseNote? _note;
   late final NotesService _notesService;
   late final TextEditingController _textEditingController;
 
-  // SuperEditor এর জন্য
   late MutableDocument _document;
   late Editor _editor;
   late MutableDocumentComposer _composer;
 
   late final FocusNode _descriptionFocusNode;
   late final FocusNode _titleFocusNode;
-  // late final UndoHistoryController _undoHistoryController;
+
 
   Color _bottomBarColor = const Color(0xFF137FA5); // default color
   Color get bottomBarColor => _bottomBarColor;
@@ -83,9 +79,9 @@ class _CreateNoteState extends State<CreateNote> {
     if (widget.note != null) {
       _note = widget.note;
       _textEditingController.text = widget.note!.title;
-      _backgroundImage = widget.note!.background;
-      _bottomBarColor = BottomSheetScreen.backgrounds[_backgroundImage]
-          ?? const Color(0xFF076687);
+      _bottomBarColor = widget.note!.background != null
+          ? Color(int.parse(widget.note!.background!))
+          : const Color(0xFF137FA5);
       if (widget.note!.content.isNotEmpty) {
         try {
           _document = _documentFromJson(widget.note!.content);
@@ -219,7 +215,7 @@ class _CreateNoteState extends State<CreateNote> {
         note: note,
         text: title,
         content: content,
-        background: _backgroundImage
+        background: _bottomBarColor.value.toString()
       );
 
     }
@@ -461,7 +457,6 @@ class _CreateNoteState extends State<CreateNote> {
                 padding:const EdgeInsetsGeometry.symmetric(horizontal: 12),
               child: Row(
                 children: [
-
                  SizedBox(width: 1),
                  InkWell(onTap: () {
                    _exportbottomsheet();
@@ -493,8 +488,6 @@ class _CreateNoteState extends State<CreateNote> {
                 ],
               ),
             )
-
-
         ],
       ),
         bottomNavigationBar: _isDescriptionFocused
@@ -513,9 +506,8 @@ class _CreateNoteState extends State<CreateNote> {
                   height: 40,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: _backgroundImage!=null
-                    ? _bottomBarColor
-                    :const Color(0xff67bfdc),
+                    //1st change
+                    color:  _bottomBarColor.withOpacity(0.2),
 
                   ),
                   child: Row(
@@ -558,14 +550,14 @@ class _CreateNoteState extends State<CreateNote> {
               : RepaintBoundary(
                 key: _globalKey,
                 child: Container(
-                        decoration: _backgroundImage != null
-                            ? BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage(_backgroundImage!),
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                            : null,
+                        // decoration: _backgroundImage != null
+                        //     ? BoxDecoration(
+                        //   image: DecorationImage(
+                        //     image: AssetImage(_backgroundImage!),
+                        //     fit: BoxFit.cover,
+                        //   ),
+                        // )
+                        //     : null,
                         child: Listener(
                           onPointerDown: (event) {
                             _hideToolbar();
@@ -834,19 +826,12 @@ class _CreateNoteState extends State<CreateNote> {
 
   void _insertCheckbox() {
     final selection = _composer.selection;
-
     if (selection == null) return;
-
     final position = selection.extent;
-
     final node = _document.getNodeById(position.nodeId);
-
     if (node is! ParagraphNode) return;
-
     final nodePosition = position.nodePosition;
-
     if (nodePosition is! TextNodePosition) return;
-
     _editor.execute([
       InsertTextRequest(
         documentPosition: DocumentPosition(
@@ -857,7 +842,6 @@ class _CreateNoteState extends State<CreateNote> {
         attributions: {},
       ),
     ]);
-
     _saveNote();
   }
 
@@ -919,7 +903,7 @@ class _CreateNoteState extends State<CreateNote> {
       builder: (context) {
         return BottomSheetScreen(
           onThemeSelected: _applyTheme,
-          currentBackground: _backgroundImage,
+          currentColor: _bottomBarColor,
         );
       },
     ).then((_) {
@@ -931,14 +915,21 @@ class _CreateNoteState extends State<CreateNote> {
     });
   }
 
-  void _applyTheme(String? imagePath)async{
+  void _applyTheme(Color color)async{
     setState(() {
-      _backgroundImage=imagePath;
-      _bottomBarColor = BottomSheetScreen.backgrounds[imagePath]
-          ?? const Color(0xFF076687);
+
+      //_backgroundImage = null; // সবসময় null
+      _bottomBarColor = color;
     });
 
     _saveNote();
+    // color কে string হিসেবে save করুন
+    // await _notesService.updateNote(
+    //   note: _note!,
+    //   text: _textEditingController.text,
+    //   content: _documentToJson(),
+    //   background: color.value.toString(), // int → string
+    //);
   }
 
   void _exportbottomsheet() {
@@ -1127,30 +1118,42 @@ class _CreateNoteState extends State<CreateNote> {
     final contentWidth = pageWidth - 40;
     double yOffset = 0;
 
-    // ✅ Text color - background image থাকলে dark, না থাকলে light
-    final textBrush = _backgroundImage != null
-        ? PdfSolidBrush(PdfColor(30, 30, 30))        // dark color
-        : PdfSolidBrush(PdfColor(0xD2, 0xFF, 0xFF)); // light color
+//     // ✅ Text color - background image থাকলে dark, না থাকলে light
+//     final textBrush = _backgroundImage != null
+//         ? PdfSolidBrush(PdfColor(30, 30, 30))        // dark color
+//         : PdfSolidBrush(PdfColor(0xD2, 0xFF, 0xFF)); // light color
+//
+// // ✅ Background draw function
+//     void drawBackground(PdfPage p) {
+//       if (_backgroundImage != null) {
+//         // সাদা background
+//         p.graphics.drawRectangle(
+//           brush: PdfSolidBrush(PdfColor(255, 255, 255)),
+//           bounds: Rect.fromLTWH(0, 0, p.size.width, p.size.height),
+//         );
+//       } else {
+//         // solid color background
+//         p.graphics.drawRectangle(
+//           brush: PdfSolidBrush(PdfColor(
+//             _bottomBarColor.red,
+//             _bottomBarColor.green,
+//             _bottomBarColor.blue,
+//           )),
+//           bounds: Rect.fromLTWH(0, 0, p.size.width, p.size.height),
+//         );
+//       }
+    // এখন হবে:
+    final textBrush = PdfSolidBrush(PdfColor(0xD2, 0xFF, 0xFF));
 
-// ✅ Background draw function
     void drawBackground(PdfPage p) {
-      if (_backgroundImage != null) {
-        // সাদা background
-        p.graphics.drawRectangle(
-          brush: PdfSolidBrush(PdfColor(255, 255, 255)),
-          bounds: Rect.fromLTWH(0, 0, p.size.width, p.size.height),
-        );
-      } else {
-        // solid color background
-        p.graphics.drawRectangle(
-          brush: PdfSolidBrush(PdfColor(
-            _bottomBarColor.red,
-            _bottomBarColor.green,
-            _bottomBarColor.blue,
-          )),
-          bounds: Rect.fromLTWH(0, 0, p.size.width, p.size.height),
-        );
-      }
+      p.graphics.drawRectangle(
+        brush: PdfSolidBrush(PdfColor(
+          _bottomBarColor.red,
+          _bottomBarColor.green,
+          _bottomBarColor.blue,
+        )),
+        bounds: Rect.fromLTWH(0, 0, p.size.width, p.size.height),
+      );
 
     }
 
@@ -1244,8 +1247,6 @@ class _CreateNoteState extends State<CreateNote> {
 
   Future<void> _saveAsImage()async{
     final screenHeight = MediaQuery.of(context).size.height;
-
-   // final fileName = 'note_${DateTime.now().millisecondsSinceEpoch}.png';
     final bytes = await SaveAsImage.captureWidget(
       _buildExportNote(),
       width: 668,
@@ -1263,14 +1264,6 @@ class _CreateNoteState extends State<CreateNote> {
       ),
     );
 
-    // final path=await SaveAsImage.saveNoteAsImage(widget: _buildExportNote(), filename: fileName);
-    // if (mounted) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     SnackBar(content: Text('Saved: $path')),
-    //   );
-    // }
-
-
 
   }
 
@@ -1286,15 +1279,18 @@ class _CreateNoteState extends State<CreateNote> {
         minHeight: screenHeight,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: _bottomBarColor,
-        image: _backgroundImage != null
-            ? DecorationImage(
-          image: AssetImage(_backgroundImage!),
-          fit: BoxFit.cover,
-        )
-            : null,
-      ),
+      // decoration: BoxDecoration(
+      //   color: _bottomBarColor,
+      //   image: _backgroundImage != null
+      //       ? DecorationImage(
+      //     image: AssetImage(_backgroundImage!),
+      //     fit: BoxFit.cover,
+      //   )
+      //       : null,
+      // )
+        decoration: BoxDecoration(
+          color: _bottomBarColor,
+        ),
       child: Padding(
         padding: const EdgeInsets.only(top: 14.0),
         child: Column(
@@ -1310,7 +1306,7 @@ class _CreateNoteState extends State<CreateNote> {
 
               ),
             ),
-            //const SizedBox(height: 4),
+
             Divider(
               color: Color(0xFFD2FEFF).withOpacity(0.2),
               thickness: 1.5,
@@ -1324,9 +1320,7 @@ class _CreateNoteState extends State<CreateNote> {
 
 
   List<Widget> _buildExportContent() {
-
     final widgets = <Widget>[];
-
     for (int i = 0; i < _document.nodeCount; i++) {
       final node = _document.getNodeAt(i)!;
 
@@ -1349,7 +1343,7 @@ class _CreateNoteState extends State<CreateNote> {
                 borderRadius: BorderRadius.circular(8),
                 child: Image.file(
                     File(node.imageUrl),
-                    fit: BoxFit.cover,   // image crop করে container fill করবে
+                    fit: BoxFit.cover,
               ),
             )
 

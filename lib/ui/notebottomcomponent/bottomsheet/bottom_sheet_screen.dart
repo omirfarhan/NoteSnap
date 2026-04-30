@@ -1,25 +1,38 @@
 import 'package:flutter/material.dart';
 
 class BottomSheetScreen extends StatelessWidget {
-  final Function(String? ) onThemeSelected;
-  final String? currentBackground;
+  final Function(Color) onThemeSelected;
+  final Color? currentColor;
+
   const BottomSheetScreen({
     super.key,
     required this.onThemeSelected,
-    this.currentBackground,
+    this.currentColor,
   });
 
-  static const Map<String?, Color> backgrounds = {
-    null: Color(0xFF137FA5),
-    'assets/pic_1.jpg': Color(0xFF1A2320),
-    'assets/pic_2.jpg': Color(0xFF091822),
-    'assets/pic_3.jpg': Color(0xFF65857E),
-    'assets/pic_4.jpg': Color(0xFF242934),
-  };
+  static const List<Color> colors = [
+    Color(0xFF137FA5),
+    Color(0xFF09021f),
+    Color(0xFF170b3d),
+    Color(0xFF28185a),
+    Color(0xFF3b2875),
+    Color(0xFF554094),
+    Color(0xFF8571bf),
+    Color(0xFF180D60),
+    Color(0xFF280053),
+    Color(0xFF4A2F9B),
+    Color(0xFF1A1A4A),
+    Color(0xFF16066A),
+    Color(0xFF15703A),
+    Color(0xFF16704A),
+    Color(0xFF012437),
+    Color(0xFF2A6250),
+    Color(0xFF97CEAD),
+    Color(0xFFE5F3DD)
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final entries = backgrounds.entries.toList();
-
     return SizedBox(
       height: MediaQuery.sizeOf(context).height / 5,
       width: double.infinity,
@@ -36,15 +49,16 @@ class BottomSheetScreen extends StatelessWidget {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemCount: entries.length,
+                itemCount: colors.length,
                 itemBuilder: (context, index) {
-                  final bg = entries[index].key;
-                  final color = entries[index].value;
-                  final isSelected = currentBackground == bg;
+                  final color = colors[index];
+
+                  final isSelected = currentColor == color;
 
                   return GestureDetector(
                     onTap: () {
-                      onThemeSelected(bg);
+
+                      onThemeSelected(color);
                       Navigator.pop(context);
                     },
                     child: Container(
@@ -56,13 +70,7 @@ class BottomSheetScreen extends StatelessWidget {
                           color: isSelected ? Colors.white : Colors.transparent,
                           width: 2.5,
                         ),
-                        color: bg == null ? color : null,
-                        image: bg != null
-                            ? DecorationImage(
-                          image: AssetImage(bg),
-                          fit: BoxFit.cover,
-                        )
-                            : null,
+                        color: color,
                       ),
                       child: isSelected
                           ? const Icon(Icons.check, color: Colors.white)
