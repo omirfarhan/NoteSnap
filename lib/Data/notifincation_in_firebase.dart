@@ -137,7 +137,7 @@ class NotifincationInFirebase {
 
     notifications.add(newNotification);
     await prefs.setStringList('mydatabase', notifications);
-    print('Notification saved: $newNotification');
+
 
   }
 

@@ -227,7 +227,7 @@ class AuthProvider extends ChangeNotifier{
          final data= jsonDecode(response.body);
          _accessToken=data['accessToken'];
 
-         print('your server accessToken is: $_accessToken');
+
          expiretime=DateTime.now().add(Duration(hours: 1));
          notifyListeners();
        }else{

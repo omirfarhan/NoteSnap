@@ -6,7 +6,7 @@ import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'dart:convert';
 
-import 'package:notes/services/cloud/cloud_folder_file_page.dart';
+
 
 import '../Data/cloud_note_model.dart';
 
@@ -23,7 +23,6 @@ class DriveHttpRequestToServer {
 
     if(existingFolder.files != null && existingFolder.files!.isNotEmpty){
       final folder= existingFolder.files!.first;
-      print('Alredy existing folder: ${folder.name}');
       return folder;
     }
 
@@ -219,11 +218,11 @@ Future<List<FolderWithFiles>> getAllFoldersWithFiles(
   for (final folder in folderList) {
     if (folder.id == null) continue;
 
-    final files = await listFilesInFolder(client, folder.id!);
-    result.add(FolderWithFiles(
-      folder: folder,
-      //files: files,
-    ));
+    // final files = await listFilesInFolder(client, folder.id!);
+    // result.add(FolderWithFiles(
+    //   folder: folder,
+    //   //files: files,
+    // ));
   }
   return result;
  }
@@ -256,7 +255,7 @@ Future<List<FolderWithFiles>> getAllFoldersWithFiles(
           fileName: file.name ?? '',
         ));
       } catch (e) {
-        print('Error reading file ${file.name}: $e');
+
       }
     }
 

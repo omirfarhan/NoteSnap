@@ -22,9 +22,17 @@ class FirebaseNotification extends StatefulWidget {
 
 class _FirebaseNotificationState extends State<FirebaseNotification> {
 
+  bool _isDeleteMode = false;
+  Set<int> _selectedIndices = {};
+  List<Map<String, dynamic>> _notifications = [];  // ← state এ রাখো
+  bool _isLoading = true;
+
+
+
   @override
   void initState() {
     super.initState();
+    _loadNotifications();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.title.isNotEmpty ||
           widget.body.isNotEmpty ||
@@ -60,10 +68,36 @@ class _FirebaseNotificationState extends State<FirebaseNotification> {
     );
   }
 
-  Future<List<Map<String, dynamic>>> loadNotification()async{
-    final prefs=await SharedPreferences.getInstance();
+  Future<void> _loadNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
     List<String> notifications = prefs.getStringList('mydatabase') ?? [];
-    return notifications.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
+    setState(() {
+      _notifications = notifications
+          .map((e) => jsonDecode(e) as Map<String, dynamic>)
+          .toList();
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _deleteSelected() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> notifications = prefs.getStringList('mydatabase') ?? [];
+
+    final sortedIndices = _selectedIndices.toList()..sort((a, b) => b.compareTo(a));
+    for (final index in sortedIndices) {
+      notifications.removeAt(index);
+    }
+
+    await prefs.setStringList('mydatabase', notifications);
+
+    setState(() {
+      _isDeleteMode = false;
+      _selectedIndices.clear();
+      
+      _notifications = notifications
+          .map((e) => jsonDecode(e) as Map<String, dynamic>)
+          .toList();
+    });
   }
 
   @override
@@ -72,6 +106,39 @@ class _FirebaseNotificationState extends State<FirebaseNotification> {
       appBar: AppBar(
         centerTitle: true,
         title: const Text('Reminders'),
+        actions: [
+          if(_isDeleteMode) ...[
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              color: Colors.white,
+              onPressed: _selectedIndices.isEmpty ? null : _deleteSelected,
+            ),
+            // Cancel button
+            TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isDeleteMode = false;
+                    _selectedIndices.clear();
+                  });
+                }, 
+                child: const Text('Clear',
+                  style: TextStyle(
+                  color: Colors.white,  //Color(0xFF9EDDE4)
+                    fontWeight: FontWeight.bold
+                ),)
+            )
+            
+          ]else
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () {
+                setState(() {
+                  _isDeleteMode = true;
+                });
+              },
+            ),
+
+        ],
       ),
       body: Column(
         children: [
@@ -79,25 +146,20 @@ class _FirebaseNotificationState extends State<FirebaseNotification> {
             color: Color(0xFFD2FEFF).withOpacity(0.2),
             thickness: 1.5,
           ),
+
           Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: loadNotification(),
-                builder: (context, snapshot) {
-
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('Notes with upcoming reminders appear here'));
-                  }
-
-                  final notifications = snapshot.data!;
-
-                  return ListView.builder(
-                      itemCount: notifications.length,
-                      itemBuilder: (context, index) {
-                        final item = notifications[index];
+            child:  _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _notifications.isEmpty
+                    ? const Center(
+                    child: Text('Notes with upcoming reminders appear here',
+                        style: TextStyle(color: Color(0xFF9EDDE4))),
+                      )
+                     : ListView.builder(
+                 itemCount: _notifications.length,
+                 itemBuilder: (context, index) {
+                        final item = _notifications[index];
+                        final isSelected = _selectedIndices.contains(index);
 
                         return Card(
                           color: const Color(0xFF9EDDE4),
@@ -118,7 +180,55 @@ class _FirebaseNotificationState extends State<FirebaseNotification> {
 
                               ],
                             ),
-                            onTap: () {
+                            trailing: _isDeleteMode
+                                ? GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    if (isSelected) {
+                                      _selectedIndices.remove(index);
+                                    } else {
+                                      _selectedIndices.add(index);
+                                    }
+                                  });
+                                },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: 26,
+                                height: 26,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isSelected
+                                      ? Colors.red
+                                      : Colors.white.withOpacity(0.6),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? Colors.red
+                                        : Colors.grey,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: isSelected
+                                    ? const Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Colors.white,
+                                )
+                                    : null,
+                              ),
+                            )
+                                : null,
+                            onTap: _isDeleteMode
+                              ? () {
+                            // Tap anywhere on card to toggle in delete mode
+                            setState(() {
+                          if (isSelected) {
+                            _selectedIndices.remove(index);
+                          } else {
+                            _selectedIndices.add(index);
+                          }
+                        });
+                        }
+                        : () {
                               showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
@@ -147,14 +257,14 @@ class _FirebaseNotificationState extends State<FirebaseNotification> {
 
                         );
                       },
-                  );
 
 
-                },
+
+
             ),
+
+
           )
-
-
         ],
       ),
 
