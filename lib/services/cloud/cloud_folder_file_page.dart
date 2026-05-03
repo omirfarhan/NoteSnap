@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
-import 'package:notes/Data/folder_model.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
 
 import '../../Data/cloud_note_model.dart';

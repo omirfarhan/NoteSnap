@@ -34,10 +34,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     'image': message.data['image'] ?? '',
     'time': DateTime.now().toString(),
   }));
-
   await prefs.setStringList('mydatabase', notifications);
-
-  print("Background message: ${message.notification?.title}");
 }
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -95,6 +92,9 @@ class MyApp extends StatelessWidget {
               color: Colors.white
           ),
         ),
+        progressIndicatorTheme: ProgressIndicatorThemeData(
+          color: Color(0xFF9EDDE4),
+        ),
 
       ),
 
@@ -119,7 +119,7 @@ class _MainPageState extends State<MainPage> {
   bool _isSelecting = false;
 
   NotifincationInFirebase notificationservices=NotifincationInFirebase();
-  //NotificationService notificationServices = NotificationService();
+
 
 
   String _getPlainTextFromContent(String content) {
@@ -208,18 +208,6 @@ class _MainPageState extends State<MainPage> {
       notificationservices.init(context);
     });
 
-    // notificationServices.requestNotificationPermission();
-    // notificationServices.forgroundMessage();
-    // notificationServices.firebaseInit(context);
-    // notificationServices.setupInteractMessage(context);
-    // notificationServices.isTokenRefresh();
-    //
-    // notificationServices.getDeviceToken().then((value){
-    //   if (kDebugMode) {
-    //     print('device token');
-    //     print(value);
-    //   }
-    // });
 
   }
 
@@ -379,7 +367,7 @@ class _MainPageState extends State<MainPage> {
                           },
                         );
                       default:
-                        return const CircularProgressIndicator();
+                        return Center(child: const CircularProgressIndicator());
                     }
                   },
               )

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
-import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,7 +19,6 @@ import 'notebottomcomponent/checkbox/checkbox_tap_delegate.dart';
 import 'notebottomcomponent/note_image_component_builder.dart';
 
 import 'package:syncfusion_flutter_pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 
 class CreateNote extends StatefulWidget {
   final DatabaseNote? note;
@@ -507,7 +505,11 @@ class _CreateNoteState extends State<CreateNote> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     //1st change
-                    color:  _bottomBarColor.withOpacity(0.2),
+                    color: HSLColor.fromColor(_bottomBarColor)
+                        .withLightness(
+                        (HSLColor.fromColor(_bottomBarColor).lightness - 0.15)
+                            .clamp(0.0, 1.0)
+                    ).toColor(),
 
                   ),
                   child: Row(
@@ -550,14 +552,7 @@ class _CreateNoteState extends State<CreateNote> {
               : RepaintBoundary(
                 key: _globalKey,
                 child: Container(
-                        // decoration: _backgroundImage != null
-                        //     ? BoxDecoration(
-                        //   image: DecorationImage(
-                        //     image: AssetImage(_backgroundImage!),
-                        //     fit: BoxFit.cover,
-                        //   ),
-                        // )
-                        //     : null,
+
                         child: Listener(
                           onPointerDown: (event) {
                             _hideToolbar();
@@ -902,7 +897,7 @@ class _CreateNoteState extends State<CreateNote> {
       useRootNavigator: true,
       builder: (context) {
         return BottomSheetScreen(
-          onThemeSelected: _applyTheme,
+          onThemeSelected: _applyTheme, // _applyTheme
           currentColor: _bottomBarColor,
         );
       },
@@ -917,19 +912,9 @@ class _CreateNoteState extends State<CreateNote> {
 
   void _applyTheme(Color color)async{
     setState(() {
-
-      //_backgroundImage = null; // সবসময় null
       _bottomBarColor = color;
     });
-
     _saveNote();
-    // color কে string হিসেবে save করুন
-    // await _notesService.updateNote(
-    //   note: _note!,
-    //   text: _textEditingController.text,
-    //   content: _documentToJson(),
-    //   background: color.value.toString(), // int → string
-    //);
   }
 
   void _exportbottomsheet() {

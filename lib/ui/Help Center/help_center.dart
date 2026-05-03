@@ -96,9 +96,7 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        //color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-       // border: Border.all(color: Colors.black12, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

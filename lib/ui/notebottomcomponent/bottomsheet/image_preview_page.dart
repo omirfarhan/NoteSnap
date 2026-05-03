@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:notes/ui/notebottomcomponent/bottomsheet/saveimageoption.dart';
-
 import '../../methodChannelStorageService/storage_service.dart';
 
 class ImagePreviewPage extends StatelessWidget {

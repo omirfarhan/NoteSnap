@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:notes/main.dart';
 import 'package:notes/services/crud/notes_service.dart';
 
 import 'all_notes_page.dart';

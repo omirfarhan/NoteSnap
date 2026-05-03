@@ -1,21 +1,14 @@
 
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
 import 'package:googleapis/drive/v3.dart' as drive;
-import 'package:notes/Data/folder_with_file.dart';
-import 'package:notes/Data/notemodel.dart';
 import 'package:notes/Data/folder_model.dart';
 import 'package:notes/Data_Layer/drive_http_request_to_server.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../Data_Layer/google_http_client.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:http/http.dart' as http;
 import '../auth/auth_provider.dart';
 import 'cloud_folder_file_page.dart';
 

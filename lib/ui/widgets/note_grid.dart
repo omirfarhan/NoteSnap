@@ -8,7 +8,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 
-import '../../constants/routes.dart';
 import '../../services/crud/notes_service.dart';
 import '../create_note.dart';
 

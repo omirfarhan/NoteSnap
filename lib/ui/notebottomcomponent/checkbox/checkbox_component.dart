@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:notes/ui/notebottomcomponent/checkbox/checkbox_node.dart';
 import 'package:super_editor/super_editor.dart';
 
 class CheckboxComponent extends StatefulWidget {
