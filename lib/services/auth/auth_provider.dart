@@ -85,32 +85,6 @@ class AuthProvider extends ChangeNotifier{
 
 
 
-  //For SignIn
-   /*
-   Future<UserCredential> signinwithGoogle() async{
-    await _initSignin();
-    final scopes= [
-      'https://www.googleapis.com/auth/drive.appdata',
-      'https://www.googleapis.com/auth/userinfo.email',
-      'https://www.googleapis.com/auth/userinfo.profile',
-    ];
-
-    final GoogleSignInAccount account = await googleSignInn.authenticate();
-    final idToken=await account.authentication.idToken;
-    final GoogleSignInServerAuthorization? serverAuth=
-    await account.authorizationClient.authorizeServer(scopes);
-
-    final googleuid=await account.id;
-    googleuserid=googleuid;
-    _saveGoogleUserid(googleuserid!);
-    final authCode= serverAuth?.serverAuthCode;
-    await _sendAuthtoBackend(authCode);
-    final credential= GoogleAuthProvider.credential(accessToken: null, idToken: idToken);
-    return await FirebaseAuth.instance.signInWithCredential(credential);
-
-  }
-
-    */
 
    Future<void> signinwithGoogle() async {
      await _initSignin();
@@ -226,8 +200,6 @@ class AuthProvider extends ChangeNotifier{
        if(response.statusCode == 200){
          final data= jsonDecode(response.body);
          _accessToken=data['accessToken'];
-
-
          expiretime=DateTime.now().add(Duration(hours: 1));
          notifyListeners();
        }else{
@@ -244,18 +216,6 @@ class AuthProvider extends ChangeNotifier{
    }
 
 
-
-/*
-   Future<void> signinwithgoogle() async{
-    final userdata=await AuthProvider.signinwithGoogle();
-    user=userdata.user;
-    profilename=user!.displayName;
-    email=user!.email;
-    photoUrl=user!.photoURL;
-    notifyListeners();
-   }
-
-    */
 
 
 

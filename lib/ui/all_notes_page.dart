@@ -245,8 +245,9 @@ class _AllNotesPageState extends State<AllNotesPage> {
               style: const TextStyle(color: Color(0xFFC8E1E4), fontSize: 14),
               decoration: InputDecoration(
                 prefixIcon: const Icon(FontAwesomeIcons.magnifyingGlass,
-                    color: Color(0xFFB8E2E8), size: 16),
-                fillColor: const Color(0xFF0B7197),
+                    //color: Color(0xFFB8E2E8),
+                    size: 16),
+                //fillColor: const Color(0xFF0B7197),
                 filled: true,
                 isDense: true,
                 border: InputBorder.none,
@@ -255,7 +256,7 @@ class _AllNotesPageState extends State<AllNotesPage> {
                 const BoxConstraints(minHeight: 38, minWidth: 38),
                 hintText: 'Search notes...',
                 hintStyle: const TextStyle(
-                  color: Color(0xFFC8E1E4),
+                  //color: Color(0xFFC8E1E4),
                   fontSize: 12,
                   fontFamily: 'Fredoka',
                 ),
@@ -289,7 +290,8 @@ class _AllNotesPageState extends State<AllNotesPage> {
                   if (notes.isEmpty) {
                     return const Center(
                       child: Text('No notes yet',
-                          style: TextStyle(color: Color(0xFF9EDDE4))),
+                          //style: TextStyle(color: Color(0xFF9EDDE4))
+                         ),
                     );
                   }
 

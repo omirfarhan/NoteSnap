@@ -423,6 +423,7 @@ class _SettingsPageState extends State<SettingsPage> {
           }else if( title ==  'Rate us' ){
             rateApp();
           }else{
+            privacyPolicy();
             print('privacy policy');
           }
 
@@ -469,6 +470,13 @@ class _SettingsPageState extends State<SettingsPage> {
     } else {
       await launchUrl(defaultUri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  Future<void> privacyPolicy() async {
+    final Uri url = Uri.parse(
+      'https://sites.google.com/view/notestorage-policy',
+    );
+    await launchUrl(url, mode: LaunchMode.inAppBrowserView);
   }
 
 

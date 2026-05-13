@@ -11,6 +11,7 @@ class BottomSheetScreen extends StatelessWidget {
   });
 
   static const List<Color> colors = [
+
     Color(0xFF137FA5),
     Color(0xFF09021f),
     Color(0xFF170b3d),
@@ -27,8 +28,8 @@ class BottomSheetScreen extends StatelessWidget {
     Color(0xFF16704A),
     Color(0xFF012437),
     Color(0xFF2A6250),
-    Color(0xFF97CEAD),
-    Color(0xFFE5F3DD)
+    // Color(0xFF97CEAD),
+    //Color(0xFFE5F3DD)
   ];
 
   @override

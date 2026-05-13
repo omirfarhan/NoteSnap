@@ -68,18 +68,32 @@ class _CreateNoteState extends State<CreateNote> {
   late final FocusNode _titleFocusNode;
 
 
-  Color _bottomBarColor = const Color(0xFF137FA5); // default color
-  Color get bottomBarColor => _bottomBarColor;
+  Color? _bottomBarColor; //= const Color(0xFF137FA5); // default color
+  //Color get bottomBarColor => _bottomBarColor;
   OverlayEntry? _toolbarOverlay;
   final GlobalKey _globalKey=GlobalKey();
+
+  Color _resolvedColor(BuildContext context) {
+    if (_bottomBarColor != null) return _bottomBarColor!;
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF131313)
+        : const Color(0xFFF9F9F9);
+  }
+
+  Color get _textColor{
+    if (_bottomBarColor != null) return Color(0xFFE1E1E1);
+    return Theme.of(context).colorScheme.onSurface;
+  }
+
   Future<DatabaseNote> createNote(BuildContext context) async {
     // note edit করতে
     if (widget.note != null) {
       _note = widget.note;
       _textEditingController.text = widget.note!.title;
-      _bottomBarColor = widget.note!.background != null
+
+      _bottomBarColor = (widget.note!.background != null && widget.note!.background!.isNotEmpty)
           ? Color(int.parse(widget.note!.background!))
-          : const Color(0xFF137FA5);
+          : null;
       if (widget.note!.content.isNotEmpty) {
         try {
           _document = _documentFromJson(widget.note!.content);
@@ -213,7 +227,8 @@ class _CreateNoteState extends State<CreateNote> {
         note: note,
         text: title,
         content: content,
-        background: _bottomBarColor.value.toString()
+        // background: _bottomBarColor.value.toString()
+        background: _bottomBarColor?.value.toString() ?? ''
       );
 
     }
@@ -391,8 +406,9 @@ class _CreateNoteState extends State<CreateNote> {
 
     return Scaffold(
       extendBodyBehindAppBar: true, // ✅ এটা যোগ করুন
-      backgroundColor: _bottomBarColor,
-        resizeToAvoidBottomInset: true,
+      //backgroundColor: _bottomBarColor,
+      backgroundColor: _resolvedColor(context),
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -402,7 +418,7 @@ class _CreateNoteState extends State<CreateNote> {
           children: [
             Text(_currentTime,
               style: TextStyle(fontSize: 13,
-                  color: Color(0xFF9EDDE4),
+                  color: _textColor, //Color(0xFF9EDDE4)
                   fontFamily: 'Regular'
               ),
             ),
@@ -411,7 +427,7 @@ class _CreateNoteState extends State<CreateNote> {
             Text(
              "${_getCharacterCount()} character",
               style: TextStyle(fontSize: 12,
-                  color: Color(0xFF9EDDE4),
+                  color: _textColor,
                   fontFamily: 'Regular'
               ),
             )
@@ -427,14 +443,14 @@ class _CreateNoteState extends State<CreateNote> {
          if (_descriptionFocusNode.hasFocus)
             IconButton(
               onPressed: _historyIndex > 0 ? _undo : null,
-              icon: Icon(Icons.undo),
+              icon: Icon(Icons.undo,),
               iconSize: 30,
               padding: EdgeInsets.zero,
             ),
             if (_descriptionFocusNode.hasFocus)
             IconButton(
               onPressed: _historyIndex < _history.length - 1 ? _redo : null,
-              icon: Icon(Icons.redo),
+              icon: Icon(Icons.redo,),
               iconSize: 30,
             ),
             SizedBox(width: 20), // gap control এখানে
@@ -449,7 +465,7 @@ class _CreateNoteState extends State<CreateNote> {
                 _titleFocusNode.unfocus();
 
               }
-            }, icon: Icon(Icons.check_circle_outline_rounded))
+            }, icon: Icon(Icons.check_circle_outline_rounded,color: _textColor,))
           ] else
             Padding(
                 padding:const EdgeInsetsGeometry.symmetric(horizontal: 12),
@@ -468,14 +484,14 @@ class _CreateNoteState extends State<CreateNote> {
                        //color: Colors.white,
                        shape: BoxShape.circle,
                        border: BoxBorder.all(
-                         color: Colors.white,
+                         color: _textColor,
                          width: 2
                        )
                      ),
-                     child: const Text(
+                     child: Text(
                        "save",
                        style: TextStyle(
-                         color: Colors.white,
+                         color: _textColor,
                          fontSize: 8.5,
                          fontWeight: FontWeight.bold
                        ),
@@ -504,12 +520,10 @@ class _CreateNoteState extends State<CreateNote> {
                   height: 40,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    //1st change
-                    color: HSLColor.fromColor(_bottomBarColor)
-                        .withLightness(
-                        (HSLColor.fromColor(_bottomBarColor).lightness - 0.15)
-                            .clamp(0.0, 1.0)
-                    ).toColor(),
+                    color: HSLColor.fromColor(_resolvedColor(context))
+                        .withLightness((HSLColor.fromColor(_resolvedColor(context))
+                        .lightness - 0.15).clamp(0.0, 1.0))
+                        .toColor(),
 
                   ),
                   child: Row(
@@ -523,20 +537,20 @@ class _CreateNoteState extends State<CreateNote> {
                           _insertImages(images);
                         }
                         },
-                          icon: Icon(Icons.image_rounded,color: Colors.white,)
+                          icon: Icon(Icons.image_rounded,color: _textColor,)
                       ),
 
                       IconButton(onPressed:(){
                         _insertCheckbox();
                       },
-                          icon: Icon(Icons.crop_square,color: Colors.white,)
+                          icon: Icon(Icons.crop_square,color: _textColor,)
                       ),
 
                       IconButton(
                           onPressed: (){
                             _openbottomSheet();
                           }, icon: Icon(FontAwesomeIcons.tshirt),
-                          color: Colors.white
+                          color: _textColor
                       )
 
                     ],
@@ -573,7 +587,7 @@ class _CreateNoteState extends State<CreateNote> {
                         decoration: InputDecoration(
                             hintText: 'Title',
                             hintStyle: TextStyle(
-                                color: Color(0xFFD2FEFF).withOpacity(0.5),
+                                color:_textColor.withOpacity(0.5),
                                 fontFamily: 'ArchivoBlack',
                                 fontSize: 18,
 
@@ -584,7 +598,7 @@ class _CreateNoteState extends State<CreateNote> {
 
                         ),
                         style: TextStyle(
-                          color: Color(0xFFD2FEFF),
+                          color: _textColor,
                           fontFamily: 'Regular',
                           fontSize: 18
                         ),
@@ -640,8 +654,8 @@ class _CreateNoteState extends State<CreateNote> {
                               StyleRule(
                                 BlockSelector.all,
                                     (Document doc, DocumentNode node) => {
-                                  Styles.textStyle: const TextStyle(
-                                      color: Color(0xFFD2FEFF),
+                                  Styles.textStyle: TextStyle(
+                                      color: _textColor,
                                       fontFamily: 'Regular',
                                       fontSize: 16,
                                       decoration: TextDecoration.none
@@ -1103,39 +1117,15 @@ class _CreateNoteState extends State<CreateNote> {
     final contentWidth = pageWidth - 40;
     double yOffset = 0;
 
-//     // ✅ Text color - background image থাকলে dark, না থাকলে light
-//     final textBrush = _backgroundImage != null
-//         ? PdfSolidBrush(PdfColor(30, 30, 30))        // dark color
-//         : PdfSolidBrush(PdfColor(0xD2, 0xFF, 0xFF)); // light color
-//
-// // ✅ Background draw function
-//     void drawBackground(PdfPage p) {
-//       if (_backgroundImage != null) {
-//         // সাদা background
-//         p.graphics.drawRectangle(
-//           brush: PdfSolidBrush(PdfColor(255, 255, 255)),
-//           bounds: Rect.fromLTWH(0, 0, p.size.width, p.size.height),
-//         );
-//       } else {
-//         // solid color background
-//         p.graphics.drawRectangle(
-//           brush: PdfSolidBrush(PdfColor(
-//             _bottomBarColor.red,
-//             _bottomBarColor.green,
-//             _bottomBarColor.blue,
-//           )),
-//           bounds: Rect.fromLTWH(0, 0, p.size.width, p.size.height),
-//         );
-//       }
-    // এখন হবে:
+
     final textBrush = PdfSolidBrush(PdfColor(0xD2, 0xFF, 0xFF));
 
     void drawBackground(PdfPage p) {
       p.graphics.drawRectangle(
         brush: PdfSolidBrush(PdfColor(
-          _bottomBarColor.red,
-          _bottomBarColor.green,
-          _bottomBarColor.blue,
+          _bottomBarColor!.red,
+          _bottomBarColor!.green,
+          _bottomBarColor!.blue,
         )),
         bounds: Rect.fromLTWH(0, 0, p.size.width, p.size.height),
       );
@@ -1264,15 +1254,7 @@ class _CreateNoteState extends State<CreateNote> {
         minHeight: screenHeight,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 10),
-      // decoration: BoxDecoration(
-      //   color: _bottomBarColor,
-      //   image: _backgroundImage != null
-      //       ? DecorationImage(
-      //     image: AssetImage(_backgroundImage!),
-      //     fit: BoxFit.cover,
-      //   )
-      //       : null,
-      // )
+
         decoration: BoxDecoration(
           color: _bottomBarColor,
         ),

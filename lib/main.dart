@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:notes/constants/routes.dart';
 import 'package:notes/services/auth/auth_provider.dart';
@@ -78,24 +79,54 @@ class MyApp extends StatelessWidget {
         FolderListRoute: (context) => const FolderList(),
       },
       //0xFF239AC4
+      themeMode: ThemeMode.system,
+      // Light Theme
       theme: ThemeData(
-        scaffoldBackgroundColor: Color(0xFF137FA5),
-        appBarTheme: AppBarTheme(
-          backgroundColor: Color(0xFF137FA5),
-          titleTextStyle: TextStyle(
-              color: Colors.white,
-              fontFamily: 'ArchivoBlack',
-              fontSize: 19,
-              fontWeight: FontWeight.w600
-          ),
-          iconTheme: IconThemeData(
-              color: Colors.white
-          ),
-        ),
-        progressIndicatorTheme: ProgressIndicatorThemeData(
-          color: Color(0xFF9EDDE4),
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFEEEEEE),
+
+        colorScheme: const ColorScheme.light(
+          onSurface: Color(0xFF484848), // ← light mode text color
         ),
 
+        appBarTheme: const AppBarTheme(
+          systemOverlayStyle: SystemUiOverlayStyle.dark,
+          backgroundColor: Color(0xFFEEEEEE),
+          titleTextStyle: TextStyle(
+            color: Color(0xFF484848),
+            fontFamily: 'ArchivoBlack',
+            fontSize: 19,
+            fontWeight: FontWeight.w400,
+          ),
+          // iconTheme: IconThemeData(
+          //   color: Colors.white,
+          // ),
+        ),
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: Color(0xFF9EDDE4),
+        ),
+      ),
+      // Dark Theme
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF1F1F1F),
+        colorScheme: const ColorScheme.dark(
+          onSurface: Color(0xFFE1E1E1), // ← dark mode text color
+        ),
+        appBarTheme: const AppBarTheme(
+          systemOverlayStyle: SystemUiOverlayStyle.light,
+          backgroundColor: Color(0xFF1E1E1E),
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontFamily: 'ArchivoBlack',
+            fontSize: 19,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: Colors.tealAccent,
+        ),
       ),
 
     );
@@ -289,9 +320,10 @@ class _MainPageState extends State<MainPage> {
               ),
               decoration: InputDecoration(
                 prefixIcon: Icon(FontAwesomeIcons.magnifyingGlass,
-                  color: Color(0xFFB8E2E8),size: 16,
+                  //color: Color(0xFFB8E2E8),
+                  size: 16,
                 ),
-                fillColor: Color(0xFF0B7197),
+                //fillColor: Color(0xFF0B7197),
                 filled: true,
                 isDense: true,
                 border: InputBorder.none,
@@ -299,7 +331,7 @@ class _MainPageState extends State<MainPage> {
                 prefixIconConstraints: BoxConstraints(minHeight: 38,minWidth: 38),
                 hintText: 'Search notes...',
                 hintStyle: TextStyle(
-                  color: Color(0xFFC8E1E4),
+                  //color: Color(0xFFC8E1E4),
                   fontSize: 12,
                   fontFamily: 'Fredoka',
                 ),
@@ -334,7 +366,6 @@ class _MainPageState extends State<MainPage> {
                               case ConnectionState.waiting:
                               case ConnectionState.active:
                                 if(snapshot.hasData){
-
                                   final allnote=snapshot.data!;
                                   final notes=allnote.where((note){
                                     final title=note.title.toLowerCase();

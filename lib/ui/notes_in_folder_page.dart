@@ -242,7 +242,7 @@ class _NotesInFolderPageState extends State<NotesInFolderPage> {
                     if (notes.isEmpty) {
                       return const Center(
                         child: Text('No notes in this folder',
-                            style: TextStyle(color: Color(0xFF9EDDE4))),
+                            ),
                       );
                     }
 

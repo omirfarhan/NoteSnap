@@ -70,7 +70,8 @@ class _RecentlyDeletedPageState extends State<RecentlyDeletedPage> {
            const Text('Recently deleted notes are kept here for 30 days.'
                ' You can recover them anytime during this period—afterward, '
                'they’ll be gone for good.',
-               style: TextStyle(color: Color(0xFF89D3DA))),
+               //style: TextStyle(color: Color(0xFF89D3DA))
+           ),
 
             SizedBox(height: 8),
             Expanded(
@@ -136,7 +137,7 @@ class _RecentlyDeletedPageState extends State<RecentlyDeletedPage> {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF58B4D3),
+                  //color: const Color(0xFF58B4D3),
                   borderRadius: BorderRadius.circular(5),
                 ),
                 clipBehavior: Clip.hardEdge,

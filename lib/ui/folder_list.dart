@@ -150,9 +150,6 @@ class _FolderListState extends State<FolderList> {
 
   }
 
-  // bool _isAllFolder(String folderName){
-  //   return folderName.toLowerCase() == 'all folder';
-  // }
 
   int _getNoteCount(String foldername) {
     return _notesService.getNoteCountForFolder(foldername: foldername);
@@ -162,7 +159,7 @@ class _FolderListState extends State<FolderList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF0D6186),
+       // backgroundColor: Color(0xFF0D6186),
         centerTitle: true,
         title: Text(
           _isSelecting
@@ -197,7 +194,7 @@ class _FolderListState extends State<FolderList> {
           
           child: Container(
             height: 40,
-            color: Color(0xFF4592AC),
+            color: Color(0xFF219BCB),
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Row(
@@ -217,13 +214,10 @@ class _FolderListState extends State<FolderList> {
 
       body: Column(
         children: [
-
           StreamBuilder<List<DatabaseNote>>(
               stream: _notesService.allNotesUnfiltered,
               builder: (context, snapshot) {
-
                 final noteCount=snapshot.data?.length ?? 0;
-
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
                   child: GestureDetector(
