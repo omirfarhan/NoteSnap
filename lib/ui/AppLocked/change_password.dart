@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ChangePasswordPage extends StatefulWidget {
@@ -195,9 +196,20 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFF0D6186),
       appBar: AppBar(
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        backgroundColor: Color(0xFF0D6186),
         centerTitle: true,
-        title: const Text('Change Password'),
+        title: const Text('Change Password',style: TextStyle(
+            color: Color(0xFFD9FFFF)
+        ),),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back,color: Color(0xFFD9FFFF)),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
       body: Center(
         child: SingleChildScrollView(

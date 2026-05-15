@@ -1,6 +1,7 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:notes/ui/recently_deleted_page.dart';
 import 'package:provider/provider.dart';
 import '../constants/routes.dart';
@@ -22,7 +23,6 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isLoggingOut = false;
  int count =0;
 
-
   @override
   void initState() {
     super.initState();
@@ -36,16 +36,20 @@ class _SettingsPageState extends State<SettingsPage> {
           return true;
         },
         child: Scaffold(
+          backgroundColor: Color(0xFF0D6186),
             appBar: AppBar(
+              systemOverlayStyle: SystemUiOverlayStyle.light,
+              backgroundColor: Color(0xFF0D6186),
               title: const Text(
                 'Settings',
                 style: TextStyle(
                   fontFamily: 'ArchivoBlack',
-                  fontSize: 19
+                  fontSize: 19,
+                  color: Color(0xFFD9FFFF)
                 ),
               ),
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: const Icon(Icons.arrow_back,color: Color(0xFFD9FFFF)),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },

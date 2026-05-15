@@ -315,7 +315,7 @@ class _MainPageState extends State<MainPage> {
               spellCheckConfiguration: SpellCheckConfiguration.disabled(),
               cursorColor: Color(0xFFC8E1E4),
               style: TextStyle(
-                color: Color(0xFFC8E1E4),
+                //color: Color(0xFFC8E1E4),
                 fontSize: 14,
               ),
               decoration: InputDecoration(

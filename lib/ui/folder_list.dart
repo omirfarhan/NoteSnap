@@ -19,6 +19,16 @@ class _FolderListState extends State<FolderList> {
   bool _isSelecting = false;
 
 
+
+  Color get _folderColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFF131313)
+      : const Color(0xFFFDFDFD);
+
+  Color get _folderTextColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFFE1E1E1)
+      : const Color(0xFF343434);
+
+
   @override
   void initState() {
     super.initState();
@@ -194,16 +204,16 @@ class _FolderListState extends State<FolderList> {
           
           child: Container(
             height: 40,
-            color: Color(0xFF219BCB),
+            color: _folderColor,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_circle_outline_rounded, color: Color(0xFFE9FEFF),),
+                  Icon(Icons.add_circle_outline_rounded, color: _folderTextColor,),
                   SizedBox(width: 5),
                   Text('Create New Folder',style: TextStyle(
-                    color: Color(0xFFE8F8FD)
+                    color:_folderTextColor
                   ),)
                 ],
               ),
@@ -223,26 +233,23 @@ class _FolderListState extends State<FolderList> {
                   child: GestureDetector(
                     onTap: () {
                       if (_isSelecting) return;
-
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => const AllNotesPage(folderName: 'All Folder'),
                         ),
                       );
                     },
-
-
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       decoration: BoxDecoration(
                         color: _selectedFoldernames.contains('all')
                             ? const Color(0xFF1A7EA8)
-                            : const Color(0xFF4592AC),
+                            : _folderColor, //const Color(0xFF4592AC)
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _selectedFoldernames.contains('all')
                               ? const Color(0xFF9EDDE4)
-                              : const Color(0xFF1A7EA8),
+                              : Colors.transparent,
                           width: 0.5,
                         ),
                       ),
@@ -250,15 +257,15 @@ class _FolderListState extends State<FolderList> {
                         title: Text(
                           'All Folder',
                           style: TextStyle(
-                            color: Color(0xFFE8F8FD),
+                            color: _folderTextColor,//Color(0xFFE8F8FD)
                             fontSize: 18,
                           ),
                         ),
                         trailing:Text(
                           '$noteCount',
 
-                          style: const TextStyle(
-                            color: Color(0xFFE8F8FD),
+                          style: TextStyle(
+                            color:_folderTextColor,
                             fontSize: 12,
                             fontFamily: 'Regular',
                           ),
@@ -299,8 +306,6 @@ class _FolderListState extends State<FolderList> {
                       return StreamBuilder<List<DatabaseNote>>(
                         stream: _notesService.allNotesUnfiltered,
                         builder: (context, noteSnapshot) {
-
-
 
                           return ListView.separated(
                             separatorBuilder: (context, index) =>
@@ -377,12 +382,12 @@ class _FolderListState extends State<FolderList> {
                                     decoration: BoxDecoration(
                                         color: isSelected
                                             ? const Color(0xFF1A7EA8)
-                                            : const Color(0xFF4592AC),
+                                            :_folderColor,
                                         borderRadius: BorderRadius.circular(12),
                                         border: BoxBorder.all(
                                             color: isSelected
                                                 ? const Color(0xFF9EDDE4)
-                                                : const Color(0xFF1A7EA8),
+                                                : Colors.transparent,
                                             width: 0.5
                                         )
                                     ),
@@ -392,16 +397,16 @@ class _FolderListState extends State<FolderList> {
 
                                       title: Text(
                                         folder.foldername,
-                                        style: const TextStyle(
-                                          color: Color(0xFFE8F8FD),
+                                        style: TextStyle(
+                                          color: _folderTextColor,
                                           fontSize: 18,
                                           fontFamily: 'Regular',
                                         ),
                                       ),
                                       trailing: Text(
                                         '$noteCount',
-                                        style: const TextStyle(
-                                          color: Color(0xFFE8F8FD),
+                                        style: TextStyle(
+                                          color: _folderTextColor,
                                           fontSize: 12,
                                           fontFamily: 'Regular',
                                         ),

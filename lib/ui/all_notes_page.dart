@@ -242,7 +242,9 @@ class _AllNotesPageState extends State<AllNotesPage> {
               enableSuggestions: false,
               spellCheckConfiguration: SpellCheckConfiguration.disabled(),
               cursorColor: const Color(0xFFC8E1E4),
-              style: const TextStyle(color: Color(0xFFC8E1E4), fontSize: 14),
+              style: const TextStyle(
+                  //color: Color(0xFFC8E1E4),
+                  fontSize: 14),
               decoration: InputDecoration(
                 prefixIcon: const Icon(FontAwesomeIcons.magnifyingGlass,
                     //color: Color(0xFFB8E2E8),

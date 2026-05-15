@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:notes/Data_Layer/google_http_client.dart';
@@ -9,6 +10,7 @@ import 'package:notes/Data_Layer/google_http_client.dart';
 import '../../Data/cloud_note_model.dart';
 import '../../Data_Layer/drive_http_request_to_server.dart';
 import '../auth/auth_provider.dart';
+import '../crud/notes_service.dart';
 import 'cloud_note_detail_page.dart';
 
 class CloudFolderFilePage extends StatefulWidget {
@@ -37,6 +39,31 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
 
   Set<String> _selectedFileIds = {};
   bool _isSelecting = false;
+
+  Color _getNoteColor(CloudNoteModel note) {
+    if (note.background != null && note.background!.isNotEmpty) {
+      try {
+        return Color(int.parse(note.background!));
+      } catch (_) {}
+    }
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF131313)
+        : const Color(0xFFF9F9F9);
+  }
+
+  Color _getTextColor(CloudNoteModel note) {
+    if (note.background != null && note.background!.isNotEmpty) {
+      try {
+        final baseColor = Color(int.parse(note.background!));
+        final hsl = HSLColor.fromColor(baseColor);
+        if (hsl.lightness > 0.6) return const Color(0xFF2C2C2C);
+      } catch (_) {}
+      return const Color(0xFFE1E1E1);
+    }
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFE1E1E1)
+        : const Color(0xFF2C2C2C);
+  }
 
 
   @override
@@ -169,11 +196,20 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFF0D6186),
       appBar: AppBar(
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        backgroundColor: Color(0xFF0D6186),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back,color: Color(0xFFD9FFFF)),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
         title: Text(
           _isSelecting
             ? '${_selectedFileIds.length} Selected'
-            : widget.folderName
+            : widget.folderName,style: TextStyle(color: Color(0xFFD9FFFF)),
         ),
         actions: [
           IconButton(
@@ -217,6 +253,8 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
           crossAxisSpacing: 20,
           itemBuilder: (context, index) {
             final note = _notes[index];
+            final noteColor = _getNoteColor(note);
+            final textColor = _getTextColor(note);
             final plainText = _getPlainText(note.content);
             final firstImage = _getFirstImage(note.content);
 
@@ -254,7 +292,7 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
 
                   color: _selectedFileIds.contains(note.fileId)
                       ? const Color(0xFF1A7EA8)
-                      : const Color(0xFF58B4D3),
+                      : noteColor,
                   borderRadius: BorderRadius.circular(5),
                   border: Border.all(
                     color: _selectedFileIds.contains(note.fileId)
@@ -268,7 +306,7 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFF58B4D3),
+                        color: noteColor, //const Color(0xFF58B4D3)
                         borderRadius: BorderRadius.circular(5),
                       ),
                       clipBehavior: Clip.hardEdge,
@@ -306,17 +344,17 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
                                   note.title,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style:  TextStyle(
                                     fontFamily: 'Regular',
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,
-                                    color: Color(0xFFDBF5FB),
+                                    color: textColor,
                                   ),
                                 ),
                                 Text(
                                   plainText,
-                                  style: const TextStyle(
-                                    color: Color(0xFFDBF5FB),
+                                  style: TextStyle(
+                                    color: textColor,
                                     fontFamily: 'Regular',
                                     fontWeight: FontWeight.w400,
                                     fontSize: 12,
@@ -332,8 +370,8 @@ class _CloudFolderFilePageState extends State<CloudFolderFilePage> {
                                   children: [
                                     Text(
                                       _formatTime(note.lastEdited),
-                                      style: const TextStyle(
-                                        color: Color(0xFFDBF5FB),
+                                      style: TextStyle(
+                                        color: textColor,
                                         fontSize: 10,
                                         fontFamily: 'Fredoka',
                                         fontWeight: FontWeight.w600,

@@ -5,18 +5,58 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:notes/Data/cloud_note_model.dart';
 
-class CloudNoteDetailPage extends StatelessWidget {
+class CloudNoteDetailPage extends StatefulWidget {
   final CloudNoteModel note;
-  const CloudNoteDetailPage({super.key,required this.note});
+  const CloudNoteDetailPage({super.key, required this.note});
 
-  // এই helper method যোগ করুন:
-  Color _getBackgroundColor() {
-    if (note.background == null) return const Color(0xFF137FA5);
-    final parsed = int.tryParse(note.background!);
-    if (parsed == null) return const Color(0xFF137FA5);
-    return Color(parsed);
+  @override
+  State<CloudNoteDetailPage> createState() => _CloudNoteDetailPageState();
+}
+
+class _CloudNoteDetailPageState extends State<CloudNoteDetailPage> with WidgetsBindingObserver {
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
   }
 
+  @override
+  void didChangePlatformBrightness() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Color get _bgColor {
+    // custom color select করা থাকলে সেটা দেখাও
+    if (widget.note.background != null && widget.note.background!.isNotEmpty) {
+      final parsed = int.tryParse(widget.note.background!);
+      if (parsed != null) return Color(parsed);
+    }
+    // না থাকলে dark/light mode অনুযায়ী
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF131313)
+        : const Color(0xFFF9F9F9);
+  }
+
+  Color get _textColor {
+    if (widget.note.background != null && widget.note.background!.isNotEmpty) {
+      final parsed = int.tryParse(widget.note.background!);
+      if (parsed != null) {
+        final hsl = HSLColor.fromColor(Color(parsed));
+        if (hsl.lightness > 0.6) return const Color(0xFF2C2C2C);
+      }
+      return const Color(0xFFE1E1E1);
+    }
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFE1E1E1)
+        : const Color(0xFF2C2C2C);
+  }
 
   String _formatTime(int ms) {
     if (ms == 0) return '';
@@ -24,15 +64,15 @@ class CloudNoteDetailPage extends StatelessWidget {
     return DateFormat('MMMM dd, hh:mm a').format(dt);
   }
 
-  List<Widget> _buildContent(String content){
+  List<Widget> _buildContent(String content) {
     if (content.isEmpty) return [];
-
-    try{
+    try {
       final list = jsonDecode(content) as List<dynamic>;
       final widgets = <Widget>[];
 
-      for(final item in list){
+      for (final item in list) {
         final type = item['type'] as String? ?? '';
+
         if (type == 'paragraph') {
           final text = item['text'] as String? ?? '';
           if (text.trim().isEmpty) continue;
@@ -41,8 +81,8 @@ class CloudNoteDetailPage extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 10),
               child: Text(
                 text,
-                style: const TextStyle(
-                  color: Color(0xFFD2FEFF),
+                style: TextStyle(
+                  color: _textColor, // ← dynamic
                   fontFamily: 'Regular',
                   fontSize: 16,
                   height: 1.4,
@@ -57,29 +97,17 @@ class CloudNoteDetailPage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 22),
               child: ClipRRect(
-
                 borderRadius: BorderRadius.circular(8),
-                child:AspectRatio(
-                    aspectRatio: 16 / 9,
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
                   child: url.startsWith('http')
-                      ? Image.network(
-                    url,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.broken_image,
-                      color: Colors.white54,
-                    ),
-                  )
-                      : Image.file(
-                    File(url),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.broken_image,
-                      color: Colors.white54,
-                    ),
-                  ),
-                )
-
+                      ? Image.network(url, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.broken_image, color: Colors.white54))
+                      : Image.file(File(url), fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.broken_image, color: Colors.white54)),
+                ),
               ),
             ),
           );
@@ -93,10 +121,8 @@ class CloudNoteDetailPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    checked
-                        ? Icons.check_box
-                        : Icons.check_box_outline_blank,
-                    color: const Color(0xFF9EDDE4),
+                    checked ? Icons.check_box : Icons.check_box_outline_blank,
+                    color: _textColor.withOpacity(0.7), // ← dynamic
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -105,13 +131,11 @@ class CloudNoteDetailPage extends StatelessWidget {
                       text,
                       style: TextStyle(
                         color: checked
-                            ? Colors.white54
-                            : const Color(0xFFD2FEFF),
+                            ? _textColor.withOpacity(0.4)
+                            : _textColor, // ← dynamic
                         fontFamily: 'Regular',
                         fontSize: 16,
-                        decoration: checked
-                            ? TextDecoration.lineThrough
-                            : null,
+                        decoration: checked ? TextDecoration.lineThrough : null,
                       ),
                     ),
                   ),
@@ -121,80 +145,54 @@ class CloudNoteDetailPage extends StatelessWidget {
           );
         }
       }
-
       return widgets;
-    }catch (e){
+    } catch (e) {
       return [
-        Text(
-          content,
-          style: const TextStyle(
-            color: Color(0xFFD2FEFF),
-            fontSize: 16,
-          ),
-        ),
+        Text(content, style: TextStyle(color: _textColor, fontSize: 16)),
       ];
-
     }
-
-
   }
 
   @override
   Widget build(BuildContext context) {
-
-    final bgColor = _getBackgroundColor();
-
-
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: bgColor,
+      backgroundColor: _bgColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: Text(
-          _formatTime(note.lastEdited),
-          style: const TextStyle(
+          _formatTime(widget.note.lastEdited),
+          style: TextStyle(
             fontSize: 12,
-            color: Color(0xFF9EDDE4),
+            color: _textColor.withOpacity(0.7), // ← dynamic
             fontFamily: 'Regular',
           ),
         ),
       ),
-
       body: Container(
-        
         width: double.infinity,
         height: double.infinity,
-        color: bgColor,
-
+        color: _bgColor,
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              10,
-              0,
-              10,
-              5,
-            ),
-          
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 5),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-          
-                if (note.title.isNotEmpty)
+                if (widget.note.title.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 9),
                     child: Text(
-                      note.title,
-                      style: const TextStyle(
-                        color: Color(0xFFD2FEFF),
+                      widget.note.title,
+                      style: TextStyle(
+                        color: _textColor, // ← dynamic
                         fontFamily: 'Regular',
                         fontSize: 19,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-          
-                ..._buildContent(note.content)
-          
+                ..._buildContent(widget.note.content),
               ],
             ),
           ),

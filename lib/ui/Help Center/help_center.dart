@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HelpCenter extends StatelessWidget {
@@ -25,10 +26,20 @@ class HelpCenter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
+      backgroundColor: Color(0xFF0D6186),
       appBar: AppBar(
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        backgroundColor: Color(0xFF0D6186),
         centerTitle: true,
-        title: const Text('Help Center'),
+        title: const Text('Help Center',style: TextStyle(
+            color: Color(0xFFD9FFFF)
+      )),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back,color: Color(0xFFD9FFFF)),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
       ),
 
       body: Center(

@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:notes/Data/folder_model.dart';
@@ -163,8 +164,17 @@ class _CloudFilesState extends State<CloudFiles> {
 
 
       return Scaffold(
+        backgroundColor: Color(0xFF0D6186),
         appBar: AppBar(
+          systemOverlayStyle: SystemUiOverlayStyle.light,
+          backgroundColor: Color(0xFF0D6186),
           centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back,color: Color(0xFFD9FFFF)),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
            title: SizedBox(
           width: double.infinity,
           child: Padding(
@@ -173,7 +183,9 @@ class _CloudFilesState extends State<CloudFiles> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center, // 🔥 center align
               children: [
-                const Text('Storage'),
+                const Text('Storage',style: TextStyle(
+                    color: Color(0xFFD9FFFF)
+                )),
                 const SizedBox(height: 4),
                 LinearPercentIndicator(
                   lineHeight: 14,
@@ -190,6 +202,7 @@ class _CloudFilesState extends State<CloudFiles> {
                 ),
               ],
             ),
+
           ),
         ),
 

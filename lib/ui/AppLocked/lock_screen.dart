@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LockScreen extends StatefulWidget {
@@ -184,10 +185,22 @@ class _LockScreenState extends State<LockScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFF0D6186),
       appBar: AppBar(
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        backgroundColor: Color(0xFF0D6186),
         centerTitle: true,
+
         title: const Text(
-            'App Locked'
+            'App Locked',style: TextStyle(
+            color: Color(0xFFD9FFFF)
+        ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back,color: Color(0xFFD9FFFF)),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
         ),
       ),
 
