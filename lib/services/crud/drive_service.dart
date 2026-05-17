@@ -16,7 +16,7 @@ class DriveService {
     _driveApi = drive.DriveApi(client);
   }
 
-  /// 🔹 Get or Create Main App Folder (inside appDataFolder)
+  // 🔹 Get or Create Main App Folder (inside appDataFolder)
   Future<String> _getOrCreateAppFolder() async {
     const appFolderName = 'MyNotesApp';
 
@@ -94,7 +94,7 @@ class DriveService {
     );
 
     if (existing.files != null && existing.files!.isNotEmpty) {
-      /// 🔄 Update existing
+      // 🔄 Update existing
       await _driveApi.files.update(
         drive.File(),
         existing.files!.first.id!,
@@ -104,7 +104,7 @@ class DriveService {
         ),
       );
     } else {
-      /// 🆕 Create new
+      // 🆕 Create new
       final driveFile = drive.File()
         ..name = fileName
         ..parents = [noteFolderId];
@@ -119,7 +119,7 @@ class DriveService {
     }
   }
 
-  /// 🔹 Upload Multiple Notes
+  // 🔹 Upload Multiple Notes
   Future<void> uploadMultipleNotes({
     required List<DatabaseNote> notes,
     required String folderName,

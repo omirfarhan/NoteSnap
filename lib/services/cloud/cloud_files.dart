@@ -182,11 +182,18 @@ class _CloudFilesState extends State<CloudFiles> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center, // 🔥 center align
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 const Text('Storage',style: TextStyle(
                     color: Color(0xFFD9FFFF)
                 )),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
+                const Text('Used upto 2 GB ',style: TextStyle(
+                    color: Color(0xFFD9FFFF),
+                  fontSize: 11
+
+                )),
+                const SizedBox(height: 2),
                 LinearPercentIndicator(
                   lineHeight: 14,
                   percent: percentvalue ?? 0,
