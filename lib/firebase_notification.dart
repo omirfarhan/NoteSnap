@@ -27,7 +27,9 @@ class _FirebaseNotificationState extends State<FirebaseNotification> {
   List<Map<String, dynamic>> _notifications = [];  // ← state এ রাখো
   bool _isLoading = true;
 
-
+  Color get _textColor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFFE1E1E1)
+      : const Color(0xFF343434);
 
   @override
   void initState() {
@@ -151,9 +153,9 @@ class _FirebaseNotificationState extends State<FirebaseNotification> {
             child:  _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _notifications.isEmpty
-                    ? const Center(
+                    ? Center(
                     child: Text('Notes with upcoming reminders appear here',
-                        style: TextStyle(color: Color(0xFF9EDDE4))),
+                        style: TextStyle(color: _textColor)),
                       )
                      : ListView.builder(
                  itemCount: _notifications.length,
