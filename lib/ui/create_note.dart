@@ -85,6 +85,10 @@ class _CreateNoteState extends State<CreateNote> {
     return Theme.of(context).colorScheme.onSurface;
   }
 
+  Color get _dividercolor => Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFFE1E1E1)
+      : const Color(0xFF343434);
+
   Future<DatabaseNote> createNote(BuildContext context) async {
     // note edit করতে
     if (widget.note != null) {
@@ -584,6 +588,7 @@ class _CreateNoteState extends State<CreateNote> {
                         keyboardType: TextInputType.multiline,
                         maxLines: null,
                         focusNode: _titleFocusNode,
+                        cursorColor: _dividercolor,
                         decoration: InputDecoration(
                             hintText: 'Title',
                             hintStyle: TextStyle(
@@ -592,6 +597,7 @@ class _CreateNoteState extends State<CreateNote> {
                                 fontSize: 18,
 
                             ),
+
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
                           isDense: true,
@@ -604,12 +610,11 @@ class _CreateNoteState extends State<CreateNote> {
                         ),
                       ),
                       Divider(
-                        color: Color(0xFFD2FEFF).withOpacity(0.2),
+                        color: _dividercolor.withOpacity(0.2),
                         thickness: 1.5,
                       ),
 
                       Expanded(
-
                         child: SuperEditor(
                           editor: _editor,
                           document: _document,
@@ -618,9 +623,23 @@ class _CreateNoteState extends State<CreateNote> {
                           focusNode: _descriptionFocusNode,
                           inputSource: TextInputSource.ime,
 
+                          documentOverlayBuilders: [
+                            SuperEditorIosToolbarFocalPointDocumentLayerBuilder(),
+                            SuperEditorIosHandlesDocumentLayerBuilder(),
+                            SuperEditorAndroidToolbarFocalPointDocumentLayerBuilder(),
+                            SuperEditorAndroidHandlesDocumentLayerBuilder(
+                              caretColor: _dividercolor, // ✅ Android cursor color
+                              caretWidth: 2,
+                            ),
+                            DefaultCaretOverlayBuilder(
+                              caretStyle: CaretStyle(
+                                color: _dividercolor, // ✅ Desktop cursor color
+                                width: 2,
+                              ),
+                            ),
+                          ],
                           imeConfiguration: const SuperEditorImeConfiguration(
                             enableAutocorrect: false,
-
                           ),
 
                           selectionStyle: const SelectionStyles(
@@ -664,14 +683,14 @@ class _CreateNoteState extends State<CreateNote> {
                                   Styles.padding: const CascadingPadding.symmetric(
                                       vertical: 0,
                                       horizontal: 0
-                                  )
-
+                                  ),
                                 },
                               ),
 
                             ],
+
                           ),
-                          
+
 
 
                         ),

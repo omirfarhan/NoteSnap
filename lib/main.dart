@@ -88,6 +88,10 @@ class MyApp extends StatelessWidget {
         colorScheme: const ColorScheme.light(
           onSurface: Color(0xFF484848), // ← light mode text color
         ),
+        // textSelectionTheme: const TextSelectionThemeData(
+        //   cursorColor: Color(0xFF484848), // ✅ light mode cursor
+        //   selectionHandleColor: Color(0xFF484848),
+        // ),
 
         appBarTheme: const AppBarTheme(
           systemOverlayStyle: SystemUiOverlayStyle.dark,
@@ -98,9 +102,7 @@ class MyApp extends StatelessWidget {
             fontSize: 19,
             fontWeight: FontWeight.w400,
           ),
-          // iconTheme: IconThemeData(
-          //   color: Colors.white,
-          // ),
+
         ),
         progressIndicatorTheme: const ProgressIndicatorThemeData(
           color: Color(0xFF9EDDE4),
@@ -123,6 +125,10 @@ class MyApp extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
+        // textSelectionTheme: const TextSelectionThemeData(
+        //   cursorColor: Color(0xFFE1E1E1), // ✅ dark mode cursor
+        //   selectionHandleColor: Color(0xFFE1E1E1),
+        // ),
 
         progressIndicatorTheme: const ProgressIndicatorThemeData(
           color: Colors.tealAccent,
