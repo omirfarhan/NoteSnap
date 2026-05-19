@@ -81,20 +81,31 @@ class _CreateNoteState extends State<CreateNote> {
   }
 
   Color get _textColor{
-    if (_bottomBarColor != null) return Color(0xFFE1E1E1);
+    if (_bottomBarColor != null) {
+      // Light color হলে dark text, dark color হলে light text
+      final luminance = _bottomBarColor!.computeLuminance();
+      return luminance > 0.5 ?
+      const Color(0xFF343434)
+      : const Color(0xFFE1E1E1);
+    }
     return Theme.of(context).colorScheme.onSurface;
   }
 
-  Color get _dividercolor => Theme.of(context).brightness == Brightness.dark
-      ? const Color(0xFFE1E1E1)
-      : const Color(0xFF343434);
+  Color get _dividercolor {
+    if (_bottomBarColor != null) {
+      final luminance = _bottomBarColor!.computeLuminance();
+      return luminance > 0.5 ? const Color(0xFF1A1A1A) : const Color(0xFFE1E1E1);
+    }
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFE1E1E1)
+        : const Color(0xFF343434);
+  }
 
   Future<DatabaseNote> createNote(BuildContext context) async {
     // note edit করতে
     if (widget.note != null) {
       _note = widget.note;
       _textEditingController.text = widget.note!.title;
-
       _bottomBarColor = (widget.note!.background != null && widget.note!.background!.isNotEmpty)
           ? Color(int.parse(widget.note!.background!))
           : null;
@@ -416,6 +427,12 @@ class _CreateNoteState extends State<CreateNote> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back,color: _textColor,),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
            spacing: 5,
@@ -447,14 +464,14 @@ class _CreateNoteState extends State<CreateNote> {
          if (_descriptionFocusNode.hasFocus)
             IconButton(
               onPressed: _historyIndex > 0 ? _undo : null,
-              icon: Icon(Icons.undo,),
+              icon: Icon(Icons.undo,color:_historyIndex > 0 ? _textColor : _textColor.withOpacity(0.3),),
               iconSize: 30,
               padding: EdgeInsets.zero,
             ),
             if (_descriptionFocusNode.hasFocus)
             IconButton(
               onPressed: _historyIndex < _history.length - 1 ? _redo : null,
-              icon: Icon(Icons.redo,),
+              icon: Icon(Icons.redo,color: _historyIndex < _history.length - 1 ? _textColor : _textColor.withOpacity(0.3)),
               iconSize: 30,
             ),
             SizedBox(width: 20), // gap control এখানে
@@ -794,7 +811,6 @@ class _CreateNoteState extends State<CreateNote> {
         ),
       ),
     );
-
     Overlay.of(context).insert(_toolbarOverlay!);
   }
   void _hideToolbar() {
@@ -851,7 +867,6 @@ class _CreateNoteState extends State<CreateNote> {
     _saveNote();
   }
 
-
   void _insertCheckbox() {
     final selection = _composer.selection;
     if (selection == null) return;
@@ -872,7 +887,6 @@ class _CreateNoteState extends State<CreateNote> {
     ]);
     _saveNote();
   }
-
   int _getCharacterCount() {
     int count = _textEditingController.text.length;
     for (int i = 0; i < _document.nodeCount; i++) {
@@ -883,7 +897,6 @@ class _CreateNoteState extends State<CreateNote> {
     }
     return count;
   }
-
   void _enforceCheckboxCursor() {
     final selection = _composer.selection;
     if (selection == null) return;
@@ -949,7 +962,6 @@ class _CreateNoteState extends State<CreateNote> {
     });
     _saveNote();
   }
-
   void _exportbottomsheet() {
     showModalBottomSheet(
       context: context,
@@ -1048,7 +1060,6 @@ class _CreateNoteState extends State<CreateNote> {
       },
     );
   }
-
   Future<void> _saveAsText()async{
 
     try{
@@ -1100,8 +1111,6 @@ class _CreateNoteState extends State<CreateNote> {
 
 
   }
-
-
   Future<void> _saveAsPDF() async {
     final title = _textEditingController.text.trim();
 
@@ -1234,11 +1243,6 @@ class _CreateNoteState extends State<CreateNote> {
       );
     }
   }
-
-
-
-
-
   Future<void> _saveAsImage()async{
     final screenHeight = MediaQuery.of(context).size.height;
     final bytes = await SaveAsImage.captureWidget(
@@ -1260,7 +1264,6 @@ class _CreateNoteState extends State<CreateNote> {
 
 
   }
-
   Widget _buildExportNote() {
 
     final screenSize = MediaQuery.of(context).size;
@@ -1303,8 +1306,6 @@ class _CreateNoteState extends State<CreateNote> {
       ),
     );
   }
-
-
   List<Widget> _buildExportContent() {
     final widgets = <Widget>[];
     for (int i = 0; i < _document.nodeCount; i++) {

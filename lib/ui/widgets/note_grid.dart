@@ -142,7 +142,7 @@ class _NoteGridState extends State<NoteGrid> with WidgetsBindingObserver {
               color: isSelected ? const Color(0xFF1A7EA8) : noteColor,
               borderRadius: BorderRadius.circular(5),
               border: Border.all(
-                color: isSelected ? Colors.white : Colors.transparent,
+                color: isSelected ? textColor : Colors.transparent,
                 width: 1.5,
               ),
             ),
@@ -217,12 +217,12 @@ class _NoteGridState extends State<NoteGrid> with WidgetsBindingObserver {
                   ),
                 ),
                 if (isSelected)
-                  const Positioned(
+                  Positioned(
                     top: 4,
                     right: 4,
                     child: Icon(
                       Icons.check_circle,
-                      color: Colors.white,
+                      color: textColor,
                       size: 18,
                     ),
                   ),
