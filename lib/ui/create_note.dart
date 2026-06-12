@@ -68,8 +68,8 @@ class _CreateNoteState extends State<CreateNote> {
   late final FocusNode _titleFocusNode;
 
 
-  Color? _bottomBarColor; //= const Color(0xFF137FA5); // default color
-  //Color get bottomBarColor => _bottomBarColor;
+  Color? _bottomBarColor;
+
   OverlayEntry? _toolbarOverlay;
   final GlobalKey _globalKey=GlobalKey();
 
@@ -1111,7 +1111,10 @@ class _CreateNoteState extends State<CreateNote> {
 
 
   }
+
+
   Future<void> _saveAsPDF() async {
+    print('background: == $_bottomBarColor');
     final title = _textEditingController.text.trim();
 
     final regularFontData =
@@ -1119,7 +1122,8 @@ class _CreateNoteState extends State<CreateNote> {
     final boldFontData =
     await rootBundle.load('assets/fonts/NotoSerifBengali-Bold.ttf');
 
-    final regularFont = PdfTrueTypeFont(regularFontData.buffer.asUint8List(), 20);
+    final regularFont = PdfTrueTypeFont(
+        regularFontData.buffer.asUint8List(), 20);
     final boldFont = PdfTrueTypeFont(boldFontData.buffer.asUint8List(), 30);
 
 
@@ -1146,18 +1150,40 @@ class _CreateNoteState extends State<CreateNote> {
     double yOffset = 0;
 
 
-    final textBrush = PdfSolidBrush(PdfColor(0xD2, 0xFF, 0xFF));
+    // 🔹 background color resolve: null হলে system theme অনুযায়ী
+    final bgColor = _bottomBarColor ??
+        (Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF131313)
+            : const Color(0xFFF9F9F9));
+
+    // 🔹 text color resolve
+    final Color textFlutterColor;
+    if (_bottomBarColor != null) {
+      final luminance = _bottomBarColor!.computeLuminance();
+      textFlutterColor = luminance > 0.5
+          ? const Color(0xFF343434)
+          : const Color(0xFFE1E1E1);
+    } else {
+      textFlutterColor = Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFFFFFFFF)
+          : const Color(0xFF000000);
+    }
+
+    final textBrush = PdfSolidBrush(PdfColor(
+      textFlutterColor.red,
+      textFlutterColor.green,
+      textFlutterColor.blue,
+    ));
 
     void drawBackground(PdfPage p) {
       p.graphics.drawRectangle(
         brush: PdfSolidBrush(PdfColor(
-          _bottomBarColor!.red,
-          _bottomBarColor!.green,
-          _bottomBarColor!.blue,
+          bgColor.red,
+          bgColor.green,
+          bgColor.blue,
         )),
         bounds: Rect.fromLTWH(0, 0, p.size.width, p.size.height),
       );
-
     }
 
     drawBackground(page);
@@ -1243,6 +1269,7 @@ class _CreateNoteState extends State<CreateNote> {
       );
     }
   }
+
   Future<void> _saveAsImage()async{
     final screenHeight = MediaQuery.of(context).size.height;
     final bytes = await SaveAsImage.captureWidget(
