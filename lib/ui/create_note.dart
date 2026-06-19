@@ -56,8 +56,6 @@ class _CreateNoteState extends State<CreateNote> {
   String _currentTime="";
   String get currentTime=> _currentTime;
 
-
-
   DatabaseNote? _note;
   late final NotesService _notesService;
   late final TextEditingController _textEditingController;
@@ -71,6 +69,7 @@ class _CreateNoteState extends State<CreateNote> {
 
 
   Color? _bottomBarColor;
+
 
   OverlayEntry? _toolbarOverlay;
   final GlobalKey _globalKey=GlobalKey();
@@ -965,6 +964,7 @@ class _CreateNoteState extends State<CreateNote> {
     _saveNote();
   }
   void _exportbottomsheet() {
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent, // 🔥 must
@@ -1048,6 +1048,8 @@ class _CreateNoteState extends State<CreateNote> {
                             builder: (_) => ImagePreviewPage(
                                 uint8list: bytes,
                                isSaveMode: false,
+                              textcolor: _textColor,
+                              //backgroundColor: bgColor,
                             ),
                           ),
                         );
@@ -1119,17 +1121,6 @@ class _CreateNoteState extends State<CreateNote> {
     print('background: == $_bottomBarColor');
     final title = _textEditingController.text.trim();
 
-    final regularFontData =
-    await rootBundle.load('assets/fonts/NotoSerifBengali-Regular.ttf');
-    final boldFontData =
-    await rootBundle.load('assets/fonts/NotoSerifBengali-Bold.ttf');
-
-    final regularFont = PdfTrueTypeFont(
-        regularFontData.buffer.asUint8List(), 20);
-    final boldFont = PdfTrueTypeFont(boldFontData.buffer.asUint8List(), 30);
-
-
-
     // 🔹 Content images (local file থেকে)
     final imageDataMap = <String, Uint8List>{};
     for (int i = 0; i < _document.nodeCount; i++) {
@@ -1171,11 +1162,11 @@ class _CreateNoteState extends State<CreateNote> {
           : const Color(0xFF000000);
     }
 
-    final textBrush = PdfSolidBrush(PdfColor(
-      textFlutterColor.red,
-      textFlutterColor.green,
-      textFlutterColor.blue,
-    ));
+    // final textBrush = PdfSolidBrush(PdfColor(
+    //   textFlutterColor.red,
+    //   textFlutterColor.green,
+    //   textFlutterColor.blue,
+    // ));
 
     void drawBackground(PdfPage p) {
       p.graphics.drawRectangle(
@@ -1309,12 +1300,28 @@ class _CreateNoteState extends State<CreateNote> {
   }
 
   Future<void> _saveAsImage()async{
+
+    // 🔹 text color resolve
+    final Color textFlutterColor;
+    if (_bottomBarColor != null) {
+      final luminance = _bottomBarColor!.computeLuminance();
+      textFlutterColor = luminance > 0.5
+          ? const Color(0xFF343434)
+          : const Color(0xFFE1E1E1);
+    } else {
+      textFlutterColor = Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFFFFFFFF)
+          : const Color(0xFF000000);
+    }
+
     final screenHeight = MediaQuery.of(context).size.height;
     final bytes = await SaveAsImage.captureWidget(
       _buildExportNote(),
       width: 668,
       minHeight: screenHeight, // ✅ full page minimum
     );
+
+
 
     if (!mounted) return;
     Navigator.push(
@@ -1323,6 +1330,8 @@ class _CreateNoteState extends State<CreateNote> {
         builder: (_) => ImagePreviewPage(
           uint8list: bytes,
           isSaveMode: true, // ✅ save button দেখাবে
+          textcolor: textFlutterColor,
+          //backgroundColor: bgColor,
         ),
       ),
     );
@@ -1330,6 +1339,23 @@ class _CreateNoteState extends State<CreateNote> {
 
   }
   Widget _buildExportNote() {
+
+    final Color exportBgColor = _bottomBarColor ??
+        (Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF000000)
+            : const Color(0xFFFFFFFF));
+
+    final Color textFlutterColor;
+    if (_bottomBarColor != null) {
+      final luminance = _bottomBarColor!.computeLuminance();
+      textFlutterColor = luminance > 0.5
+          ? const Color(0xFF343434)
+          : const Color(0xFFE1E1E1);
+    } else {
+      textFlutterColor = Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFFFFFFFF)
+          : const Color(0xFF000000);
+    }
 
     final screenSize = MediaQuery.of(context).size;
     final screenHeight = screenSize.height;
@@ -1340,10 +1366,10 @@ class _CreateNoteState extends State<CreateNote> {
       constraints: BoxConstraints(
         minHeight: screenHeight,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 15),
 
         decoration: BoxDecoration(
-          color: _bottomBarColor,
+          color: exportBgColor,
         ),
       child: Padding(
         padding: const EdgeInsets.only(top: 14.0),
@@ -1353,9 +1379,9 @@ class _CreateNoteState extends State<CreateNote> {
           children: [
             Text(
               _textEditingController.text,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
-                color: Color(0xFFD2FEFF),
+                color: textFlutterColor,
                   fontFamily: 'Regular',
 
               ),
@@ -1372,6 +1398,18 @@ class _CreateNoteState extends State<CreateNote> {
     );
   }
   List<Widget> _buildExportContent() {
+
+    final Color textFlutterColor;
+    if (_bottomBarColor != null) {
+      final luminance = _bottomBarColor!.computeLuminance();
+      textFlutterColor = luminance > 0.5
+          ? const Color(0xFF343434)
+          : const Color(0xFFE1E1E1);
+    } else {
+      textFlutterColor = Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFFFFFFFF)
+          : const Color(0xFF000000);
+    }
     final widgets = <Widget>[];
     for (int i = 0; i < _document.nodeCount; i++) {
       final node = _document.getNodeAt(i)!;
@@ -1380,7 +1418,7 @@ class _CreateNoteState extends State<CreateNote> {
         widgets.add(
           Text(
             node.text.text,
-            style: const TextStyle(color: Color(0xFFD2FEFF), fontSize: 16),
+            style: TextStyle(color: textFlutterColor, fontSize: 16),
           ),
         );
       }
