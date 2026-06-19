@@ -20,6 +20,8 @@ import 'notebottomcomponent/note_image_component_builder.dart';
 
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
+import 'notebottomcomponent/pdfDrawimage/imagetopdf.dart';
+
 class CreateNote extends StatefulWidget {
   final DatabaseNote? note;
   final String? folderName;
@@ -1197,41 +1199,77 @@ class _CreateNoteState extends State<CreateNote> {
     }
 
     // 🔹 Title
-    if (title.isNotEmpty) {
-      final size = boldFont.measureString(title, layoutArea: Size(contentWidth, 0));
-      checkNewPage(size.height);
-      page.graphics.drawString(
-        title,
-        boldFont,
-        brush: textBrush,
-        bounds: Rect.fromLTWH(20, yOffset, contentWidth, pageHeight),
-        format: PdfStringFormat(
-          wordWrap: PdfWordWrapType.word,
-          lineSpacing: 4,
-        ),
-      );
-      yOffset += size.height + 16;
-    }
+    // if (title.isNotEmpty) {
+    //   final size = boldFont.measureString(title, layoutArea: Size(contentWidth, 0));
+    //   checkNewPage(size.height);
+    //   page.graphics.drawString(
+    //     title,
+    //     boldFont,
+    //     brush: textBrush,
+    //     bounds: Rect.fromLTWH(20, yOffset, contentWidth, pageHeight),
+    //     format: PdfStringFormat(
+    //       wordWrap: PdfWordWrapType.word,
+    //       lineSpacing: 4,
+    //     ),
+    //   );
+    //   yOffset += size.height + 16;
+    // }
 
     // 🔹 Content loop
+
+    // 🔹 Title — rendered as an image instead of drawString
+    if (title.isNotEmpty) {
+      final rendered = await Imagetopdf().renderTextToImage(
+        text: title,
+        fontFamily: 'NotoSerifBengali',
+        fontSize: 30,
+        fontWeight: FontWeight.bold,
+        color: textFlutterColor,
+        maxWidthPoints: contentWidth,
+      );
+      checkNewPage(rendered.height);
+      page.graphics.drawImage(
+        PdfBitmap(rendered.bytes),
+        Rect.fromLTWH(20, yOffset, contentWidth, rendered.height),
+      );
+      yOffset += rendered.height + 16;
+    }
+
     for (int i = 0; i < _document.nodeCount; i++) {
       final node = _document.getNodeAt(i);
 
+      // if (node is ParagraphNode && node.text.text.isNotEmpty) {
+      //   final text = node.text.text;
+      //   final size = regularFont.measureString(text, layoutArea: Size(contentWidth, 0));
+      //   checkNewPage(size.height);
+      //   page.graphics.drawString(
+      //     text,
+      //     regularFont,
+      //     brush: textBrush,
+      //     bounds: Rect.fromLTWH(20, yOffset, contentWidth, pageHeight),
+      //     format: PdfStringFormat(
+      //       wordWrap: PdfWordWrapType.word,
+      //       lineSpacing: 2,
+      //     ),
+      //   );
+      //   yOffset += size.height + 12;
+      // }
+
       if (node is ParagraphNode && node.text.text.isNotEmpty) {
-        final text = node.text.text;
-        final size = regularFont.measureString(text, layoutArea: Size(contentWidth, 0));
-        checkNewPage(size.height);
-        page.graphics.drawString(
-          text,
-          regularFont,
-          brush: textBrush,
-          bounds: Rect.fromLTWH(20, yOffset, contentWidth, pageHeight),
-          format: PdfStringFormat(
-            wordWrap: PdfWordWrapType.word,
-            lineSpacing: 2,
-          ),
+        final rendered = await Imagetopdf().renderTextToImage(
+          text: node.text.text,
+          fontFamily: 'NotoSerifBengali',
+          fontSize: 20,
+          fontWeight: FontWeight.normal,
+          color: textFlutterColor,
+          maxWidthPoints: contentWidth,
         );
-        yOffset += size.height + 12;
+        checkNewPage(rendered.height);
+        page.graphics.drawImage(
+          PdfBitmap(rendered.bytes),
+          Rect.fromLTWH(20, yOffset, contentWidth, rendered.height),
+        );
+        yOffset += rendered.height + 12;
       }
 
       if (node is ImageNode) {
